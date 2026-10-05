@@ -70,7 +70,7 @@
 | :--- | :---: | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
 | **WP-7.1** | FR-1.3 | MOD-7: Commercial Launch | Auth Hardening, TOTP MFA & Password Reset | TOTP MFA enrollment, password reset with immediate session revocation, encrypted totp_secret at rest | W13–W14 | 14 | Taha Asadullah | WP-2.2 | `[ROADMAP]` |
 | **WP-7.2** | FR-1.4 | MOD-7: Commercial Launch | Guided Onboarding & Offline Org Recovery Key | Step-by-step wizard: DNS verification, Offline Master Recovery Key generation, mandatory backup test challenge | W13–W14 | 12 | Taha Asadullah | WP-3.2 | `[ROADMAP]` |
-| **WP-7.3** | FR-1.6 | MOD-7: Commercial Launch | Account-Less Guest Submission & Tracking URLs | Ephemeral Curve25519 key generation in browser, secret tracking URL issuance (`/report/track/BBT-RPT-XXXX`), anonymous retests | W13–W14 | 10 | Taha Asadullah | WP-4.1 | `[ROADMAP]` |
+| **WP-7.3** | FR-1.6 | MOD-7: Commercial Launch | Account-Less Guest Submission, Recovery & Invitations | Ephemeral Curve25519 key generation in browser, secret tracking URL issuance with client URI fragment (#token=...&key=...), exportable Guest Recovery Package, multi-device restoration UI (/report/restore), and tokenized private program access enforcement | W13–W14 | 10 | Taha Asadullah | WP-4.1 | `[ROADMAP]` |
 | **WP-7.4** | FR-8.4 | MOD-7: Commercial Launch | Direct-to-R2 Presigned Upload & Orphan Cleanup | Presigned S3/R2 direct upload route (`/api/uploads/presign`), upload quota verification at issuance, and automated orphan cleanup | W13–W14 | 10 | Taha Asadullah | WP-4.2 | `[ROADMAP]` |
 | **WP-7.5** | FR-5.4 | MOD-7: Commercial Launch | SLA Countdown Engine & Slack Webhooks | Hourly scheduled SLA cron check, notification outbox worker, visual countdown alerts, and Slack-compatible webhook payloads | W15–W16 | 12 | Taha Asadullah | WP-5.2 | `[ROADMAP]` |
 | **WP-7.6** | FR-7.7 | MOD-7: Commercial Launch | Redacted Evidence Export Engine (PDF & JSON) | Sanitized PDF and JSON closure summary generation documenting timeline, commit SHA/branch, deployment env, and retest attestations | W15–W16 | 10 | Taha Asadullah | WP-6.1 | `[ROADMAP]` |
@@ -111,13 +111,13 @@
 
 | Sprint ID | Academic Weeks | Target Work Packages | Key Engineering Deliverables | Prerequisite Gates & Evaluation | Planned Hours | Status |
 | :--- | :--- | :--- | :--- | :--- | :---: | :---: |
-| **Sprint 1** | Weeks 1–2 | WP-1.1, WP-1.2, WP-1.3, WP-1.4 | Monorepo scaffolding, PostgreSQL RLS schema, AST sanitization, and UI tokens | Gate 0: Foundation Review | 40 | `[READY]` |
-| **Sprint 2** | Weeks 3–4 | WP-2.1, WP-2.2, WP-2.3, WP-2.4 | Tenant registration, DB-backed sessions, server RBAC, and shared store rate limiter | Gate 1: Identity & Multi-Tenancy | 40 | `[PLANNED]` |
-| **Sprint 3** | Weeks 5–6 | WP-3.1, WP-3.2, WP-3.3, WP-3.4 | RFC 9116 download, in-browser PGP cleartext signing, DNS TXT verifier, Ed25519 keypair generator | Gate 2: Policy & Keys | 40 | `[PLANNED]` |
-| **Sprint 4** | Weeks 7–8 | WP-4.1, WP-4.2, WP-4.3, WP-4.4 | Dual-recipient encryption, direct R2 presigned upload, pure TS CVSS 3.1 engine, in-browser decryption | **Gate 3: Working Prototype Demonstration** | 40 | `[PLANNED]` |
-| **Sprint 5** | Weeks 9–10 | WP-5.1, WP-5.2, WP-5.3, WP-5.4 | Dual-lane triage threads, metadata email alerts, GitHub commit & branch compare validation, config SHA binder | Gate 4: Remediation Evidence | 38 | `[PLANNED]` |
-| **Sprint 6** | Weeks 11–12 | WP-6.1, WP-6.2, ACAD-01, ACAD-02, WP-BUF-1 | Attested retest state machine, storage quotas, Juice Shop usability study, final thesis & demo defense | **Gate 5: Academic FYP Defense Certified** | 66 | `[PLANNED]` |
-| **Sprint 7** | Weeks 13–14 | WP-7.1, WP-7.2, WP-7.3, WP-7.4, WP-7.11 | TOTP MFA, offline recovery key onboarding, account-less guest intake, direct R2 upload hardening, SuperAdmin | Gate 6: Commercial Core Intake | 54 | `[ROADMAP]` |
+| **Sprint 1** | Weeks 1–2 | WP-1.1 to WP-1.4 + Buffer (4h) | Monorepo scaffolding, PostgreSQL RLS schema, AST sanitization, and UI tokens | Gate 0: Foundation Review | 44 | `[READY]` |
+| **Sprint 2** | Weeks 3–4 | WP-2.1 to WP-2.4 + Buffer (4h) | Tenant registration, DB-backed sessions, server RBAC, and shared store rate limiter | Gate 1: Identity & Multi-Tenancy | 44 | `[PLANNED]` |
+| **Sprint 3** | Weeks 5–6 | WP-3.1 to WP-3.4 + Buffer (4h) | RFC 9116 download, in-browser PGP cleartext signing, DNS TXT verifier, Ed25519 keypair generator | Gate 2: Policy & Keys | 44 | `[PLANNED]` |
+| **Sprint 4** | Weeks 7–8 | WP-4.1 to WP-4.4 + Buffer (4h) | Dual-recipient encryption, direct R2 presigned upload, pure TS CVSS 3.1 engine, in-browser decryption | **Gate 3: Working Prototype Demonstration** | 44 | `[PLANNED]` |
+| **Sprint 5** | Weeks 9–10 | WP-5.1 to WP-5.4 + Buffer (6h) | Dual-lane triage threads, metadata email alerts, GitHub commit & branch compare validation, config SHA binder | Gate 4: Remediation Evidence | 44 | `[PLANNED]` |
+| **Sprint 6** | Weeks 11–12 | WP-6.1, WP-6.2, ACAD-01, ACAD-02 + Defense Buffer (6h) | Attested retest state machine, storage quotas, Juice Shop usability study, final thesis & demo defense | **Gate 5: Academic FYP Defense Certified** | 44 | `[PLANNED]` |
+| **Sprint 7** | Weeks 13–14 | WP-7.1, WP-7.2, WP-7.3, WP-7.4, WP-7.11 | TOTP MFA, offline recovery key onboarding, account-less guest intake & recovery, direct R2 upload hardening, SuperAdmin | Gate 6: Commercial Core Intake | 54 | `[ROADMAP]` |
 | **Sprint 8** | Weeks 15–16 | WP-7.5, WP-7.6, WP-7.7, WP-7.8 | SLA countdown engine & Slack webhooks, redacted PDF export, Lemon Squeezy MoR billing, landing page & legal | Gate 7: Commercial Operations Ready | 54 | `[ROADMAP]` |
 | **Sprint 9** | Weeks 17–18 | WP-7.9, WP-7.10, WP-7.12, WP-BUF-2 | Security hardening & pen-test pass, Sentry observability, disaster recovery sandbox drill, launch buffer | **Gate 8: Commercial Production Release** | 52 | `[ROADMAP]` |
 

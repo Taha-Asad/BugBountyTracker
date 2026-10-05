@@ -3,6 +3,8 @@ erDiagram
     ORGANIZATION ||--o{ PROGRAM : hosts
     ORGANIZATION ||--o{ USER_MEMBERSHIP : employs
     ORGANIZATION ||--o{ PROGRAM_INVITATION : issues
+    PROGRAM ||--o{ PROGRAM_DEFENDER : assigns
+    USER ||--o{ PROGRAM_DEFENDER : participates
     USER ||--o{ USER_MEMBERSHIP : belongs_to
     USER ||--o{ PGP_KEY : owns
     USER ||--o{ SESSION : authenticates
@@ -44,6 +46,15 @@ erDiagram
         string recovery_public_key
         string policy_markdown
         datetime created_at
+    }
+
+    PROGRAM_DEFENDER {
+        string id PK
+        string program_id FK
+        string user_id FK
+        string role "LEAD_TRIAGER | REVIEWER"
+        boolean is_active
+        datetime assigned_at
     }
 
     PROGRAM_INVITATION {
@@ -94,10 +105,12 @@ erDiagram
         string id PK
         string organization_id FK
         string program_id FK
-        string hunter_id FK
-        string guest_token_hash UK
-        string assigned_defender_id FK
-        string state "NEW | TRIAGING | ACCEPTED | FIX_PROPOSED | RETEST_PENDING | VERIFIED_RESEARCHER | VERIFIED_INTERNAL | CLOSED_UNVERIFIED_TIMEOUT | RISK_ACCEPTED | REJECTED_SPAM | REJECTED_INVALID | DUPLICATE | WITHDRAWN"
+        string hunter_id FK "nullable"
+        string guest_token_hash UK "nullable"
+        string guest_public_key "nullable (Curve25519 armor)"
+        string guest_recovery_hash "nullable"
+        string assigned_defender_id FK "nullable"
+        string state "NEW | TRIAGING | ACCEPTED | NEED_MORE_INFO | FIX_PROPOSED | RETEST_PENDING | VERIFIED_RESEARCHER | VERIFIED_INTERNAL | CLOSED_UNVERIFIED_TIMEOUT | CLOSED_INCOMPLETE | RISK_ACCEPTED | REJECTED_SPAM | REJECTED_INVALID | DUPLICATE | WITHDRAWN"
         string operational_label "AUTHENTICATION_BYPASS | INJECTION_VULNERABILITY | INFORMATION_DISCLOSURE | CROSS_SITE_SCRIPTING | ACCESS_CONTROL_ISSUE | DENIAL_OF_SERVICE | OTHER"
         string title_ciphertext "CIPHERTEXT ONLY"
         string asset_scope
@@ -105,6 +118,9 @@ erDiagram
         float cvss_suggested
         float cvss_score
         string encrypted_payload "CIPHERTEXT ONLY"
+        string risk_accepted_by_user_id FK "nullable"
+        string risk_rationale "nullable"
+        datetime risk_review_date "nullable"
         datetime sla_triage_due
         datetime sla_remediation_due
         datetime created_at
@@ -114,7 +130,9 @@ erDiagram
     DISCUSSION_MESSAGE {
         string id PK
         string report_id FK
-        string sender_id FK
+        string sender_actor_type "REGISTERED_USER | GUEST_RESEARCHER | SYSTEM_AUTOMATION"
+        string sender_user_id FK "nullable"
+        string sender_guest_id "nullable"
         string lane "RESEARCHER_ORG | REVIEWER_INTERNAL"
         string encrypted_body "CIPHERTEXT ONLY"
         datetime created_at
@@ -136,8 +154,9 @@ erDiagram
     RETEST_EVIDENCE {
         string id PK
         string report_id FK
-        string verifier_id FK
-        string verifier_type "RESEARCHER | INTERNAL_DEFENDER"
+        string verifier_actor_type "RESEARCHER_REGISTERED | RESEARCHER_GUEST | DEFENDER_INTERNAL | MANAGER_TIMEOUT"
+        string verifier_user_id FK "nullable"
+        string verifier_guest_token_hash "nullable"
         boolean fix_confirmed
         string verification_notes_cipher "CIPHERTEXT ONLY"
         datetime retest_date
@@ -156,9 +175,11 @@ erDiagram
         string id PK
         string organization_id FK
         string report_id FK
-        string actor_id FK
+        string actor_type "REGISTERED_USER | GUEST_RESEARCHER | SYSTEM_AUTOMATION"
+        string actor_user_id FK "nullable"
+        string actor_guest_id "nullable"
         string action
-        string justification
+        string justification "nullable"
         string prev_hash
         datetime timestamp
     }

@@ -9,12 +9,13 @@ sequenceDiagram
     Hunter->>Browser: Enters Scope, Category Enum, Title, Description & PoC
     Browser->>Server: GET /api/v1/programs/{slug}/encryption-targets
     Server-->>Browser: Returns recipient_set_version, Defender Public Keys, Recovery Key
-    Browser->>Browser: Autonomous Curve25519 Ephemeral Key Generation (<40ms)
+    Browser->>Browser: Autonomous Curve25519 Ephemeral Key Generation (<50ms)
     Browser->>Browser: openpgp.encrypt(payload, [ReportKey, DefKeys..., RecoveryKey])
     Browser->>Server: POST /api/v1/reports (recipient_set_version, Neutral Label, title_ciphertext, payload_ciphertext)
     Server->>Server: Validate recipient_set_version, Turnstile CAPTCHA, Tenant Scope & Quota
     Server->>DB: INSERT INTO reports (recipient_set_version, title_ciphertext, payload, operational_label, state='NEW')
     DB-->>Server: Record Persisted (Hash-Chained Audit Event)
-    Server-->>Browser: 201 Created (Report #BBT-102 + Tracking Token)
-    Browser->>KeyStore: Store Tracking Secret & Ephemeral Private Key
-    Browser-->>Hunter: Display Secret Tracking URL & Encrypted Receipt
+    Server-->>Browser: 201 Created (Report #BBT-102 + Guest Access Token)
+    Browser->>KeyStore: Store Tracking Secret & Ephemeral Private Key in IndexedDB
+    Browser->>Browser: Assemble Armored Guest Recovery Package (Token + Encrypted Key)
+    Browser-->>Hunter: Display Fragment URL (#token=...&key=...) & Downloadable Recovery Package

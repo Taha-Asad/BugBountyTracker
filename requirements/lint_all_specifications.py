@@ -80,13 +80,20 @@ check('guest_token_hash' in srs or 'Account-Less (Guest)' in srs, "SRS.md specif
 check('Lemon Squeezy' in srs, "SRS.md specifies Lemon Squeezy Merchant of Record")
 check('recovery_public_key' in srs or 'Organization Master Recovery Key' in srs, "SRS.md specifies Offline Organization Master Recovery Key")
 check('wasm-unsafe-eval' in srs, "SRS.md specifies wasm-unsafe-eval for OpenPGP.js Argon2 S2K CSP")
+check('CLOSED_INCOMPLETE' in srs, "SRS.md specifies CLOSED_INCOMPLETE for intake clarification timeout")
+check('PROGRAM_DEFENDER' in srs, "SRS.md specifies PROGRAM_DEFENDER entity for program-scoped recipients")
+check('Guest Recovery Package' in srs, "SRS.md specifies Guest Recovery Package for multi-device key restore")
+check('URI fragment' in srs or '#token=' in srs, "SRS.md specifies URI fragment protection against credential logging")
 
 # 5. Check architecture/KEY_MANAGEMENT.md consistency
 with open(files['KEY_MANAGEMENT.md'], 'r', encoding='utf-8') as f:
     km = f.read()
 check('IndexedDB' in km and 'localStorage' not in km, "KEY_MANAGEMENT.md uses IndexedDB for guest keys (zero localStorage)")
 check('wasm-unsafe-eval' in km, "KEY_MANAGEMENT.md specifies wasm-unsafe-eval CSP for Argon2 S2K")
-check('Argon2 S2K' in km, "KEY_MANAGEMENT.md specifies Argon2 S2K key protection")
+check('Argon2 S2K' in km or 'Argon2id S2K' in km, "KEY_MANAGEMENT.md specifies Argon2 S2K key protection")
+check('Guest Recovery Package' in km, "KEY_MANAGEMENT.md specifies Guest Recovery Package")
+check('#token=' in km, "KEY_MANAGEMENT.md specifies URI fragment protection for guest tracking URLs")
+check('RFC 9580' in km, "KEY_MANAGEMENT.md references RFC 9580 standard")
 
 # 6. Check CVSS_TEST_FIXTURES.md integrity & vector uniqueness
 with open(files['CVSS_TEST_FIXTURES.md'], 'r', encoding='utf-8') as f:
@@ -95,12 +102,16 @@ with open(files['CVSS_TEST_FIXTURES.md'], 'r', encoding='utf-8') as f:
 check('FIRST.org' in cvss_text and 'NIST National Vulnerability Database' in cvss_text, "CVSS_TEST_FIXTURES.md cites FIRST.org Examples Guide & NIST NVD")
 check('CVE-2021-41773' in cvss_text and '7.5' in cvss_text, "CVSS_TEST_FIXTURES.md correctly attributes CVE-2021-41773 as 7.5 High")
 check('24-ST-013' in cvss_text, "CVSS_TEST_FIXTURES.md contains Roll No 24-ST-013")
+check('8.22' in cvss_text and '8.2252' not in cvss_text, "CVSS_TEST_FIXTURES.md enforces official FIRST.org coefficient 8.22 (zero 8.2252)")
+check('CVE-2018-13379-VAR' in cvss_text and '5.3' in cvss_text, "CVSS_TEST_FIXTURES.md Fixture 25 scores 5.3 Medium with 8.22 coefficient")
 
+scoring_text = cvss_text.split("### Part 3")[0] if "### Part 3" in cvss_text else cvss_text
 vector_pattern = re.compile(r'`(CVSS:3\.1/[^`]+)`')
-vectors = vector_pattern.findall(cvss_text)
-check(len(vectors) == 45, f"CVSS_TEST_FIXTURES.md contains exactly 45 vectors (found {len(vectors)})")
+vectors = vector_pattern.findall(scoring_text)
+check(len(vectors) == 45, f"CVSS_TEST_FIXTURES.md contains exactly 45 scoring vectors (found {len(vectors)})")
 unique_vectors = set(vectors)
-check(len(unique_vectors) == 45, f"All 45 vectors are mathematically unique (found {len(unique_vectors)} unique)")
+check(len(unique_vectors) == 45, f"All 45 scoring vectors are mathematically unique (found {len(unique_vectors)} unique)")
+check("### Part 3: Executable Parser Rejection" in cvss_text, "CVSS_TEST_FIXTURES.md contains Part 3 Parser Rejection test suite")
 
 # 7. Cross-Document WBS Arithmetic, Package Parity & Task Status Honesty
 with open(files['WBS.md'], 'r', encoding='utf-8') as f:
@@ -110,6 +121,7 @@ check('236 Hours' in wbs and '28 Hours' in wbs and '264 Hours' in wbs, "WBS.md a
 check('160 Hours' in wbs and '424 Hours' in wbs, "WBS.md commercial arithmetic: 264h academic + 160h commercial = 424h total")
 check('WP-7.1' in wbs and 'WP-7.12' in wbs, "WBS.md contains commercial packages WP-7.1 to WP-7.12")
 check('`[READY]`' in wbs and 'WP-1.1' in wbs, "WBS.md maintains honest task status: WP-1.1 is READY (not falsely DONE)")
+check('Sprint 6' in wbs and '| 44 |' in wbs, "WBS.md maintains balanced academic sprints: Sprint 6 is 44h (not 66h)")
 
 # 8. Check standalone diagrams in requirements/diagrams/
 diagram_stems = [

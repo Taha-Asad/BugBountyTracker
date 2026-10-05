@@ -128,7 +128,15 @@ The platform differentiates itself through four architectural and operational pi
   * `VERIFIED_RESEARCHER`: The reporting researcher independently retested and certified that the vulnerability is mitigated on the deployment environment.
   * `VERIFIED_INTERNAL`: An authorized organization reviewer certified the fix, recording whether they authored the fix.
   * `CLOSED_UNVERIFIED_TIMEOUT`: Closed following an expired researcher grace period (≥ 14 days) **only through an explicit authorized reviewer action with recorded justification**.
-* **BR-7.4**: Additional terminal states include `RISK_ACCEPTED` (formal organizational acceptance of operational risk without code modification) and `WITHDRAWN` (researcher self-retraction).
+* **BR-7.2**: From `RETEST_PENDING`, reports shall transition to final closure exclusively under one of three distinct terminal states:
+  * `VERIFIED_RESEARCHER`: The reporting researcher independently confirmed the vulnerability is mitigated on the target deployment.
+  * `VERIFIED_INTERNAL`: An authorized organization reviewer certified the fix, recording whether they authored the fix.
+  * `CLOSED_UNVERIFIED_TIMEOUT`: Closed following an expired researcher grace period (≥ 14 days) **only through an explicit authorized reviewer action with recorded administrative justification**. Never counted as a verified fix.
+* **BR-7.3**: Additional terminal states include:
+  * `CLOSED_INCOMPLETE`: Clarification inquiry (`NEED_MORE_INFO`) expired after 14 days of researcher inactivity at intake. Distinct from `CLOSED_UNVERIFIED_TIMEOUT` (which applies only to deployed fixes awaiting retest).
+  * `RISK_ACCEPTED`: Formal organization acceptance of operational risk without code modification. Requires an authorized decision-maker (`ORG_OWNER` or Lead Defender), a mandatory written business and security rationale, and a scheduled review date. Under no circumstances does `RISK_ACCEPTED` count as a passed retest or verified remediation.
+  * `REJECTED_SPAM`, `REJECTED_INVALID`, `DUPLICATE`, and `WITHDRAWN`.
+* **BR-7.4**: Reports in `NEED_MORE_INFO` shall automatically transition to `CLOSED_INCOMPLETE` after 14 days of researcher inactivity without clarification, preserving the audit record. Reopening is permitted if the researcher subsequently provides the required clarification.
 * **BR-7.5**: If retesting reveals that the vulnerability persists, the state transition shall record a `RETEST_FAILED` audit event and return to `ACCEPTED`, preserving the failed retest evidence in the immutable audit log.
 * **BR-7.6**: Reopening any closed report shall require an authorized Defender or Tenant Owner action recording an immutable justification log, transitioning the ticket back to `TRIAGING`.
 * **BR-7.7**: The platform shall generate exportable Redacted Closure Evidence summaries (PDF and JSON format) capturing the operational label, report lifecycle timestamps, verified commit SHA/branch, deployment environment, retest attestations, and closing officer identity, suitable for sharing with enterprise clients and security auditors without disclosing raw exploit instructions.
@@ -197,10 +205,18 @@ To ensure financial viability and recover cloud operational costs, BugBountyTrac
 
 | Subscription Tier | Proposed Price | Target Customer Hypothesis | Included Features & Quota Bounds |
 | :--- | :---: | :--- | :--- |
-| **Open Source / Community** | **$0 / mo** | Open-source libraries, solo maintainers & non-profits | 1 active public program, 1 defender seat, 5 active reports/month, 2 GB encrypted storage, signed RFC 9116 generator, GitHub commit verification. |
+| **Open Source / Community** | **$0 / mo** | Open-source libraries, solo maintainers & non-profits | 1 active public program, 1 defender seat, up to 5 simultaneously active open reports (if a 6th report is submitted while 5 remain active, intake still encrypts and accepts the payload, displaying a non-blocking quota banner to triage/resolve open tickets or upgrade, guaranteeing zero data loss for security disclosures), 2 GB encrypted storage, signed RFC 9116 generator, GitHub commit verification. |
 | **Team Launch Plan** | **$49 / mo** | Small software engineering teams (5–25 devs) needing structured intake | 1 active disclosure program (public or invite-only), up to 5 defender seats (with program-scoped decryption), 10 GB encrypted storage, direct presigned R2 uploads, SLA countdown timers, Slack-compatible webhooks, GitHub commit & branch compare verification, Redacted PDF/JSON Closure Evidence exports. |
 
-*With 2 paying customers on the Team Plan ($49/mo each = $98.00/mo gross), net revenue after Lemon Squeezy processing fees (5% base + $0.50/tx + 0.5% subscription fee = $6.39; net revenue = $91.61, or ~$89.70 if international/bank transfer surcharges apply), the platform covers 100% of its base commercial cloud operating expenses (~$61.00/mo). All pricing figures represent initial validation hypotheses subject to empirical testing during the commercial pilot.*
+#### Financial Unit Economics & Payout Modeling
+* **Gross Revenue (2 Paying Customers)**: 2 × $49.00 = **$98.00 / month**.
+* **Lemon Squeezy Base Fees**: 5% base ($4.90) + $0.50/transaction ($1.00) + 0.5% recurring subscription fee ($0.49) = **$6.39 total fees**.
+* **Base Net Revenue**: $98.00 − $6.39 = **$91.61 / month**.
+* **International Card & Transfer Mix Modeling**:
+  * *Domestic US Cards*: Net = **$91.61** (covers 150% of the ~$61.00/mo operating baseline).
+  * *International Cards (+1.5% surcharge, $1.47)*: Net = **$90.14**.
+  * *Bank Payout to Pakistan via Stripe Connect Rails (1% payout fee)*: Net received = **$89.24 – $90.69**.
+* In all modeled payment scenarios, 2 paying customers reliably cover 100% of the commercial cloud baseline (~$61.00/mo) with a healthy operating margin. All pricing figures represent initial validation hypotheses subject to empirical testing during the commercial pilot.
 
 ---
 

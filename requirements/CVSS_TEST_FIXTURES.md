@@ -49,7 +49,7 @@ Every benchmark entry is cross-referenced against its authoritative entry in the
 | **22** | FIRST-EX-02 | `CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N` | ** 6.1** | `Medium` | [Reflected XSS (FIRST Ex 2)](https://www.first.org/cvss/v3.1/examples) |
 | **23** | CVE-2014-0160 | `CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N` | ** 5.9** | `Medium` | [OpenSSL Heartbleed Leak](https://nvd.nist.gov/vuln/detail/CVE-2014-0160) |
 | **24** | CVE-2017-5753 | `CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:C/C:H/I:N/A:N` | ** 5.6** | `Medium` | [Spectre Variant 1 Side Channel](https://nvd.nist.gov/vuln/detail/CVE-2017-5753) |
-| **25** | CVE-2018-13379 | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N` | ** 5.4** | `Medium` | [FortiOS Path Traversal](https://nvd.nist.gov/vuln/detail/CVE-2018-13379) |
+| **25** | CVE-2018-13379-VAR | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N` | ** 5.3** | `Medium` | [FortiOS Path Traversal (Low Conf Variant)](https://nvd.nist.gov/vuln/detail/CVE-2018-13379) |
 | **26** | CVE-2016-10229 | `CVSS:3.1/AV:P/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H` | ** 4.6** | `Medium` | [Qualcomm Hardware Crash](https://nvd.nist.gov/vuln/detail/CVE-2016-10229) |
 | **27** | FIRST-EX-11 | `CVSS:3.1/AV:N/AC:H/PR:L/UI:R/S:C/C:L/I:L/A:N` | ** 4.4** | `Medium` | [Complex Authenticated XSS (FIRST Ex 11)](https://www.first.org/cvss/v3.1/examples) |
 | **28** | FIRST-EX-14 | `CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:L/A:N` | ** 4.3** | `Medium` | [CSRF Logout / State Change (FIRST Ex 14)](https://www.first.org/cvss/v3.1/examples) |
@@ -82,14 +82,31 @@ These vectors explicitly stress the deterministic calculation formulas defined i
 
 ---
 
+### Part 3: Executable Parser Rejection Test Cases (Negative Suite)
+
+To ensure the calculation engine does not silently accept corrupted inputs or overwrite duplicate keys, the parser strictly enforces FIRST.org grammar:
+
+| Test ID | Malformed Input Vector | Expected Error Rationale | Parser Behavior |
+| :---: | :--- | :--- | :--- |
+| **NEG-01** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N/AV:L` | Duplicate metric key (`AV` repeated) | Rejects with `Duplicate metric key detected` |
+| **NEG-02** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N` | Missing mandatory metric (`A` omitted) | Rejects with `Missing mandatory Base metrics` |
+| **NEG-03** | `CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N` | Unsupported or invalid CVSS specification prefix | Rejects with `Vector must start with 'CVSS:3.1/'` |
+| **NEG-04** | `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N/ZZ:X` | Unknown metric key (`ZZ`) | Rejects with `Unknown metric key` |
+| **NEG-05** | `CVSS:3.1/AV:X/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N` | Unrecognized metric value (`X` for `AV`) | Rejects with `Invalid value 'X' for metric 'AV'` |
+| **NEG-06** | `CVSS:3.1/AVN/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N` | Missing colon delimiter in metric segment | Rejects with `Malformed metric segment (missing ':')` |
+
+---
+
 ### Algorithmic Invariants Required for Engine Certification
 
 1. **Zero Impact Identity**: If Confidentiality = None, Integrity = None, and Availability = None, then `ISS = 0` and `BaseScore = 0.0` regardless of exploitability metrics.
 2. **Ceiling Invariant**: Under no combination of metrics may the calculated Base Score exceed `10.0`.
-3. **Roundup Precision**: The FIRST.org rounding specification states:
+3. **Official Formula Constant**: In accordance with FIRST.org CVSS v3.1 Section 7.1, the exploitability coefficient is strictly **8.22**:
+   $$\text{Exploitability} = 8.22 \times \text{AV} \times \text{AC} \times \text{PR} \times \text{UI}$$
+4. **Roundup Precision**: The FIRST.org rounding specification states:
    $$\text{Roundup}(x) = \frac{\lceil x \times 10 \rceil}{10}$$
-   The engine implementation must avoid JavaScript IEEE 754 floating-point truncation bugs (e.g. `Math.ceil(4.000000000000001 * 10) / 10 = 4.1` vs `4.0`) by using an epsilon threshold $\epsilon = 10^{-7}$.
-4. **Parser Validation & Fuzz Resistance**:
+   The engine implementation must avoid JavaScript IEEE 754 floating-point truncation bugs by using an epsilon threshold $\epsilon = 10^{-7}$.
+5. **Parser Validation & Fuzz Resistance**:
    * Reject vectors with missing required metrics.
    * Reject vectors with duplicate metric keys (e.g. `.../AV:N/AV:L/...`).
    * Reject vectors with unrecognized metric values.

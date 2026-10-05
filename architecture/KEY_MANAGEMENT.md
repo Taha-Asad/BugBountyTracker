@@ -13,9 +13,9 @@ BugBountyTrack incorporates client-side OpenPGP encryption to protect sensitive 
 
 The cryptographic subsystem executes in the user's web browser using `openpgp.js`. The server functions strictly as an untrusted message routing and ciphertext persistence layer for encrypted payloads.
 
-To ensure rapid browser performance (<50ms) and eliminate compliance friction:
-1. **Algorithm Pinning**: The platform pins exclusively to **v4 Ed25519 (Signing) / X25519 (Encryption)** Curve25519 keys. Legacy RSA-4096 is deprecated and dropped because its multi-second in-browser key generation violates NFR-02 (<1.5s).
-2. **Standardized Key Protection**: Private keys stored in browser `IndexedDB` are protected using OpenPGP's standardized **Argon2 S2K (String-to-Key)** derivation rather than non-standard custom AES-GCM wrappers.
+To ensure rapid browser performance (<50ms benchmark target) and eliminate compliance friction:
+1. **Algorithm Pinning & RFC 9580 Conformance**: The platform pins exclusively to **Curve25519 (Ed25519 for signing, X25519 for encryption)** implemented via `openpgp.js`, adhering to the modernized OpenPGP specification (RFC 9580 / RFC 4880). Generating bare Curve25519 keypairs under 50ms is designated as a benchmark target on evergreen desktop and modern mobile browsers. Legacy RSA-4096 is deprecated and dropped because its multi-second in-browser key generation violates NFR-02 (<1.5s).
+2. **Standardized Key Protection & WebAssembly CSP**: Private keys stored in browser `IndexedDB` are protected using OpenPGP's native **Argon2id S2K (String-to-Key)** derivation (`memory=64MB, iterations=3`) rather than custom wrappers. Because OpenPGP.js compiles its Argon2id implementation in WebAssembly, the application's Content Security Policy explicitly permits `'wasm-unsafe-eval'`. Passphrase derivation introduces an intentional, measured cryptographic delay of ~200–400ms to resist brute-force attacks, which is strictly decoupled from the sub-50ms bare keygen benchmark.
 
 ---
 
@@ -48,25 +48,37 @@ To prevent combinatorial key explosion while supporting collaborative team triag
 1. **Program-Scoped Authorization**: Encryption recipients are strictly bounded to the **reporting researcher** (or ephemeral report key), the **offline organization master recovery key**, plus the **active defenders explicitly assigned to the specific program** ($N \le 10$). Defenders in the same organization who are not assigned to the program are not included.
 2. **Pseudonymous Key Identifiers**: The client fetches public encryption subkeys identified strictly by their 16-character OpenPGP Key ID or 40-character fingerprint. Employee names, email addresses, and internal roles are not included in public keyrings to minimize internal organizational disclosure.
 
-### 2.2 Account-Less (Guest) Researcher Submission Lifecycle
-To prevent adoption drop-off caused by mandatory account creation, BugBountyTrack enables account-less vulnerability intake:
-1. **Ephemeral Key Generation**: When a researcher opens a program's submission form (`/report/:org_slug`), the browser autonomously generates an in-memory Curve25519 keypair (`K_report_pub`, `K_report_priv`) in under 40ms.
+### 2.2 Account-Less (Guest) Researcher Lifecycle & Multi-Device Recovery
+To eliminate adoption drop-off caused by mandatory account creation, BugBountyTrack enables account-less vulnerability intake while providing robust cryptographic access recovery:
+1. **Ephemeral Key Generation**: When a researcher opens a program's submission form (`/report/:org_slug`), the browser autonomously generates an in-memory Curve25519 keypair (`K_report_pub`, `K_report_priv`) in under 50ms.
 2. **Multi-Recipient Encryption**: The report payload is encrypted to:
-   - All active defenders of the target program (`K_def_1..N`).
+   - All active defenders assigned to the program (`K_def_1..N`).
    - The organization's offline master recovery key (`K_recovery_pub`).
    - The ephemeral report key (`K_report_pub`).
-3. **Tracking Token Generation**: Upon submission, the server returns an opaque, high-entropy tracking identifier (`BBT-RPT-XXXX`) paired with a cryptographic access token.
-4. **Local Keystore Persistence**: The browser stores `K_report_priv` and the tracking URL in an ephemeral `IndexedDB` keystore. The researcher is presented with a clear action prompt: *"Bookmark this tracking link or save your recovery code to view replies and verify fixes."*
-5. **Anonymous Dialogue & Retest**: The researcher accesses `/report/track/:token` to read encrypted reviewer comments and submit retest evidence without ever registering an account or managing passwords.
-6. **Optional Account Binding**: If the researcher later creates a BugBountyTrack account, they can claim historical report tokens to bind findings to their public profile and reputation score.
+3. **Explicit Separation of Access & Decryption Material**:
+   - **Guest Access Token** (`guest_access_token`): An opaque, high-entropy bearer token returned by the server upon submission to authorize HTTP retrieval of the encrypted report record.
+   - **Report Private Key** (`K_report_priv`): The Curve25519 private key enabling local client-side decryption of the report payload. Stored locally in browser `IndexedDB`.
+   - **Guest Recovery Package**: An exportable, printable ASCII-armored block or 24-word recovery seed containing `{ report_id, guest_access_token, encrypted_private_key }` protected with an optional user-selected passphrase.
+4. **URL Fragment Defense Against Credential Leakage**:
+   The tracking URL provided to the researcher is formatted using a client-side URI fragment:
+   `https://app.bugbountytrack.com/report/track/BBT-RPT-XXXX#token=<access_token>&key=<privkey_export>`
+   Because modern web browsers **never transmit URI fragments (everything after `#`) in HTTP request lines**, this architecture guarantees that sensitive access tokens and private key material are never exposed in server access logs, reverse proxy logs, CDN traces, or external HTTP `Referer` headers.
+5. **Multi-Device Portability & Key Restoration**:
+   If a researcher opens the tracking URL on another device, switches browsers, or clears browser storage, they navigate to `/report/restore` and import their Guest Recovery Package. The browser imports `K_report_priv` into the new browser's `IndexedDB`, restoring full read/write access to confidential dialogue and retest workflows.
+6. **Acceptance Verification**:
+   * *Acceptance Test*: (1) Submit report anonymously; (2) download/copy recovery package; (3) completely clear browser `IndexedDB` and cookies; (4) load tracking URL on a different clean browser; (5) import recovery package; (6) successfully decrypt reviewer reply and submit retest attestation.
+7. **Optional Account Binding**: If the researcher later creates a verified BugBountyTrack account, they can claim historical report tokens to bind findings to their public profile and reputation score.
 
 ### 2.3 Offline Organization Master Recovery Key & Mandatory Backup
-To prevent total data loss in the event of defender laptop destruction or browser cache clearing:
-1. **Key Generation at Onboarding**: During initial organization onboarding, the owner's browser generates an **Organization Master Recovery Keypair** (`K_rec_pub`, `K_rec_priv`).
-2. **Server Storage of Public Key**: The server stores `K_rec_pub` as part of the organization profile. Every report submitted to the organization includes a PKESK packet wrapped for `K_rec_pub`.
-3. **Mandatory Offline Export**: `K_rec_priv` is **never** transmitted to the server. The owner must download the ASCII-armored recovery kit (`org-recovery-key.asc` or printable emergency kit).
-4. **Pre-Activation Decryption Challenge**: The onboarding wizard requires the owner to upload the exported key file and decrypt a test challenge ciphertext before the organization is activated. Programs cannot receive reports until backup verification succeeds.
-5. **Disaster Recovery**: If all defenders lose their local browser keys, the organization owner can use their offline recovery key to decrypt historical report envelopes and re-wrap session keys for newly assigned defenders.
+To prevent catastrophic data loss if all active defender laptops are destroyed or browser storage is wiped:
+1. **Passphrase-Protected Key Generation**: During initial organization onboarding, the owner's browser generates an **Organization Master Recovery Keypair** (`K_rec_pub`, `K_rec_priv`). The private key is passphrase-protected in-browser with Argon2id S2K (`argon2id`, memory=64MB, iterations=3) before export.
+2. **Server Storage of Public Key**: The server stores `K_rec_pub` as part of the organization profile. Every report and internal note submitted to the organization includes a PKESK packet wrapped for `K_rec_pub`.
+3. **Mandatory Offline Export**: `K_rec_priv` is **never** transmitted to the server. The owner must download the ASCII-armored recovery kit (`org-recovery-key.asc`) and store it offline (air-gapped USB, physical safe, or hardware vault).
+4. **Client-Side Pre-Activation Decryption Challenge**: The onboarding wizard requires the owner to select and load the exported recovery key locally in browser runtime and decrypt a test challenge ciphertext entirely in client-side memory using `openpgp.js`. The private key material never traverses the network and is immediately purged from browser memory and `IndexedDB` once the challenge is verified. Programs cannot be activated until this client-side test succeeds.
+5. **Disaster Recovery Authorization & Audit**:
+   - Only the `ORG_OWNER` role may initiate emergency recovery, requiring mandatory step-up TOTP MFA re-authentication.
+   - Invoking recovery emits an immediate high-priority email notification to all active program defenders and records an immutable audit ledger entry: `ORGANIZATION_RECOVERY_INVOKED`.
+   - The recovery key decrypts payload session keys ($K_S$) to re-wrap them for newly assigned defenders; it does not alter historical audit log chains.
 
 ### 2.4 Key Synchronization & Concurrency Protocol (`recipient_set_version`)
 To prevent race conditions when team members join or leave while reports are in transit:

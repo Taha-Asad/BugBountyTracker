@@ -53,8 +53,8 @@ projects/BugBountyTrack/
 │   ├── compile_srs_docx.py         # Portable compiler: SRS.md + diagrams -> SRS.docx
 │   ├── compile_wbs_xlsx.py         # Portable compiler: WBS.md -> WBS.xlsx
 │   ├── generate_perfect_diagrams.py# SVG/PNG compiler for all 6 architecture diagrams
-│   ├── lint_all_specifications.py  # Level 1 specification integrity linter (101 checks, 100% pass)
-│   ├── verify_cvss_engine.py       # Level 2 CVSS 3.1 mathematical verification engine (45 vectors, 100% pass)
+│   ├── lint_all_specifications.py  # Level 1 specification integrity linter (112 checks, 100% pass)
+│   ├── verify_cvss_engine.py       # Level 2 CVSS 3.1 mathematical verification & parser rejection engine (45 scoring vectors + 6 negative tests, 100% pass)
 │   ├── verify_all_specifications.py# Backward-compatible wrapper invoking lint_all_specifications.py
 │   └── diagrams/                   # Architecture, sequence, state, and ERD diagrams
 │       ├── fig4_1_component.png / .svg
@@ -114,16 +114,16 @@ To uphold the *Observe, Build, Verify* ethos of Crow Parliament, quality assuran
 
 ```mermaid
 flowchart TD
-    L1["Level 1: Specification Integrity Linter<br/>(lint_all_specifications.py — 101 checks)"] --> L2["Level 2: CVSS Mathematical Engine Tests<br/>(verify_cvss_engine.py — 45 unique vectors)"]
-    L2 --> L3["Level 3: Cryptographic Integration Tests<br/>(OpenPGP dual-envelope, session key re-wrapping)"]
+    L1["Level 1: Specification Integrity Linter<br/>(lint_all_specifications.py — 112 checks)"] --> L2["Level 2: CVSS Mathematical Engine & Rejection Tests<br/>(verify_cvss_engine.py — 45 scoring vectors + 6 negative tests)"]
+    L2 --> L3["Level 3: Cryptographic Integration Tests<br/>(OpenPGP dual-envelope, guest recovery, session key re-wrapping)"]
     L3 --> L4["Level 4: Operational Launch Gates<br/>(DoR -> DoAC -> DoCC -> DoQV -> DoSA -> DoOR -> DoRG)"]
 ```
 
 | Layer | Verification Target | Mechanism | Status |
 | :--- | :--- | :--- | :--- |
-| **Level 1: Specification Linter** | Document cross-references, arithmetic, schema consistency, OpenXML formulas, honest task statuses, diagram assets, and CSP rules | Automated AST & regex linter (`lint_all_specifications.py`) | **101 / 101 Passed (100%)** |
-| **Level 2: CVSS Unit Tests** | CVSS 3.1 Base Score equations, metric weights, Roundup() parity | Pure Python mathematical verification engine (`verify_cvss_engine.py`) | **45 / 45 Passed (100%)** |
-| **Level 3: Cryptographic Integration** | Multi-defender encryption, session key re-wrapping, DOM isolation | Vitest & Playwright browser integration suite (Scheduled: Sprints 3–4) | *Phase 3 Gate* |
+| **Level 1: Specification Linter** | Document cross-references, arithmetic, schema consistency, OpenXML formulas, honest task statuses, diagram assets, guest recovery, and CSP rules | Automated AST & regex linter (`lint_all_specifications.py`) | **112 / 112 Passed (100%)** |
+| **Level 2: CVSS Engine & Parser Tests** | CVSS 3.1 Base Score equations (official 8.22 coefficient), metric weights, Roundup() parity, and strict parser rejection (duplicates, syntax) | Pure Python mathematical verification engine (`verify_cvss_engine.py`) | **45 / 45 Scoring + 6 / 6 Negative Passed (100%)** |
+| **Level 3: Cryptographic Integration** | Multi-defender encryption, guest recovery package, session key re-wrapping, DOM isolation | Vitest & Playwright browser integration suite (Scheduled: Sprints 3–4) | *Phase 3 Gate* |
 | **Level 4: Operational Launch Gates** | End-to-end production readiness, security threat models, SLOs | Crow Parliament Phase Gate Governance protocol (`DoR` to `DoRG`) | *Phase 4–7 Gates* |
 
 ---
@@ -133,10 +133,10 @@ flowchart TD
 All compilation and verification scripts are self-contained and executable from the repository root:
 
 ```bash
-# 1. Run the specification integrity linter (101 cross-document checks)
+# 1. Run the specification integrity linter (112 cross-document checks)
 python3 requirements/lint_all_specifications.py
 
-# 2. Run the CVSS 3.1 mathematical verification engine (45 test fixtures)
+# 2. Run the CVSS 3.1 mathematical verification engine (45 scoring vectors + 6 rejection tests)
 python3 requirements/verify_cvss_engine.py
 
 # 3. Recompile BRD.docx from BRD.md

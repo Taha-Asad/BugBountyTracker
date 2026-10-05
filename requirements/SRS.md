@@ -147,9 +147,15 @@ BugBountyTrack is structured into three clean architectural tiers:
   * `ORG_READONLY`: View non-sensitive report metadata, SLA timers, and aggregated program metrics.
   * `HUNTER`: View and update submitted reports, participate in confidential conversation, conduct retests.
 * **FR-1.3 (P1, Core)**: Users shall register and authenticate via email and bcrypt/Argon2-hashed passwords, backed by database-persisted session tokens stored in secure, HTTP-only cookies. `ORG_OWNER` and `ORG_DEFENDER` roles shall support Time-Based One-Time Password (TOTP) Multi-Factor Authentication with encrypted secrets at rest.
-* **FR-1.4 (P1, Commercial)**: The platform shall provide a Guided Onboarding Wizard enabling organization leads to complete program configuration (domain DNS challenge, policy scope definition, browser key generation, offline master recovery key export with test challenge, and `security.txt` signing) within 15 minutes.
-* **FR-1.5 (P2, Commercial)**: The platform shall support both public disclosure programs (`/programs/[slug]`) and private invitation-only programs accessible via cryptographically tokenized invitation URLs (`/programs/[slug]/join?token=...`).
-* **FR-1.6 (P1, Core)**: The platform shall provide **Account-Less (Guest) Vulnerability Intake**: external researchers can submit vulnerability reports without registering an account. The client browser generates an ephemeral Curve25519 keypair, encrypts the report to the program defenders and organization recovery key, and provides the submitter with an opaque secret tracking URL (`/report/track/BBT-RPT-XXXX?token=<secret>`) to review replies and submit retests.
+* **FR-1.4 (P1, Commercial)**: The platform shall provide a Guided Onboarding Wizard enabling organization leads to complete program configuration (domain DNS challenge, policy scope definition, browser key generation, offline master recovery key export with client-side test challenge, and `security.txt` signing) within 15 minutes.
+* **FR-1.5 (P2, Commercial)**: The platform shall support both public disclosure programs (`/programs/[slug]`) and private invitation-only programs accessible via cryptographically tokenized invitation URLs (`/programs/[slug]/join?token=...`). Public programs permit unauthenticated guest submissions. Private programs require a valid invitation token (`token_hash`) to submit; guests possessing an invitation token may submit without registering, but uninvited anonymous submissions to private programs are rejected.
+* **FR-1.6 (P1, Core)**: The platform shall provide **Account-Less (Guest) Vulnerability Intake**: external researchers can submit vulnerability reports without registering an account. The client browser generates an ephemeral Curve25519 keypair and creates three distinct, cryptographically isolated items:
+  * **Guest Access Token** (`guest_access_token`): Authenticates retrieval of the encrypted report record via bearer token over HTTPS.
+  * **Ephemeral Report Private Key** (`guest_private_key`): Curve25519 private key stored in `IndexedDB` that decrypts the report session key in-browser.
+  * **Guest Recovery Package**: An exportable ASCII-armored block or 24-word recovery seed containing `{ report_id, guest_access_token, encrypted_private_key }` protected with an optional user passphrase.
+  * **URL Fragment Protection**: Tracking URLs are formatted as `/report/track/BBT-RPT-XXXX#token=<access_token>&key=<privkey_export>`. Because the URI fragment (following `#`) is strictly handled client-side by the browser runtime and is never transmitted in HTTP request lines, credentials are systematically protected against leakage in server access logs, reverse proxies, WAF logs, and HTTP `Referer` headers.
+  * **Multi-Device Portability**: Guests accessing from a different browser or device can navigate to `/report/restore` and import their Guest Recovery Package to restore access and decrypt historical and future messages.
+  * **Acceptance Criteria**: Submit anonymously -> export recovery package -> clear browser cache/storage -> open in clean browser -> import recovery package -> decrypt confidential messages -> submit retest attestation.
 
 ### 3.2 RFC 9116 Policy & Safe Harbor Generator (FR-2)
 * **FR-2.1 (P1, Core)**: The platform shall generate a compliant RFC 9116 text policy file available for download and preview at `/api/v1/programs/[slug]/security.txt` adhering strictly to RFC 9116 syntax.
@@ -159,18 +165,18 @@ BugBountyTrack is structured into three clean architectural tiers:
 * **FR-2.5 (P2, Core)**: The platform shall verify domain ownership by performing automated DNS TXT record challenge lookups (`_bbt-challenge.<domain>`) prior to activating a public program.
 
 ### 3.3 Browser-Side OpenPGP Cryptographic Pipeline & Neutral Labeling (FR-3)
-* **FR-3.1 (P1, Core)**: The client browser shall generate OpenPGP keypairs pinned strictly to **v4 Ed25519 (Signing) and X25519 (Encryption)** Curve25519 algorithms (<50ms generation time), adhering to RFC 9580 / RFC 4880. RSA-4096 is deprecated and excluded.
-* **FR-3.2 (P1, Core)**: Private keys shall be exported armored and stored locally in browser `IndexedDB`, encrypted using OpenPGP's native **Argon2 S2K** string-to-key derivation. User accounts distinguish between the Login Password (auth) and the Local Encryption Passphrase (unlocking IndexedDB).
+* **FR-3.1 (P1, Core)**: The client browser shall generate OpenPGP keypairs pinned strictly to **Curve25519 (Ed25519 for signing, X25519 for encryption)** in accordance with RFC 9580 / RFC 4880. Generating bare Curve25519 keypairs in under 50ms is designated as a benchmark target on evergreen desktop and modern mobile browsers. Legacy RSA-4096 is deprecated and excluded.
+* **FR-3.2 (P1, Core)**: Private keys shall be exported armored and stored locally in browser `IndexedDB`, encrypted using OpenPGP Argon2id S2K (`argon2id`, memory=64MB, iterations=3). User accounts distinguish between the Login Password (auth) and the Local Encryption Passphrase (unlocking IndexedDB). To support WebAssembly execution of Argon2 in OpenPGP.js, the Content Security Policy shall include `'wasm-unsafe-eval'`.
 * **FR-3.3 (P1, Core)**: When submitting a report, the client shall encrypt the sensitive fields (`title_ciphertext`, `description`, `reproduction_steps`, `impact`, and `attachment_payload`) using OpenPGP multi-recipient encryption targeted to:
   * The program's active authorized defenders (N ≤ 10).
   * The organization's offline master recovery key.
   * The reporting researcher's public encryption key (or ephemeral report key).
 * **FR-3.4 (P1, Core)**: The client shall capture a server-readable neutral operational category label (`operational_label` enum: `AUTHENTICATION_BYPASS`, `INJECTION_VULNERABILITY`, `INFORMATION_DISCLOSURE`, `CROSS_SITE_SCRIPTING`, `ACCESS_CONTROL_ISSUE`, `DENIAL_OF_SERVICE`, `OTHER`) to facilitate safe dashboard filtering, queue management, and external notifications without leaking exploit titles.
 * **FR-3.5 (P1, Core)**: Encrypted attachment binaries (≤ 25 MB) shall be uploaded directly from the browser to Cloudflare R2 using presigned URLs requested from `/api/uploads/presign`, completely bypassing serverless function payload size ceilings (4.5 MB).
-* **FR-3.6 (P2, Core)**: Key lifecycle management shall include mandatory offline Organization Master Recovery Key export with test challenge, historic key retention in `IndexedDB`, and audited session key re-wrapping (`HISTORICAL_ACCESS_GRANTED`).
+* **FR-3.6 (P2, Core)**: Key lifecycle management shall include a mandatory offline Organization Master Recovery Key. During organization setup, an offline Curve25519 recovery keypair is generated and passphrase-protected with Argon2id S2K. The Organization Owner must export the key offline and complete an in-browser verification challenge by selecting and loading the recovery file into browser memory to decrypt an ephemeral test challenge payload locally. The private recovery key is never transmitted across the network, never stored in server databases, and is immediately purged from browser memory and `IndexedDB` once verified. Recovery operations are restricted to `ORG_OWNER` with mandatory TOTP MFA step-up and trigger an immediate notification and audit alert to all active program defenders.
 
 ### 3.4 Deterministic CVSS 3.1 Base Scoring Engine (FR-4)
-* **FR-4.1 (P1, Core)**: The platform shall incorporate a pure TypeScript calculation function computing FIRST.org CVSS 3.1 Base scores (0.0 to 10.0), mathematically verified with 100% parity against the 45 canonical unique test vectors documented in [`CVSS_TEST_FIXTURES.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/requirements/CVSS_TEST_FIXTURES.md) via `verify_cvss_engine.py`.
+* **FR-4.1 (P1, Core)**: The platform shall incorporate a pure TypeScript calculation function computing FIRST.org CVSS 3.1 Base scores (0.0 to 10.0), mathematically verified with 100% parity against the 45 canonical unique test vectors documented in [`CVSS_TEST_FIXTURES.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/requirements/CVSS_TEST_FIXTURES.md) via `verify_cvss_engine.py` using the official FIRST.org coefficient 8.22.
 * **FR-4.2 (P1, Core)**: The engine shall evaluate the 8 standard metrics: Attack Vector (`AV:N/A/L/P`), Attack Complexity (`AC:L/H`), Privileges Required (`PR:N/L/H`), User Interaction (`UI:N/R`), Scope (`S:U/C`), Confidentiality (`C:N/L/H`), Integrity (`I:N/L/H`), and Availability (`A:N/L/H`).
 * **FR-4.3 (P1, Core)**: The platform shall provide bidirectional conversion between metric selection and canonical vector strings (e.g., `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H`).
 * **FR-4.4 (P1, Core)**: The schema shall decouple the researcher-suggested severity (`cvss_suggested`) from the defender-assigned official rating (`cvss_score`), recording assessor user ID and written justification.
@@ -202,15 +208,16 @@ BugBountyTrack is structured into three clean architectural tiers:
 * **FR-7.2 (P1, Core)**: From `RETEST_PENDING`, reports shall transition to final closure exclusively under one of three distinct terminal states:
   * `VERIFIED_RESEARCHER`: The reporting researcher independently confirmed the vulnerability is mitigated on the target deployment.
   * `VERIFIED_INTERNAL`: An authorized organization reviewer certified the fix, recording whether they authored the fix.
-  * `CLOSED_UNVERIFIED_TIMEOUT`: Closed following an expired grace period (≥ 14 days) **strictly via an authorized reviewer action with recorded justification**.
+  * `CLOSED_UNVERIFIED_TIMEOUT`: Closed following an expired grace period (≥ 14 days) **strictly via an authorized reviewer action with recorded administrative justification**. Never counted as a verified fix.
 * **FR-7.3 (P1, Core)**: Additional supported terminal states include:
-  * `RISK_ACCEPTED`: Formal organization acceptance of operational risk without code modification.
+  * `CLOSED_INCOMPLETE`: Clarification inquiry (`NEED_MORE_INFO`) expired after 14 days of researcher inactivity at intake. Strictly distinct from `CLOSED_UNVERIFIED_TIMEOUT` (which applies only to deployed fixes awaiting retest).
+  * `RISK_ACCEPTED`: Formal organization acceptance of operational risk without code modification. Requires an authorized decision-maker (`ORG_OWNER` or designated Lead Defender), a mandatory written business and security rationale, and a scheduled review date. Under no circumstances does `RISK_ACCEPTED` count as a passed retest or verified remediation in platform metrics or exports.
   * `REJECTED_SPAM`: Direct closure of noise or automated scans from `NEW`.
   * `REJECTED_INVALID`: Validated as non-vulnerability or out of program scope.
   * `DUPLICATE`: Linked to an existing active or closed report.
   * `WITHDRAWN`: Voluntarily retracted by the submitting researcher.
 * **FR-7.4 (P1, Core)**: If an empirical retest demonstrates that the vulnerability persists, the state transition shall record a `RETEST_FAILED` audit event and return to `ACCEPTED`, retaining the failed retest evidence in the immutable audit log.
-* **FR-7.5 (P1, Core)**: Reports in `NEED_MORE_INFO` shall automatically transition to closed after 14 days of researcher inactivity.
+* **FR-7.5 (P1, Core)**: Reports in `NEED_MORE_INFO` shall automatically transition to `CLOSED_INCOMPLETE` after 14 days of researcher inactivity without clarification, recording an automated timeout event. Reopening is permitted if the researcher subsequently provides the required clarification.
 * **FR-7.6 (P1, Core)**: Any closed state may be reopened by `Defender` or `Tenant Owner` recording an immutable justification log, transitioning the report back to `TRIAGING`.
 * **FR-7.7 (P2, Commercial)**: The platform shall generate exportable Redacted Closure Evidence summaries (PDF and JSON formats) capturing the operational label, report lifecycle timestamps, verified commit SHA/branch, deployment environment, retest attestations, and closing officer identity, suitable for sharing with enterprise clients and security auditors without disclosing raw exploit instructions. Included in the $49/mo Team plan.
 
@@ -233,19 +240,20 @@ BugBountyTrack is structured into three clean architectural tiers:
 
 ### 4.1 Textual Use Case Specifications
 
-#### Use Case UC-01: Submit Encrypted Vulnerability Report
+#### Use Case UC-01: Submit Encrypted Vulnerability Report & Generate Recovery Package
 * **Primary Actor**: Ethical Security Researcher (`Hunter` or `Guest Hunter`).
-* **Preconditions**: Researcher is on the organization's public program page.
+* **Preconditions**: Researcher is on the organization's public program page (or possesses a valid private program invitation token).
 * **Main Success Scenario**:
   1. Researcher selects in-scope target asset, selects a neutral operational category label (`operational_label` enum), and enters specific vulnerability title.
   2. Researcher inputs sensitive vulnerability description, reproduction steps, and optional PoC attachment.
-  3. Client browser generates an ephemeral Curve25519 keypair in memory (<40ms).
-  4. Client browser fetches the organization's active public defender encryption subkeys and the offline master recovery key.
-  5. Client browser generates an ephemeral AES-256 session key, encrypts title (`title_ciphertext`), description, and PoC, and encrypts the session key with the organization's subkeys, recovery key, and ephemeral report key.
+  3. Client browser generates an ephemeral Curve25519 keypair in memory (<50ms).
+  4. Client browser fetches the program's active public defender encryption subkeys and the offline master recovery key.
+  5. Client browser generates an ephemeral AES-256 session key, encrypts title (`title_ciphertext`), description, and PoC, and encrypts the session key with the program defenders' subkeys, recovery key, and ephemeral report key.
   6. If attachment is present: Browser requests presigned URL from `/api/uploads/presign` and streams encrypted ciphertext directly to Cloudflare R2.
   7. Browser dispatches HTTP POST request with neutral operational metadata, OpenPGP ciphertext payload, and attachment R2 references.
   8. Backend validates Turnstile CAPTCHA, tenant asset scope, and persists ciphertext in PostgreSQL.
-  9. System issues an opaque secret tracking URL (`/report/track/BBT-RPT-XXXX?token=<secret>`), displays a bookmark prompt, and sets state to `NEW`.
+  9. System issues a Guest Access Token, stores ephemeral private key in `IndexedDB`, and displays a Secret Tracking URL using a client-side URI fragment (`/report/track/BBT-RPT-XXXX#token=<secret>&key=<privkey>`).
+  10. System generates a downloadable and copyable **Guest Recovery Package** (armored bundle) to enable multi-device restoration, and sets report state to `NEW`.
 * **Extensions**:
   * *4a. Organization public key missing or invalid*: Browser displays error; submission blocked.
   * *8a. Rate limit exceeded*: Backend returns `429 Too Many Requests`; submission blocked.
@@ -381,11 +389,13 @@ flowchart LR
         UC9["UC-09: Tokenized Private Program Invitations"]
         UC10["UC-10: Lemon Squeezy Subscription & Quota Management"]
         UC11["UC-11: Platform Tenant Provisioning & Abuse Suspension"]
+        UC12["UC-12: Guest Recovery Package Export & Multi-Device Import"]
     end
 
     Hunter --> UC1
     Hunter --> UC4
     Hunter --> UC9
+    Hunter --> UC12
     Defender --> UC2
     Defender --> UC3
     Defender --> UC4
@@ -417,15 +427,16 @@ sequenceDiagram
     Hunter->>Browser: Enters Scope, Category Enum, Title, Description & PoC
     Browser->>Server: GET /api/v1/programs/{slug}/encryption-targets
     Server-->>Browser: Returns recipient_set_version, Defender Public Keys, Recovery Key
-    Browser->>Browser: Autonomous Curve25519 Ephemeral Key Generation (<40ms)
+    Browser->>Browser: Autonomous Curve25519 Ephemeral Key Generation (<50ms)
     Browser->>Browser: openpgp.encrypt(payload, [ReportKey, DefKeys..., RecoveryKey])
     Browser->>Server: POST /api/v1/reports (recipient_set_version, Neutral Label, title_ciphertext, payload_ciphertext)
     Server->>Server: Validate recipient_set_version, Turnstile CAPTCHA, Tenant Scope & Quota
     Server->>DB: INSERT INTO reports (recipient_set_version, title_ciphertext, payload, operational_label, state='NEW')
     DB-->>Server: Record Persisted (Hash-Chained Audit Event)
-    Server-->>Browser: 201 Created (Report #BBT-102 + Tracking Token)
-    Browser->>KeyStore: Store Tracking Secret & Ephemeral Private Key
-    Browser-->>Hunter: Display Secret Tracking URL & Encrypted Receipt
+    Server-->>Browser: 201 Created (Report #BBT-102 + Guest Access Token)
+    Browser->>KeyStore: Store Tracking Secret & Ephemeral Private Key in IndexedDB
+    Browser->>Browser: Assemble Armored Guest Recovery Package (Token + Encrypted Key)
+    Browser-->>Hunter: Display Fragment URL (#token=...&key=...) & Downloadable Recovery Package
 ```
 
 ---
@@ -470,10 +481,10 @@ sequenceDiagram
 | `TRIAGING` | Accept Vulnerability | `Defender` | Flaw in-scope; valid reproduction; CVSS Base score computed | `ACCEPTED` | CVSS 3.1 Base vector string, numeric score, textual justification |
 | `TRIAGING` | Request Clarification | `Defender` | PoC incomplete or unable to reproduce | `NEED_MORE_INFO` | Structured inquiry posted in Researcher–Org discussion lane |
 | `NEED_MORE_INFO` | Submit Clarification | `Hunter` | Supplementary details or revised PoC provided | `TRIAGING` | Encrypted clarification response payload |
-| `NEED_MORE_INFO` | Inactivity Timeout | System Cron | Researcher inactive ≥ 14 days after inquiry | `CLOSED_UNVERIFIED_TIMEOUT`| Automated timeout record |
+| `NEED_MORE_INFO` | Inactivity Timeout | System Cron | Researcher inactive ≥ 14 days after inquiry | `CLOSED_INCOMPLETE`| Automated timeout record (intake abandoned without proof) |
 | `TRIAGING` | Reject Submission | `Defender` | Out of program scope, invalid bug, or non-actionable | `REJECTED_INVALID` | Mandatory rejection category and policy citation |
 | `TRIAGING` | Mark as Duplicate | `Defender` | Identical root cause previously reported; verified in-browser | `DUPLICATE` | Reference to primary parent Report ID |
-| `TRIAGING` | Accept Operational Risk| `Defender` / `Owner` | Management formally accepts risk without fixing | `RISK_ACCEPTED` | Executive risk acceptance justification |
+| `TRIAGING` | Accept Operational Risk| `Defender` / `Owner` | Management formally accepts risk; requires written rationale & review date | `RISK_ACCEPTED` | Executive risk acceptance justification and scheduled review date |
 | `TRIAGING` | Withdraw Finding | `Hunter` | Reporter retracts mistaken submission | `WITHDRAWN` | Submitter retraction statement |
 | `ACCEPTED` | Propose Remediation | `Defender` | Validated GitHub commit SHA or SHA-256 config hash | `FIX_PROPOSED` | 40-char commit SHA + target branch OR config SHA-256 hash |
 | `FIX_PROPOSED` | Deploy Fix & Request Retest | `Defender` | Remediation deployed to designated accessible environment | `RETEST_PENDING` | Deployment environment URL, version tag, retest instructions |
@@ -481,7 +492,7 @@ sequenceDiagram
 | `RETEST_PENDING` | Retest Passed (Internal) | `Defender` | Fix verified mitigated internally; author conflict disclosed | `VERIFIED_INTERNAL` | Reviewer empirical test evidence, conflict-of-interest disclosure |
 | `RETEST_PENDING` | Grace Period Inactivity Closure | `Defender` | Researcher inactive ≥ 14 days after deployment notification | `CLOSED_UNVERIFIED_TIMEOUT` | Explicit reviewer closure action with recorded administrative rationale |
 | `RETEST_PENDING` | Retest Failed (Flaw Persists) | `Hunter` / `Defender` | Empirical retest demonstrates vulnerability remains exploitable | `ACCEPTED` (via `RETEST_FAILED` event) | Detailed failure reproduction notes, error logs; preserves audit record |
-| `VERIFIED_RESEARCHER` / `VERIFIED_INTERNAL` / `CLOSED_UNVERIFIED_TIMEOUT` / `REJECTED_INVALID` / `DUPLICATE` | Reopen Ticket | `Defender` / `Tenant Owner` | Regression identified or formal dispute upheld | `TRIAGING` | Mandatory reopening audit justification and incident link |
+| `VERIFIED_RESEARCHER` / `VERIFIED_INTERNAL` / `CLOSED_UNVERIFIED_TIMEOUT` / `CLOSED_INCOMPLETE` / `REJECTED_INVALID` / `DUPLICATE` | Reopen Ticket | `Defender` / `Tenant Owner` | Regression identified or formal dispute upheld | `TRIAGING` | Mandatory reopening audit justification and incident link |
 
 ```mermaid
 stateDiagram-v2
@@ -492,8 +503,8 @@ stateDiagram-v2
     TRIAGING --> DUPLICATE: Reviewer Links Duplicate
     TRIAGING --> NEED_MORE_INFO: Clarification Requested
     NEED_MORE_INFO --> TRIAGING: Researcher Responds
-    NEED_MORE_INFO --> CLOSED_UNVERIFIED_TIMEOUT: Inactive >= 14 Days
-    TRIAGING --> RISK_ACCEPTED: Risk Formally Accepted
+    NEED_MORE_INFO --> CLOSED_INCOMPLETE: Inactive >= 14 Days (Intake Abandoned)
+    TRIAGING --> RISK_ACCEPTED: Risk Formally Accepted (Documented)
     TRIAGING --> WITHDRAWN: Submitter Retracts
     TRIAGING --> ACCEPTED: Valid Flaw Confirmed
 
@@ -508,8 +519,10 @@ stateDiagram-v2
     VERIFIED_RESEARCHER --> TRIAGING: Regression Identified (Reopen)
     VERIFIED_INTERNAL --> TRIAGING: Regression Identified (Reopen)
     CLOSED_UNVERIFIED_TIMEOUT --> TRIAGING: Retest Requested (Reopen)
+    CLOSED_INCOMPLETE --> TRIAGING: Reporter Clarifies (Reopen)
     REJECTED_INVALID --> TRIAGING: Dispute Upheld (Reopen)
     DUPLICATE --> TRIAGING: Distinct Root Cause (Reopen)
+    RISK_ACCEPTED --> TRIAGING: Annual Review / Risk Re-evaluated (Reopen)
 ```
 
 ---
@@ -522,6 +535,8 @@ erDiagram
     ORGANIZATION ||--o{ PROGRAM : hosts
     ORGANIZATION ||--o{ USER_MEMBERSHIP : employs
     ORGANIZATION ||--o{ PROGRAM_INVITATION : issues
+    PROGRAM ||--o{ PROGRAM_DEFENDER : assigns
+    USER ||--o{ PROGRAM_DEFENDER : participates
     USER ||--o{ USER_MEMBERSHIP : belongs_to
     USER ||--o{ PGP_KEY : owns
     USER ||--o{ SESSION : authenticates
@@ -563,6 +578,15 @@ erDiagram
         string recovery_public_key
         string policy_markdown
         datetime created_at
+    }
+
+    PROGRAM_DEFENDER {
+        string id PK
+        string program_id FK
+        string user_id FK
+        string role "LEAD_TRIAGER | REVIEWER"
+        boolean is_active
+        datetime assigned_at
     }
 
     PROGRAM_INVITATION {
@@ -613,10 +637,12 @@ erDiagram
         string id PK
         string organization_id FK
         string program_id FK
-        string hunter_id FK
-        string guest_token_hash UK
-        string assigned_defender_id FK
-        string state "NEW | TRIAGING | ACCEPTED | FIX_PROPOSED | RETEST_PENDING | VERIFIED_RESEARCHER | VERIFIED_INTERNAL | CLOSED_UNVERIFIED_TIMEOUT | RISK_ACCEPTED | REJECTED_SPAM | REJECTED_INVALID | DUPLICATE | WITHDRAWN"
+        string hunter_id FK "nullable"
+        string guest_token_hash UK "nullable"
+        string guest_public_key "nullable (Curve25519 armor)"
+        string guest_recovery_hash "nullable"
+        string assigned_defender_id FK "nullable"
+        string state "NEW | TRIAGING | ACCEPTED | NEED_MORE_INFO | FIX_PROPOSED | RETEST_PENDING | VERIFIED_RESEARCHER | VERIFIED_INTERNAL | CLOSED_UNVERIFIED_TIMEOUT | CLOSED_INCOMPLETE | RISK_ACCEPTED | REJECTED_SPAM | REJECTED_INVALID | DUPLICATE | WITHDRAWN"
         string operational_label "AUTHENTICATION_BYPASS | INJECTION_VULNERABILITY | INFORMATION_DISCLOSURE | CROSS_SITE_SCRIPTING | ACCESS_CONTROL_ISSUE | DENIAL_OF_SERVICE | OTHER"
         string title_ciphertext "CIPHERTEXT ONLY"
         string asset_scope
@@ -624,6 +650,9 @@ erDiagram
         float cvss_suggested
         float cvss_score
         string encrypted_payload "CIPHERTEXT ONLY"
+        string risk_accepted_by_user_id FK "nullable"
+        string risk_rationale "nullable"
+        datetime risk_review_date "nullable"
         datetime sla_triage_due
         datetime sla_remediation_due
         datetime created_at
@@ -633,7 +662,9 @@ erDiagram
     DISCUSSION_MESSAGE {
         string id PK
         string report_id FK
-        string sender_id FK
+        string sender_actor_type "REGISTERED_USER | GUEST_RESEARCHER | SYSTEM_AUTOMATION"
+        string sender_user_id FK "nullable"
+        string sender_guest_id "nullable"
         string lane "RESEARCHER_ORG | REVIEWER_INTERNAL"
         string encrypted_body "CIPHERTEXT ONLY"
         datetime created_at
@@ -655,8 +686,9 @@ erDiagram
     RETEST_EVIDENCE {
         string id PK
         string report_id FK
-        string verifier_id FK
-        string verifier_type "RESEARCHER | INTERNAL_DEFENDER"
+        string verifier_actor_type "RESEARCHER_REGISTERED | RESEARCHER_GUEST | DEFENDER_INTERNAL | MANAGER_TIMEOUT"
+        string verifier_user_id FK "nullable"
+        string verifier_guest_token_hash "nullable"
         boolean fix_confirmed
         string verification_notes_cipher "CIPHERTEXT ONLY"
         datetime retest_date
@@ -675,9 +707,11 @@ erDiagram
         string id PK
         string organization_id FK
         string report_id FK
-        string actor_id FK
+        string actor_type "REGISTERED_USER | GUEST_RESEARCHER | SYSTEM_AUTOMATION"
+        string actor_user_id FK "nullable"
+        string actor_guest_id "nullable"
         string action
-        string justification
+        string justification "nullable"
         string prev_hash
         datetime timestamp
     }

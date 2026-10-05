@@ -6,8 +6,8 @@ stateDiagram-v2
     TRIAGING --> DUPLICATE: Reviewer Links Duplicate
     TRIAGING --> NEED_MORE_INFO: Clarification Requested
     NEED_MORE_INFO --> TRIAGING: Researcher Responds
-    NEED_MORE_INFO --> CLOSED_UNVERIFIED_TIMEOUT: Inactive >= 14 Days
-    TRIAGING --> RISK_ACCEPTED: Risk Formally Accepted
+    NEED_MORE_INFO --> CLOSED_INCOMPLETE: Inactive >= 14 Days (Intake Abandoned)
+    TRIAGING --> RISK_ACCEPTED: Risk Formally Accepted (Documented)
     TRIAGING --> WITHDRAWN: Submitter Retracts
     TRIAGING --> ACCEPTED: Valid Flaw Confirmed
 
@@ -22,5 +22,7 @@ stateDiagram-v2
     VERIFIED_RESEARCHER --> TRIAGING: Regression Identified (Reopen)
     VERIFIED_INTERNAL --> TRIAGING: Regression Identified (Reopen)
     CLOSED_UNVERIFIED_TIMEOUT --> TRIAGING: Retest Requested (Reopen)
+    CLOSED_INCOMPLETE --> TRIAGING: Reporter Clarifies (Reopen)
     REJECTED_INVALID --> TRIAGING: Dispute Upheld (Reopen)
     DUPLICATE --> TRIAGING: Distinct Root Cause (Reopen)
+    RISK_ACCEPTED --> TRIAGING: Annual Review / Risk Re-evaluated (Reopen)
