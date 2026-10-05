@@ -1,0 +1,40 @@
+{
+  "$schema": "../PROJECT_SCHEMA.md",
+  "projectId": "bugbountytrack",
+  "portalId": "PTUT-PRJ-089",
+  "portalTitle": "BugBountyTrack – Private Bug Bounty & Vulnerability Disclosure Platform",
+  "studentAuthor": "Taha Asadullah",
+  "rollNo": "24-ST-013",
+  "session": "2024-2028",
+  "batch": "24-SET-Fall",
+  "section": "SET-A",
+  "officialEmail": "24-st-013@students.ptut.edu.pk",
+  "supervisor": "Sir Umar Hayat",
+  "name": "BugBountyTrack — Multi-Tenant Vulnerability Disclosure Platform with Cryptographic Payload Isolation and Evidence-Based Remediation Traceability",
+  "category": "9. CYBERSECURITY, PRIVACY & LEGALTECH",
+  "claimedDate": "2026-10-02",
+  "type": "university-fyp",
+  "status": "active",
+  "paths": {
+    "root": "projects/BugBountyTrack",
+    "requirements": "projects/BugBountyTrack/requirements",
+    "architecture": "projects/BugBountyTrack/architecture",
+    "decisions": "projects/BugBountyTrack/decisions",
+    "tasks": "projects/BugBountyTrack/tasks",
+    "evidence": "projects/BugBountyTrack/evidence",
+    "learning": "projects/BugBountyTrack/learning",
+    "sourceCode": "projects/BugBountyTrack/src"
+  },
+  "stack": {
+    "primaryLanguage": "TypeScript",
+    "secondaryLanguages": ["Rust"],
+    "backend": ["Node.js", "Next.js"],
+    "frontend": ["Next.js", "Tailwind CSS"],
+    "database": ["PostgreSQL"],
+    "orm": ["Prisma"],
+    "cryptography": ["OpenPGP.js"],
+    "standards": ["RFC-9116", "CVSS-3.1"]
+  },
+  "activePhase": "Phase 1: Requirements Analysis & Engineering (Gate 1: DoR)",
+  "activeMilestone": "Week 1-2: Discovery, BRD, IEEE 830 SRS & WBS Baseline Certified"
+}

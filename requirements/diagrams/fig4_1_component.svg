@@ -1,0 +1,139 @@
+<svg width="920" height="470" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arr" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 9 3, 0 6" fill="#386B24" />
+    </marker>
+    <marker id="arr_ext" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 9 3, 0 6" fill="#0284C7" />
+    </marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#FFFFFF"/>
+  <text x="460" y="26" font-family="DejaVu Sans, Arial" font-size="15" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Figure 4.1: BugBountyTrack 3-Tier Decoupled Architecture &amp; Commercial Services</text>
+
+  <!-- Tier 1: Client Tier -->
+  <rect x="20" y="48" width="225" height="405" rx="8" fill="#F7FAF2" stroke="#386B24" stroke-width="2"/>
+  <rect x="20" y="48" width="225" height="34" rx="8" fill="#E3EFCB"/>
+  <text x="132" y="70" font-family="DejaVu Sans, Arial" font-size="11.5" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Tier 1: Client Browser Runtime</text>
+  
+  <rect x="30" y="92" width="205" height="52" rx="5" fill="#FFFFFF" stroke="#D1E3A5" stroke-width="1.5"/>
+  <text x="132" y="111" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#222222" text-anchor="middle">Next.js 14 App Router UI</text>
+  <text x="132" y="126" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#555555" text-anchor="middle">Guided Onboarding &amp; Health Checklist</text>
+  <text x="132" y="138" font-family="DejaVu Sans, Arial" font-size="8" fill="#386B24" text-anchor="middle">Redacted Closure PDF/HTML Exporter</text>
+
+  <rect x="30" y="152" width="205" height="56" rx="5" fill="#FFFFFF" stroke="#D1E3A5" stroke-width="1.5"/>
+  <text x="132" y="171" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#222222" text-anchor="middle">OpenPGP.js &amp; WebCrypto</text>
+  <text x="132" y="187" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#555555" text-anchor="middle">Dual-Recipient Payload Encryption</text>
+  <text x="132" y="200" font-family="DejaVu Sans, Arial" font-size="8" fill="#386B24" text-anchor="middle">Title &amp; Exploit Ciphertext Isolation</text>
+
+  <rect x="30" y="216" width="205" height="60" rx="5" fill="#FFFFFF" stroke="#D1E3A5" stroke-width="1.5"/>
+  <text x="132" y="235" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#222222" text-anchor="middle">IndexedDB KeyStore &amp; Backup</text>
+  <text x="132" y="250" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#555555" text-anchor="middle">PBKDF2/AES-GCM Local Passphrase</text>
+  <text x="132" y="263" font-family="DejaVu Sans, Arial" font-size="8" fill="#386B24" text-anchor="middle">Protected Armored Export &amp; Restore</text>
+  <text x="132" y="273" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#B91C1C" text-anchor="middle">0 Plaintext Key Material to Server</text>
+
+  <rect x="30" y="284" width="205" height="50" rx="5" fill="#FFFFFF" stroke="#D1E3A5" stroke-width="1.5"/>
+  <text x="132" y="303" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#222222" text-anchor="middle">rehype-sanitize AST Parser</text>
+  <text x="132" y="319" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#555555" text-anchor="middle">Stored XSS Defense &amp; Safe Markdown</text>
+  <text x="132" y="330" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">Strict HTML Tag Allowlist</text>
+
+  <rect x="30" y="342" width="205" height="48" rx="5" fill="#FFFFFF" stroke="#D1E3A5" stroke-width="1.5"/>
+  <text x="132" y="361" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#222222" text-anchor="middle">Local SHA-256 Digest Hasher</text>
+  <text x="132" y="377" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#555555" text-anchor="middle">WebCrypto Infrastructure Baseline</text>
+
+  <rect x="30" y="398" width="205" height="45" rx="5" fill="#FFFFFF" stroke="#D1E3A5" stroke-width="1.5"/>
+  <text x="132" y="416" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#222222" text-anchor="middle">Browser Trust Boundary</text>
+  <text x="132" y="432" font-family="DejaVu Sans, Arial" font-size="8" fill="#B91C1C" text-anchor="middle">Assumes Uncompromised Client Device</text>
+
+  <!-- Flow 1->2 -->
+  <path d="M 245 190 L 280 190" stroke="#386B24" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="262" y="180" font-family="DejaVu Sans, Arial" font-size="8" font-weight="bold" fill="#386B24" text-anchor="middle">HTTPS</text>
+  <text x="262" y="202" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">Ciphertext</text>
+
+  <!-- Tier 2: Serverless Application Tier -->
+  <rect x="280" y="48" width="235" height="405" rx="8" fill="#F7FAF2" stroke="#386B24" stroke-width="2"/>
+  <rect x="280" y="48" width="235" height="34" rx="8" fill="#E3EFCB"/>
+  <text x="397" y="70" font-family="DejaVu Sans, Arial" font-size="11.5" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Tier 2: Backend (Node.js 22 LTS)</text>
+
+  <rect x="292" y="92" width="210" height="52" rx="5" fill="#FFFFFF" stroke="#D1E3A5" stroke-width="1.5"/>
+  <text x="397" y="111" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#222222" text-anchor="middle">Next.js API Gateway Routes</text>
+  <text x="397" y="126" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#555555" text-anchor="middle">JWT Sessions &amp; TOTP 2FA Verification</text>
+  <text x="397" y="138" font-family="DejaVu Sans, Arial" font-size="8" fill="#386B24" text-anchor="middle">Tenant Scope &amp; Private Invite Auth</text>
+
+  <rect x="292" y="152" width="210" height="56" rx="5" fill="#FFFFFF" stroke="#D1E3A5" stroke-width="1.5"/>
+  <text x="397" y="171" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#222222" text-anchor="middle">Server-Side RBAC Middleware</text>
+  <text x="397" y="187" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#555555" text-anchor="middle">Owner, Defender, Hunter, ReadOnly</text>
+  <text x="397" y="200" font-family="DejaVu Sans, Arial" font-size="8" fill="#386B24" text-anchor="middle">Dynamic SET LOCAL app.current_tenant_id</text>
+
+  <rect x="292" y="216" width="210" height="56" rx="5" fill="#FFFFFF" stroke="#D1E3A5" stroke-width="1.5"/>
+  <text x="397" y="235" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#222222" text-anchor="middle">SLA Engine &amp; Assignment</text>
+  <text x="397" y="250" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#555555" text-anchor="middle">Owner Assignment &amp; Target Timers</text>
+  <text x="397" y="263" font-family="DejaVu Sans, Arial" font-size="8" fill="#386B24" text-anchor="middle">Overdue First-Response Reminders</text>
+
+  <rect x="292" y="280" width="210" height="52" rx="5" fill="#FFFFFF" stroke="#D1E3A5" stroke-width="1.5"/>
+  <text x="397" y="299" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#222222" text-anchor="middle">Rate Limiter &amp; Quota Guard</text>
+  <text x="397" y="315" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#555555" text-anchor="middle">Token Bucket (5 sub/hr/IP limit)</text>
+  <text x="397" y="327" font-family="DejaVu Sans, Arial" font-size="8" fill="#386B24" text-anchor="middle">Atomic Quota (50MB DB / 2GB R2)</text>
+
+  <rect x="292" y="340" width="210" height="50" rx="5" fill="#FFFFFF" stroke="#D1E3A5" stroke-width="1.5"/>
+  <text x="397" y="359" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#222222" text-anchor="middle">Deterministic CVSS 3.1 &amp; State</text>
+  <text x="397" y="375" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#555555" text-anchor="middle">Pure TypeScript Function (52 Vectors)</text>
+  <text x="397" y="386" font-family="DejaVu Sans, Arial" font-size="8" fill="#555555" text-anchor="middle">Append-Only Audit Event Dispatcher</text>
+
+  <rect x="292" y="398" width="210" height="45" rx="5" fill="#FFFFFF" stroke="#D1E3A5" stroke-width="1.5"/>
+  <text x="397" y="416" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#222222" text-anchor="middle">GitHub App Integration Client</text>
+  <text x="397" y="432" font-family="DejaVu Sans, Arial" font-size="8" fill="#386B24" text-anchor="middle">Read-Only Scopes (Public &amp; Private Repos)</text>
+
+  <!-- Flow 2->3 -->
+  <path d="M 515 190 L 545 190" stroke="#386B24" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Tier 3: Persistence Tier -->
+  <rect x="545" y="48" width="175" height="405" rx="8" fill="#F7FAF2" stroke="#386B24" stroke-width="2"/>
+  <rect x="545" y="48" width="175" height="34" rx="8" fill="#E3EFCB"/>
+  <text x="632" y="70" font-family="DejaVu Sans, Arial" font-size="11.5" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Tier 3: Persistence Tier</text>
+
+  <rect x="555" y="105" width="155" height="95" rx="5" fill="#FFFFFF" stroke="#D1E3A5" stroke-width="1.5"/>
+  <text x="632" y="126" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#222222" text-anchor="middle">Neon PostgreSQL 16</text>
+  <text x="632" y="144" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#386B24" text-anchor="middle">Dynamic Row-Level Security</text>
+  <text x="632" y="159" font-family="DejaVu Sans, Arial" font-size="8" fill="#555555" text-anchor="middle">Append-Only Audit Log Tables</text>
+  <text x="632" y="173" font-family="DejaVu Sans, Arial" font-size="8" fill="#555555" text-anchor="middle">Point-in-Time Recovery (PITR)</text>
+  <text x="632" y="187" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#B91C1C" text-anchor="middle">Ciphertext Payload Custodian</text>
+
+  <rect x="555" y="240" width="155" height="95" rx="5" fill="#FFFFFF" stroke="#D1E3A5" stroke-width="1.5"/>
+  <text x="632" y="262" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#222222" text-anchor="middle">Cloudflare R2 Storage</text>
+  <text x="632" y="280" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#555555" text-anchor="middle">Client-Encrypted Binaries</text>
+  <text x="632" y="295" font-family="DejaVu Sans, Arial" font-size="8" fill="#386B24" text-anchor="middle">Zero Egress Bandwidth Fees</text>
+  <text x="632" y="309" font-family="DejaVu Sans, Arial" font-size="8" fill="#555555" text-anchor="middle">24h Multipart Orphan Pruning</text>
+  <text x="632" y="323" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">Encrypted PoC Attachments</text>
+
+  <!-- Flow 2->External -->
+  <path d="M 515 350 L 740 350" stroke="#0284C7" stroke-width="1.5" stroke-dasharray="4" marker-end="url(#arr_ext)"/>
+
+  <!-- External 3rd-Party Services -->
+  <rect x="740" y="48" width="165" height="405" rx="8" fill="#F0F9FF" stroke="#0284C7" stroke-width="2"/>
+  <rect x="740" y="48" width="165" height="34" rx="8" fill="#BAE6FD"/>
+  <text x="822" y="70" font-family="DejaVu Sans, Arial" font-size="11" font-weight="bold" fill="#0369A1" text-anchor="middle">External Services</text>
+
+  <rect x="750" y="98" width="145" height="70" rx="5" fill="#FFFFFF" stroke="#BAE6FD" stroke-width="1.5"/>
+  <text x="822" y="119" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#0369A1" text-anchor="middle">GitHub REST API v3</text>
+  <text x="822" y="135" font-family="DejaVu Sans, Arial" font-size="8" fill="#555555" text-anchor="middle">GET /repos/.../commits/{ref}</text>
+  <text x="822" y="149" font-family="DejaVu Sans, Arial" font-size="8" fill="#386B24" text-anchor="middle">Commit SHA &amp; Branch</text>
+  <text x="822" y="161" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">Public &amp; Private Repo Check</text>
+
+  <rect x="750" y="185" width="145" height="72" rx="5" fill="#FFFFFF" stroke="#BAE6FD" stroke-width="1.5"/>
+  <text x="822" y="206" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#0369A1" text-anchor="middle">Resend / Postmark</text>
+  <text x="822" y="222" font-family="DejaVu Sans, Arial" font-size="8" fill="#555555" text-anchor="middle">Metadata Alerts &amp; Invites</text>
+  <text x="822" y="235" font-family="DejaVu Sans, Arial" font-size="8" fill="#386B24" text-anchor="middle">Exponential Backoff Outbox</text>
+  <text x="822" y="248" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#B91C1C" text-anchor="middle">Zero Exploit Bytes in Email</text>
+
+  <rect x="750" y="275" width="145" height="68" rx="5" fill="#FFFFFF" stroke="#BAE6FD" stroke-width="1.5"/>
+  <text x="822" y="296" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#0369A1" text-anchor="middle">DNS Authority</text>
+  <text x="822" y="312" font-family="DejaVu Sans, Arial" font-size="8" fill="#555555" text-anchor="middle">Node.js dns.promises</text>
+  <text x="822" y="325" font-family="DejaVu Sans, Arial" font-size="8" fill="#386B24" text-anchor="middle">_bbt-challenge.&lt;domain&gt;</text>
+  <text x="822" y="337" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">TXT Record Verification</text>
+
+  <rect x="750" y="360" width="145" height="75" rx="5" fill="#FFFFFF" stroke="#BAE6FD" stroke-width="1.5"/>
+  <text x="822" y="380" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#0369A1" text-anchor="middle">Commercial Billing</text>
+  <text x="822" y="396" font-family="DejaVu Sans, Arial" font-size="8" fill="#555555" text-anchor="middle">Subscription Entitlements</text>
+  <text x="822" y="409" font-family="DejaVu Sans, Arial" font-size="8" fill="#386B24" text-anchor="middle">Starter vs Team Seats</text>
+  <text x="822" y="422" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">Grace Period Enforcement</text>
+</svg>

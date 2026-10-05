@@ -1,0 +1,121 @@
+<svg width="920" height="470" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrsm" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+      <path d="M 0 0 L 6 3 L 0 6 z" fill="#386B24" />
+    </marker>
+    <marker id="arrsm_red" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+      <path d="M 0 0 L 6 3 L 0 6 z" fill="#B91C1C" />
+    </marker>
+    <marker id="arrsm_orange" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+      <path d="M 0 0 L 6 3 L 0 6 z" fill="#D97706" />
+    </marker>
+    <marker id="arrsm_term" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+      <path d="M 0 0 L 6 3 L 0 6 z" fill="#15803D" />
+    </marker>
+    <marker id="arrsm_gray" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+      <path d="M 0 0 L 6 3 L 0 6 z" fill="#4B5563" />
+    </marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#FFFFFF"/>
+  <text x="460" y="24" font-family="DejaVu Sans, Arial" font-size="15" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Figure 4.5: Remediation &amp; Attested Retest Lifecycle State Machine (3 Independent Branches)</text>
+
+  <!-- Start State -->
+  <circle cx="35" cy="75" r="10" fill="#386B24"/>
+
+  <!-- NEW State -->
+  <rect x="75" y="53" width="85" height="44" rx="8" fill="#E3EFCB" stroke="#386B24" stroke-width="2"/>
+  <text x="117" y="79" font-family="DejaVu Sans, Arial" font-size="11" font-weight="bold" fill="#1B1D1E" text-anchor="middle">NEW</text>
+
+  <!-- TRIAGING State -->
+  <rect x="205" y="53" width="105" height="44" rx="8" fill="#FFFFFF" stroke="#386B24" stroke-width="2"/>
+  <text x="257" y="79" font-family="DejaVu Sans, Arial" font-size="11" font-weight="bold" fill="#1B1D1E" text-anchor="middle">TRIAGING</text>
+
+  <!-- NEED_MORE_INFO (Side branch from TRIAGING) -->
+  <rect x="200" y="145" width="115" height="38" rx="6" fill="#F7FAF2" stroke="#555555" stroke-width="1.5"/>
+  <text x="257" y="169" font-family="DejaVu Sans, Arial" font-size="9" font-weight="bold" fill="#333333" text-anchor="middle">NEED_MORE_INFO</text>
+
+  <!-- REJECTED & DUPLICATE (Exception Terminals) -->
+  <rect x="140" y="215" width="105" height="38" rx="6" fill="#FFF0F0" stroke="#B91C1C" stroke-width="1.5"/>
+  <text x="192" y="239" font-family="DejaVu Sans, Arial" font-size="9.5" font-weight="bold" fill="#B91C1C" text-anchor="middle">REJECTED</text>
+
+  <rect x="265" y="215" width="105" height="38" rx="6" fill="#FFF0F0" stroke="#B91C1C" stroke-width="1.5"/>
+  <text x="317" y="239" font-family="DejaVu Sans, Arial" font-size="9.5" font-weight="bold" fill="#B91C1C" text-anchor="middle">DUPLICATE</text>
+
+  <!-- ACCEPTED State -->
+  <rect x="365" y="53" width="105" height="44" rx="8" fill="#FFFFFF" stroke="#386B24" stroke-width="1.5"/>
+  <text x="417" y="79" font-family="DejaVu Sans, Arial" font-size="11" font-weight="bold" fill="#1B1D1E" text-anchor="middle">ACCEPTED</text>
+
+  <!-- FIX_PROPOSED State -->
+  <rect x="520" y="53" width="115" height="44" rx="8" fill="#FFFFFF" stroke="#386B24" stroke-width="1.5"/>
+  <text x="577" y="79" font-family="DejaVu Sans, Arial" font-size="11" font-weight="bold" fill="#1B1D1E" text-anchor="middle">FIX_PROPOSED</text>
+
+  <!-- RETEST_PENDING State -->
+  <rect x="685" y="53" width="135" height="44" rx="8" fill="#E3EFCB" stroke="#386B24" stroke-width="2"/>
+  <text x="752" y="79" font-family="DejaVu Sans, Arial" font-size="11" font-weight="bold" fill="#1B1D1E" text-anchor="middle">RETEST_PENDING</text>
+
+  <!-- THREE COMPLETELY SEPARATE OUTGOING BRANCHES FROM RETEST_PENDING -->
+  <!-- Branch 1: VERIFIED_RESEARCHER (Angled Left to x=420, y=190) -->
+  <rect x="420" y="190" width="170" height="44" rx="8" fill="#F0FDF4" stroke="#15803D" stroke-width="2"/>
+  <text x="505" y="212" font-family="DejaVu Sans, Arial" font-size="9.5" font-weight="bold" fill="#15803D" text-anchor="middle">VERIFIED_RESEARCHER</text>
+  <text x="505" y="225" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#15803D" text-anchor="middle">(Independent External Pass)</text>
+
+  <!-- Branch 2: VERIFIED_INTERNAL (Direct Down to x=610, y=285) -->
+  <rect x="610" y="285" width="165" height="44" rx="8" fill="#F0FDF4" stroke="#15803D" stroke-width="2"/>
+  <text x="692" y="307" font-family="DejaVu Sans, Arial" font-size="9.5" font-weight="bold" fill="#15803D" text-anchor="middle">VERIFIED_INTERNAL</text>
+  <text x="692" y="320" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#15803D" text-anchor="middle">(Reviewer Conflict Disclosed)</text>
+
+  <!-- Branch 3: CLOSED_UNVERIFIED_TIMEOUT (Angled Right to x=735, y=190) -->
+  <rect x="735" y="190" width="170" height="44" rx="8" fill="#F9FAFB" stroke="#4B5563" stroke-width="1.5"/>
+  <text x="820" y="212" font-family="DejaVu Sans, Arial" font-size="8.5" font-weight="bold" fill="#374151" text-anchor="middle">CLOSED_UNVERIFIED_TIMEOUT</text>
+  <text x="820" y="225" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#4B5563" text-anchor="middle">(≥14d Inactivity Rationale)</text>
+
+  <!-- Transitions -->
+  <path d="M 45 75 L 75 75" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrsm)"/>
+  <path d="M 160 75 L 205 75" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrsm)"/>
+  <text x="182" y="68" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">Intake</text>
+
+  <path d="M 310 75 L 365 75" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrsm)"/>
+  <text x="337" y="68" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#386B24" text-anchor="middle">CVSS Scored</text>
+
+  <path d="M 470 75 L 520 75" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrsm)"/>
+  <text x="495" y="68" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">Commit SHA</text>
+
+  <path d="M 635 75 L 685 75" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrsm)"/>
+  <text x="660" y="68" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">Deployed</text>
+
+  <!-- Clarification loop -->
+  <path d="M 245 97 L 245 145" stroke="#555555" stroke-width="1.5" marker-end="url(#arrsm)"/>
+  <path d="M 270 145 L 270 97" stroke="#555555" stroke-width="1.5" marker-end="url(#arrsm)"/>
+  <text x="295" y="125" font-family="DejaVu Sans, Arial" font-size="7" fill="#555555">Clarify</text>
+
+  <!-- Rejection & Duplicate -->
+  <path d="M 225 97 L 192 215" stroke="#B91C1C" stroke-width="1.5" marker-end="url(#arrsm_red)"/>
+  <path d="M 285 97 L 317 215" stroke="#B91C1C" stroke-width="1.5" marker-end="url(#arrsm_red)"/>
+
+  <!-- CLEAR NON-CROSSING FAN-OUT ARROWS FROM RETEST_PENDING -->
+  <!-- Branch 1: Leftward to VERIFIED_RESEARCHER -->
+  <path d="M 700 97 L 550 190" stroke="#15803D" stroke-width="2" marker-end="url(#arrsm_term)"/>
+  <text x="595" y="135" font-family="DejaVu Sans, Arial" font-size="7.5" font-weight="bold" fill="#15803D">Hunter Retest Pass</text>
+
+  <!-- Branch 2: Center/Direct to VERIFIED_INTERNAL -->
+  <path d="M 740 97 L 700 285" stroke="#15803D" stroke-width="2" marker-end="url(#arrsm_term)"/>
+  <text x="735" y="270" font-family="DejaVu Sans, Arial" font-size="7.5" font-weight="bold" fill="#15803D">Internal Retest Pass</text>
+
+  <!-- Branch 3: Rightward to CLOSED_UNVERIFIED_TIMEOUT -->
+  <path d="M 790 97 L 830 190" stroke="#4B5563" stroke-width="2" marker-end="url(#arrsm_gray)"/>
+  <text x="825" y="145" font-family="DejaVu Sans, Arial" font-size="7.5" font-weight="bold" fill="#4B5563">≥14d Timeout Closure</text>
+
+  <!-- Retest Failed (Audit Event returning to ACCEPTED) -->
+  <path d="M 685 85 Q 580 140 445 97" stroke="#D97706" stroke-width="1.5" stroke-dasharray="4" marker-end="url(#arrsm_orange)" fill="none"/>
+  <text x="565" y="128" font-family="DejaVu Sans, Arial" font-size="8" font-weight="bold" fill="#D97706" text-anchor="middle">Retest Failed Event (Audit Preserved -> Returns to ACCEPTED)</text>
+
+  <!-- Reopening Path (From ALL closed states -> returns to TRIAGING) -->
+  <path d="M 420 215 L 257 410 L 257 97" stroke="#B91C1C" stroke-width="1.5" stroke-dasharray="4" marker-end="url(#arrsm_red)" fill="none"/>
+  <path d="M 610 305 L 360 410" stroke="#B91C1C" stroke-width="1.2" stroke-dasharray="3" fill="none"/>
+  <path d="M 735 215 L 530 410" stroke="#B91C1C" stroke-width="1.2" stroke-dasharray="3" fill="none"/>
+  <path d="M 192 253 L 192 410" stroke="#B91C1C" stroke-width="1.2" stroke-dasharray="3" fill="none"/>
+  <path d="M 317 253 L 317 410" stroke="#B91C1C" stroke-width="1.2" stroke-dasharray="3" fill="none"/>
+
+  <rect x="290" y="398" width="240" height="26" rx="4" fill="#FEF2F2" stroke="#B91C1C"/>
+  <text x="410" y="415" font-family="DejaVu Sans, Arial" font-size="8" font-weight="bold" fill="#B91C1C" text-anchor="middle">Reopen Ticket with Justification -> Returns to TRIAGING</text>
+</svg>

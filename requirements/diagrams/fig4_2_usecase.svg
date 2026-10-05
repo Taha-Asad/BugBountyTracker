@@ -1,0 +1,126 @@
+<svg width="920" height="490" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arruc" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#386B24" />
+    </marker>
+    <marker id="arruc_admin" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#6B7280" />
+    </marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#FFFFFF"/>
+  <text x="460" y="24" font-family="DejaVu Sans, Arial" font-size="15" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Figure 4.2: BugBountyTrack Use Case Model &amp; Commercial Actor Roles</text>
+
+  <!-- Actors on Left -->
+  <!-- Hunter -->
+  <circle cx="70" cy="95" r="14" fill="#E3EFCB" stroke="#386B24" stroke-width="1.5"/>
+  <text x="70" y="99" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#386B24" text-anchor="middle">H</text>
+  <text x="70" y="122" font-family="DejaVu Sans, Arial" font-size="9.5" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Ethical Researcher</text>
+  <text x="70" y="134" font-family="DejaVu Sans, Arial" font-size="8" fill="#555555" text-anchor="middle">(Hunter)</text>
+
+  <!-- Defender -->
+  <circle cx="70" cy="215" r="14" fill="#E3EFCB" stroke="#386B24" stroke-width="1.5"/>
+  <text x="70" y="219" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#386B24" text-anchor="middle">D</text>
+  <text x="70" y="242" font-family="DejaVu Sans, Arial" font-size="9.5" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Triage Lead / Reviewer</text>
+  <text x="70" y="254" font-family="DejaVu Sans, Arial" font-size="8" fill="#555555" text-anchor="middle">(Org Defender / Custodian)</text>
+
+  <!-- Owner -->
+  <circle cx="70" cy="335" r="14" fill="#E3EFCB" stroke="#386B24" stroke-width="1.5"/>
+  <text x="70" y="339" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#386B24" text-anchor="middle">O</text>
+  <text x="70" y="362" font-family="DejaVu Sans, Arial" font-size="9.5" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Tenant Owner</text>
+  <text x="70" y="374" font-family="DejaVu Sans, Arial" font-size="8" fill="#555555" text-anchor="middle">(Eng Lead / SaaS Admin)</text>
+
+  <!-- ReadOnly -->
+  <circle cx="70" cy="425" r="12" fill="#F3F4F6" stroke="#4B5563" stroke-width="1.5"/>
+  <text x="70" y="429" font-family="DejaVu Sans, Arial" font-size="9" font-weight="bold" fill="#4B5563" text-anchor="middle">R</text>
+  <text x="70" y="450" font-family="DejaVu Sans, Arial" font-size="8.5" font-weight="bold" fill="#4B5563" text-anchor="middle">Executive ReadOnly</text>
+
+  <!-- SuperAdmin on Right -->
+  <circle cx="845" cy="245" r="14" fill="#F3F4F6" stroke="#4B5563" stroke-width="1.5"/>
+  <text x="845" y="249" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#4B5563" text-anchor="middle">A</text>
+  <text x="845" y="272" font-family="DejaVu Sans, Arial" font-size="9.5" font-weight="bold" fill="#374151" text-anchor="middle">Platform SuperAdmin</text>
+  <text x="845" y="284" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#B91C1C" text-anchor="middle">(0 Plaintext Payload Access)</text>
+
+  <!-- Boundary Box -->
+  <rect x="175" y="45" width="570" height="430" rx="10" fill="#FAFCF7" stroke="#386B24" stroke-width="2"/>
+  <text x="460" y="68" font-family="DejaVu Sans, Arial" font-size="11.5" font-weight="bold" fill="#386B24" text-anchor="middle">BugBountyTrack B2B Security Platform Boundary</text>
+
+  <!-- Use Case Bubbles -->
+  <!-- UC-01 -->
+  <rect x="200" y="85" width="235" height="38" rx="19" fill="#FFFFFF" stroke="#386B24" stroke-width="1.5"/>
+  <text x="317" y="102" font-family="DejaVu Sans, Arial" font-size="9" font-weight="bold" fill="#1B1D1E" text-anchor="middle">UC-01: Submit Encrypted Report</text>
+  <text x="317" y="114" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">(Public Intake or Private Invite Token)</text>
+
+  <!-- UC-02 -->
+  <rect x="475" y="85" width="245" height="38" rx="19" fill="#FFFFFF" stroke="#386B24" stroke-width="1.5"/>
+  <text x="597" y="102" font-family="DejaVu Sans, Arial" font-size="9" font-weight="bold" fill="#1B1D1E" text-anchor="middle">UC-02: Decrypt &amp; Triage Report</text>
+  <text x="597" y="114" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">(Local Key Unlock, Neutral Label &amp; CVSS)</text>
+
+  <!-- UC-03 -->
+  <rect x="200" y="140" width="235" height="38" rx="19" fill="#FFFFFF" stroke="#386B24" stroke-width="1.5"/>
+  <text x="317" y="157" font-family="DejaVu Sans, Arial" font-size="9" font-weight="bold" fill="#1B1D1E" text-anchor="middle">UC-03: Propose Remediation Evidence</text>
+  <text x="317" y="169" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">(Public / Private GitHub Commit &amp; Branch)</text>
+
+  <!-- UC-04 -->
+  <rect x="475" y="140" width="245" height="38" rx="19" fill="#FFFFFF" stroke="#386B24" stroke-width="1.5"/>
+  <text x="597" y="157" font-family="DejaVu Sans, Arial" font-size="9" font-weight="bold" fill="#1B1D1E" text-anchor="middle">UC-04: Attested Retest &amp; Closure</text>
+  <text x="597" y="169" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">(Hunter / Internal Attestation or Timeout)</text>
+
+  <!-- UC-05 -->
+  <rect x="200" y="195" width="235" height="38" rx="19" fill="#FFFFFF" stroke="#386B24" stroke-width="1.5"/>
+  <text x="317" y="212" font-family="DejaVu Sans, Arial" font-size="9" font-weight="bold" fill="#1B1D1E" text-anchor="middle">UC-05: Guided Onboarding &amp; Setup</text>
+  <text x="317" y="224" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">(DNS TXT, RFC 9116 Policy &amp; Health Checklist)</text>
+
+  <!-- UC-06 -->
+  <rect x="475" y="195" width="245" height="38" rx="19" fill="#FFFFFF" stroke="#386B24" stroke-width="1.5"/>
+  <text x="597" y="212" font-family="DejaVu Sans, Arial" font-size="9" font-weight="bold" fill="#1B1D1E" text-anchor="middle">UC-06: Assign Report &amp; Monitor SLAs</text>
+  <text x="597" y="224" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">(Assignee, Target Timers &amp; Reminders)</text>
+
+  <!-- UC-07 -->
+  <rect x="200" y="250" width="235" height="38" rx="19" fill="#FFFFFF" stroke="#386B24" stroke-width="1.5"/>
+  <text x="317" y="267" font-family="DejaVu Sans, Arial" font-size="9" font-weight="bold" fill="#1B1D1E" text-anchor="middle">UC-07: Generate Redacted Closure Export</text>
+  <text x="317" y="279" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">(Auditor Evidence PDF / Client Summary)</text>
+
+  <!-- UC-08 -->
+  <rect x="475" y="250" width="245" height="38" rx="19" fill="#FFFFFF" stroke="#386B24" stroke-width="1.5"/>
+  <text x="597" y="267" font-family="DejaVu Sans, Arial" font-size="9" font-weight="bold" fill="#1B1D1E" text-anchor="middle">UC-08: Key Backup, Restore &amp; Handover</text>
+  <text x="597" y="279" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">(Armored Backup, Restore Drill, Successor)</text>
+
+  <!-- UC-09 -->
+  <rect x="200" y="305" width="235" height="38" rx="19" fill="#FFFFFF" stroke="#386B24" stroke-width="1.5"/>
+  <text x="317" y="322" font-family="DejaVu Sans, Arial" font-size="9" font-weight="bold" fill="#1B1D1E" text-anchor="middle">UC-09: Manage Private Program Invites</text>
+  <text x="317" y="334" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">(Token Generation, Acceptance &amp; Revocation)</text>
+
+  <!-- UC-10 -->
+  <rect x="475" y="305" width="245" height="38" rx="19" fill="#FFFFFF" stroke="#386B24" stroke-width="1.5"/>
+  <text x="597" y="322" font-family="DejaVu Sans, Arial" font-size="9" font-weight="bold" fill="#1B1D1E" text-anchor="middle">UC-10: Subscription &amp; Quota Controls</text>
+  <text x="597" y="334" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">(Seat Limits, Storage Quotas &amp; Data Exit)</text>
+
+  <!-- UC-11 (Platform Admin) -->
+  <rect x="330" y="375" width="260" height="40" rx="20" fill="#F3F4F6" stroke="#4B5563" stroke-width="1.5"/>
+  <text x="460" y="393" font-family="DejaVu Sans, Arial" font-size="9" font-weight="bold" fill="#374151" text-anchor="middle">UC-11: Platform Tenant Provisioning &amp; SRE</text>
+  <text x="460" y="405" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#4B5563" text-anchor="middle">(Tenant Lifecycle, Global Rate Limits, PITR Drills)</text>
+
+  <!-- Connections -->
+  <!-- Hunter -->
+  <line x1="120" y1="100" x2="200" y2="104" stroke="#386B24" stroke-width="1.2" marker-end="url(#arruc)"/>
+  <line x1="120" y1="108" x2="475" y2="155" stroke="#386B24" stroke-width="1.2" marker-end="url(#arruc)"/>
+
+  <!-- Defender -->
+  <line x1="120" y1="210" x2="475" y2="106" stroke="#386B24" stroke-width="1.2" marker-end="url(#arruc)"/>
+  <line x1="120" y1="218" x2="435" y2="162" stroke="#386B24" stroke-width="1.2" marker-end="url(#arruc)"/>
+  <line x1="120" y1="225" x2="475" y2="160" stroke="#386B24" stroke-width="1.2" marker-end="url(#arruc)"/>
+  <line x1="120" y1="230" x2="475" y2="210" stroke="#386B24" stroke-width="1.2" marker-end="url(#arruc)"/>
+  <line x1="120" y1="236" x2="435" y2="265" stroke="#386B24" stroke-width="1.2" marker-end="url(#arruc)"/>
+  <line x1="120" y1="242" x2="475" y2="268" stroke="#386B24" stroke-width="1.2" marker-end="url(#arruc)"/>
+
+  <!-- Owner -->
+  <line x1="120" y1="335" x2="200" y2="215" stroke="#386B24" stroke-width="1.2" marker-end="url(#arruc)"/>
+  <line x1="120" y1="342" x2="200" y2="322" stroke="#386B24" stroke-width="1.2" marker-end="url(#arruc)"/>
+  <line x1="120" y1="350" x2="475" y2="322" stroke="#386B24" stroke-width="1.2" marker-end="url(#arruc)"/>
+
+  <!-- ReadOnly -->
+  <line x1="120" y1="425" x2="435" y2="275" stroke="#4B5563" stroke-width="1" stroke-dasharray="3" marker-end="url(#arruc_admin)"/>
+
+  <!-- Admin -->
+  <line x1="810" y1="270" x2="590" y2="390" stroke="#4B5563" stroke-width="1.2" marker-end="url(#arruc_admin)"/>
+</svg>

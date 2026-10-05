@@ -1,0 +1,78 @@
+<svg width="900" height="425" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrsq2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#386B24" />
+    </marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#FFFFFF"/>
+  <text x="450" y="24" font-family="DejaVu Sans, Arial" font-size="15" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Figure 4.4: Sequence: Authorized In-Browser Decryption &amp; Neutral Label Triage</text>
+
+  <!-- Lifeline Headers -->
+  <rect x="30" y="48" width="130" height="32" rx="5" fill="#E3EFCB" stroke="#386B24"/>
+  <text x="95" y="68" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Organization Reviewer</text>
+
+  <rect x="200" y="48" width="130" height="32" rx="5" fill="#E3EFCB" stroke="#386B24"/>
+  <text x="265" y="68" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Defender Browser UI</text>
+
+  <rect x="385" y="48" width="145" height="32" rx="5" fill="#E3EFCB" stroke="#386B24"/>
+  <text x="457" y="68" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Next.js API Gateway</text>
+
+  <rect x="585" y="48" width="130" height="32" rx="5" fill="#E3EFCB" stroke="#386B24"/>
+  <text x="650" y="68" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Neon PostgreSQL</text>
+
+  <rect x="745" y="48" width="135" height="32" rx="5" fill="#E3EFCB" stroke="#386B24"/>
+  <text x="812" y="68" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#1B1D1E" text-anchor="middle">IndexedDB Keystore</text>
+
+  <!-- Vertical dashed lines -->
+  <line x1="95" y1="80" x2="95" y2="410" stroke="#CBD5E1" stroke-dasharray="4"/>
+  <line x1="265" y1="80" x2="265" y2="410" stroke="#CBD5E1" stroke-dasharray="4"/>
+  <line x1="457" y1="80" x2="457" y2="410" stroke="#CBD5E1" stroke-dasharray="4"/>
+  <line x1="650" y1="80" x2="650" y2="410" stroke="#CBD5E1" stroke-dasharray="4"/>
+  <line x1="812" y1="80" x2="812" y2="410" stroke="#CBD5E1" stroke-dasharray="4"/>
+
+  <!-- Step 1: Navigates -->
+  <line x1="95" y1="105" x2="265" y2="105" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrsq2)"/>
+  <text x="180" y="98" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#1B1D1E" text-anchor="middle">1. Navigates to /reports/BBT-102</text>
+
+  <!-- Step 2: Request Report -->
+  <line x1="265" y1="130" x2="457" y2="130" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrsq2)"/>
+  <text x="361" y="123" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#1B1D1E" text-anchor="middle">2. GET /api/v1/reports/BBT-102 (JWT Cookie)</text>
+
+  <!-- Gateway Auth & RLS check -->
+  <rect x="400" y="145" width="115" height="34" rx="4" fill="#EAF7EA" stroke="#386B24"/>
+  <text x="457" y="159" font-family="DejaVu Sans, Arial" font-size="8" font-weight="bold" fill="#386B24" text-anchor="middle">Verify JWT &amp; RBAC</text>
+  <text x="457" y="171" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">SET LOCAL tenant_id = :id</text>
+
+  <!-- Step 3: Query DB -->
+  <line x1="457" y1="195" x2="650" y2="195" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrsq2)"/>
+  <text x="553" y="188" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#1B1D1E" text-anchor="middle">3. SELECT ciphertext, label, metadata</text>
+
+  <line x1="650" y1="220" x2="457" y2="220" stroke="#555555" stroke-dasharray="4" marker-end="url(#arrsq2)"/>
+  <text x="553" y="213" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#555555" text-anchor="middle">4. Return Encrypted Record</text>
+
+  <line x1="457" y1="245" x2="265" y2="245" stroke="#555555" stroke-dasharray="4" marker-end="url(#arrsq2)"/>
+  <text x="361" y="238" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#555555" text-anchor="middle">5. 200 OK (Ciphertext Payload + Neutral Label)</text>
+
+  <!-- Step 4: Prompt Passphrase -->
+  <line x1="265" y1="270" x2="95" y2="270" stroke="#B91C1C" stroke-width="1.5" marker-end="url(#arrsq2)"/>
+  <text x="180" y="263" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#B91C1C" text-anchor="middle">6. Prompt Local Encryption Passphrase</text>
+
+  <line x1="95" y1="295" x2="265" y2="295" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrsq2)"/>
+  <text x="180" y="288" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#1B1D1E" text-anchor="middle">7. Enters Passphrase (Client Memory Only)</text>
+
+  <!-- Step 5: Keystore -->
+  <line x1="265" y1="320" x2="812" y2="320" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrsq2)"/>
+  <text x="538" y="313" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#1B1D1E" text-anchor="middle">8. Retrieve Passphrase-Encrypted Custodian Private Key</text>
+
+  <line x1="812" y1="345" x2="265" y2="345" stroke="#555555" stroke-dasharray="4" marker-end="url(#arrsq2)"/>
+  <text x="538" y="338" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#555555" text-anchor="middle">9. Return Encrypted Armored Key Material</text>
+
+  <!-- Decrypt block -->
+  <rect x="205" y="360" width="120" height="34" rx="4" fill="#EAF7EA" stroke="#386B24"/>
+  <text x="265" y="373" font-family="DejaVu Sans, Arial" font-size="8" font-weight="bold" fill="#386B24" text-anchor="middle">openpgp.decrypt()</text>
+  <text x="265" y="386" font-family="DejaVu Sans, Arial" font-size="7.5" fill="#555555" text-anchor="middle">Title &amp; PoC + rehype AST</text>
+
+  <!-- Step 6: Render -->
+  <line x1="265" y1="405" x2="95" y2="405" stroke="#228822" stroke-width="1.5" marker-end="url(#arrsq2)"/>
+  <text x="180" y="398" font-family="DejaVu Sans, Arial" font-size="8.5" font-weight="bold" fill="#228822" text-anchor="middle">10. Renders Plaintext Report in Confidential View</text>
+</svg>

@@ -1,0 +1,162 @@
+<svg width="940" height="540" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrerd" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#386B24" />
+    </marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#FFFFFF"/>
+  <text x="470" y="24" font-family="DejaVu Sans, Arial" font-size="15" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Figure 4.6: Relational Prisma Domain Schema (Commercial B2B SaaS Architecture)</text>
+
+  <!-- Organization -->
+  <rect x="20" y="45" width="160" height="135" rx="6" fill="#F7FAF2" stroke="#386B24" stroke-width="1.5"/>
+  <rect x="20" y="45" width="160" height="24" rx="6" fill="#E3EFCB"/>
+  <text x="100" y="62" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Organization</text>
+  <text x="28" y="86" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• id: String (PK)</text>
+  <text x="28" y="102" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• name: String</text>
+  <text x="28" y="118" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• slug: String (UK)</text>
+  <text x="28" y="134" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• domain: String</text>
+  <text x="28" y="150" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• domain_verified: Bool</text>
+  <text x="28" y="166" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• created_at: DateTime</text>
+
+  <!-- Subscription -->
+  <rect x="20" y="195" width="160" height="120" rx="6" fill="#F7FAF2" stroke="#386B24" stroke-width="1.5"/>
+  <rect x="20" y="195" width="160" height="24" rx="6" fill="#E3EFCB"/>
+  <text x="100" y="212" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Subscription</text>
+  <text x="28" y="235" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• id: String (PK)</text>
+  <text x="28" y="250" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#386B24" font-weight="bold">• organization_id (FK)</text>
+  <text x="28" y="265" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• plan: PlanTier (STARTER/PRO)</text>
+  <text x="28" y="280" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• status: SubStatus (ACTIVE/GRACE)</text>
+  <text x="28" y="295" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• seat_limit: Int (2..10)</text>
+  <text x="28" y="309" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• storage_quota_mb: Int</text>
+
+  <!-- UserMembership -->
+  <rect x="20" y="330" width="160" height="105" rx="6" fill="#F7FAF2" stroke="#386B24" stroke-width="1.5"/>
+  <rect x="20" y="330" width="160" height="24" rx="6" fill="#E3EFCB"/>
+  <text x="100" y="347" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#1B1D1E" text-anchor="middle">UserMembership</text>
+  <text x="28" y="369" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• id: String (PK)</text>
+  <text x="28" y="384" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#386B24" font-weight="bold">• organization_id (FK)</text>
+  <text x="28" y="399" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#386B24" font-weight="bold">• user_id (FK)</text>
+  <text x="28" y="414" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• role: Role (OWNER/DEF/RO)</text>
+  <text x="28" y="428" font-family="DejaVu Sans, Arial" font-size="8" fill="#555555">• is_custodian: Boolean</text>
+
+  <!-- User & PGP Key -->
+  <rect x="20" y="445" width="160" height="85" rx="6" fill="#F7FAF2" stroke="#386B24" stroke-width="1.5"/>
+  <rect x="20" y="445" width="160" height="22" rx="6" fill="#E3EFCB"/>
+  <text x="100" y="460" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#1B1D1E" text-anchor="middle">User &amp; Auth</text>
+  <text x="28" y="480" font-family="DejaVu Sans, Arial" font-size="8" fill="#222222">• id: String (PK), email: String</text>
+  <text x="28" y="494" font-family="DejaVu Sans, Arial" font-size="8" fill="#222222">• password_hash (bcrypt r=12)</text>
+  <text x="28" y="508" font-family="DejaVu Sans, Arial" font-size="8" fill="#222222">• totp_secret: String? (MFA)</text>
+  <text x="28" y="522" font-family="DejaVu Sans, Arial" font-size="8" fill="#222222">• email_verified: Boolean</text>
+
+  <!-- Program & Invites -->
+  <rect x="210" y="45" width="185" height="135" rx="6" fill="#F7FAF2" stroke="#386B24" stroke-width="1.5"/>
+  <rect x="210" y="45" width="185" height="24" rx="6" fill="#E3EFCB"/>
+  <text x="302" y="62" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Program</text>
+  <text x="218" y="86" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• id: String (PK)</text>
+  <text x="218" y="102" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#386B24" font-weight="bold">• organization_id: String (FK)</text>
+  <text x="218" y="118" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• visibility: "PUBLIC | PRIVATE_INVITE"</text>
+  <text x="218" y="134" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• scope_rules: Text</text>
+  <text x="218" y="150" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• safe_harbor_policy: Text</text>
+  <text x="218" y="166" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• active_encryption_subKey: Text</text>
+
+  <rect x="210" y="195" width="185" height="120" rx="6" fill="#F7FAF2" stroke="#386B24" stroke-width="1.5"/>
+  <rect x="210" y="195" width="185" height="24" rx="6" fill="#E3EFCB"/>
+  <text x="302" y="212" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#1B1D1E" text-anchor="middle">ProgramInvitation</text>
+  <text x="218" y="235" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• id: String (PK)</text>
+  <text x="218" y="250" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#386B24" font-weight="bold">• program_id: String (FK)</text>
+  <text x="218" y="265" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• invited_email: String</text>
+  <text x="218" y="280" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• token_hash: String (UK)</text>
+  <text x="218" y="295" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• status: "PENDING | ACCEPTED | REVOKED"</text>
+  <text x="218" y="309" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• expires_at: DateTime (7d TTL)</text>
+
+  <!-- Central Entity: Report -->
+  <rect x="425" y="45" width="245" height="270" rx="6" fill="#F7FAF2" stroke="#386B24" stroke-width="2"/>
+  <rect x="425" y="45" width="245" height="24" rx="6" fill="#E3EFCB"/>
+  <text x="547" y="62" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#1B1D1E" text-anchor="middle">Report (Multi-Tenant Isolated)</text>
+  <text x="435" y="86" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• id: String (PK, e.g. #BBT-102)</text>
+  <text x="435" y="101" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#386B24" font-weight="bold">• organization_id: String (FK)</text>
+  <text x="435" y="116" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#386B24" font-weight="bold">• program_id: String (FK)</text>
+  <text x="435" y="131" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#386B24" font-weight="bold">• hunter_id: String (FK)</text>
+  <text x="435" y="146" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• assigned_defender_id: String? (FK)</text>
+  <text x="435" y="161" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• operational_label: NeutralCategory (Enum)</text>
+  <text x="435" y="176" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#B91C1C" font-weight="bold">• title_ciphertext: Text (CIPHERTEXT)</text>
+  <text x="435" y="191" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#B91C1C" font-weight="bold">• payload_ciphertext: Text (CIPHERTEXT)</text>
+  <text x="435" y="206" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• asset_scope_url: String</text>
+  <text x="435" y="221" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• cvss_vector: String, cvss_score: Float</text>
+  <text x="435" y="236" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• state: ReportState (NEW..CLOSED)</text>
+  <text x="435" y="251" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• sla_first_response_due: DateTime</text>
+  <text x="435" y="266" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• sla_remediation_due: DateTime</text>
+  <text x="435" y="281" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• created_at, updated_at: DateTime</text>
+
+  <!-- Supporting Entities Right -->
+  <!-- RemediationRecord -->
+  <rect x="700" y="45" width="220" height="135" rx="6" fill="#F7FAF2" stroke="#386B24" stroke-width="1.5"/>
+  <rect x="700" y="45" width="220" height="24" rx="6" fill="#E3EFCB"/>
+  <text x="810" y="62" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#1B1D1E" text-anchor="middle">RemediationRecord</text>
+  <text x="708" y="86" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• id: String (PK)</text>
+  <text x="708" y="100" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#386B24" font-weight="bold">• report_id: String (FK)</text>
+  <text x="708" y="114" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• evidence_type: CODE | CONFIG</text>
+  <text x="708" y="128" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• commit_sha: String? (40-char)</text>
+  <text x="708" y="142" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• branch_name: String?</text>
+  <text x="708" y="156" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• config_sha256_hash: String?</text>
+  <text x="708" y="170" font-family="DejaVu Sans, Arial" font-size="8" fill="#555555">• deployment_env &amp; deployed_version</text>
+
+  <!-- RetestEvidence -->
+  <rect x="700" y="195" width="220" height="145" rx="6" fill="#F7FAF2" stroke="#386B24" stroke-width="1.5"/>
+  <rect x="700" y="195" width="220" height="24" rx="6" fill="#E3EFCB"/>
+  <text x="810" y="212" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#1B1D1E" text-anchor="middle">RetestEvidence</text>
+  <text x="708" y="235" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• id: String (PK)</text>
+  <text x="708" y="249" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#386B24" font-weight="bold">• report_id: String (FK)</text>
+  <text x="708" y="263" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#386B24" font-weight="bold">• verifier_id: String (FK)</text>
+  <text x="708" y="277" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• verifier_type: RESEARCHER | INTERNAL</text>
+  <text x="708" y="291" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• fix_confirmed: Boolean</text>
+  <text x="708" y="305" font-family="DejaVu Sans, Arial" font-size="8" fill="#B91C1C">• researcher_notes_cipher: Text (Dual)</text>
+  <text x="708" y="318" font-family="DejaVu Sans, Arial" font-size="8" fill="#B91C1C">• internal_notes_cipher: Text (Reviewer)</text>
+  <text x="708" y="331" font-family="DejaVu Sans, Arial" font-size="8" fill="#555555">• retest_date: DateTime</text>
+
+  <!-- ClosureExport & AuditEvent Bottom -->
+  <rect x="210" y="330" width="185" height="105" rx="6" fill="#F7FAF2" stroke="#386B24" stroke-width="1.5"/>
+  <rect x="210" y="330" width="185" height="24" rx="6" fill="#E3EFCB"/>
+  <text x="302" y="347" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#1B1D1E" text-anchor="middle">ClosureEvidenceExport</text>
+  <text x="218" y="369" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• id: String (PK)</text>
+  <text x="218" y="384" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#386B24" font-weight="bold">• report_id: String (FK)</text>
+  <text x="218" y="399" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• exported_by: String (FK)</text>
+  <text x="218" y="414" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• redacted_sha256_hash: String</text>
+  <text x="218" y="428" font-family="DejaVu Sans, Arial" font-size="8" fill="#555555">• export_timestamp: DateTime</text>
+
+  <rect x="425" y="345" width="245" height="175" rx="6" fill="#F7FAF2" stroke="#386B24" stroke-width="1.5"/>
+  <rect x="425" y="345" width="245" height="24" rx="6" fill="#E3EFCB"/>
+  <text x="547" y="362" font-family="DejaVu Sans, Arial" font-size="10.5" font-weight="bold" fill="#1B1D1E" text-anchor="middle">AuditEvent (Append-Only)</text>
+  <text x="435" y="385" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• id: String (PK)</text>
+  <text x="435" y="400" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#386B24" font-weight="bold">• organization_id: String (FK)</text>
+  <text x="435" y="415" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#386B24" font-weight="bold">• report_id: String? (FK)</text>
+  <text x="435" y="430" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#386B24" font-weight="bold">• actor_id: String (FK)</text>
+  <text x="435" y="445" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• event_type: ActionType (TRANSITION/KEY_ROTATION)</text>
+  <text x="435" y="460" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• state_before, state_after: String?</text>
+  <text x="435" y="475" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• justification: String</text>
+  <text x="435" y="490" font-family="DejaVu Sans, Arial" font-size="8" fill="#B91C1C" font-weight="bold">• Application Grants: INSERT &amp; SELECT Only</text>
+  <text x="435" y="504" font-family="DejaVu Sans, Arial" font-size="8" fill="#555555">• timestamp: DateTime</text>
+
+  <!-- DiscussionMessage -->
+  <rect x="700" y="355" width="220" height="120" rx="6" fill="#F7FAF2" stroke="#386B24" stroke-width="1.5"/>
+  <rect x="700" y="355" width="220" height="24" rx="6" fill="#E3EFCB"/>
+  <text x="810" y="372" font-family="DejaVu Sans, Arial" font-size="10" font-weight="bold" fill="#1B1D1E" text-anchor="middle">DiscussionMessage</text>
+  <text x="708" y="394" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• id: String (PK)</text>
+  <text x="708" y="408" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#386B24" font-weight="bold">• report_id: String (FK)</text>
+  <text x="708" y="422" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#386B24" font-weight="bold">• sender_id: String (FK)</text>
+  <text x="708" y="436" font-family="DejaVu Sans, Arial" font-size="8.5" fill="#222222">• lane: "RESEARCHER_ORG | INTERNAL_NOTES"</text>
+  <text x="708" y="450" font-family="DejaVu Sans, Arial" font-size="8" fill="#B91C1C" font-weight="bold">• encrypted_body: Text (CIPHERTEXT)</text>
+  <text x="708" y="464" font-family="DejaVu Sans, Arial" font-size="8" fill="#555555">• created_at: DateTime</text>
+
+  <!-- Relationship Lines -->
+  <line x1="180" y1="100" x2="210" y2="100" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrerd)"/>
+  <line x1="395" y1="100" x2="425" y2="100" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrerd)"/>
+  <line x1="302" y1="180" x2="302" y2="195" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrerd)"/>
+  <line x1="670" y1="100" x2="700" y2="100" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrerd)"/>
+  <line x1="670" y1="230" x2="700" y2="230" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrerd)"/>
+  <line x1="670" y1="380" x2="700" y2="380" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrerd)"/>
+  <line x1="425" y1="380" x2="395" y2="380" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrerd)"/>
+  <line x1="100" y1="180" x2="100" y2="195" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrerd)"/>
+  <line x1="100" y1="315" x2="100" y2="330" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrerd)"/>
+  <line x1="100" y1="435" x2="100" y2="445" stroke="#386B24" stroke-width="1.5" marker-end="url(#arrerd)"/>
+</svg>
