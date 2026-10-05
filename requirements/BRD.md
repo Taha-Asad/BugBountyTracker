@@ -30,7 +30,7 @@
 Vulnerability coordination is an essential component of modern software defense. When external security researchers discover flaws in software products, they require a secure, confidential mechanism to report their findings without exposing the affected organization or risking legal ambiguity.
 
 While mature enterprises deploy dedicated security portals or contract commercial crowdsourced platforms (such as HackerOne, Bugcrowd, or Intigriti), early-stage technology startups, small software engineering teams (5–50 developers), and open-source projects face significant structural barriers:
-1. **Commercial Subscription Realities**: While established vendors offer entry tiers (such as HackerOne Essential VDP), existing solutions either steer organizations toward high-cost enterprise managed-triage contracts ($15,000–$30,000+/year) or route unencrypted vulnerability reproduction steps and exploit payloads into standard web queues and unencrypted corporate email inboxes.
+1. **Triage Architecture & Commercial Trade-Offs**: While established platforms offer entry tiers (such as HackerOne's free Essential VDP), existing solutions typically operate on a server-managed triage model where exploit details are held unencrypted on vendor infrastructure and forwarded to external mailboxes or ticketing systems. Organizations desiring confidential triage are steered toward enterprise managed-service contracts ($15,000–$30,000+/year) where vendor staff review raw reports. Small teams who want confidential intake without delegating report access to third-party services currently lack a lightweight, privacy-preserving tool.
 2. **Confidentiality & Insecure Communication**: Lacking dedicated cryptographic intake channels, small organizations receive security reports via plaintext email, public issue trackers, or social media direct messages. This unencrypted transit exposes sensitive zero-day vulnerability reproduction steps across intermediate mail servers and employee devices.
 3. **The Remediation & Verification Gap**: Standard bug trackers treat vulnerability resolution as an informal status change (`Closed` or `Resolved`). There is rarely an explicit, verifiable connection between the vulnerability report, the code or configuration change intended to resolve it, and an attested retest outcome confirming the fix before closure.
 4. **Legal Ambiguity & Onboarding Friction**: Early-stage engineering teams struggle to establish clear rules of engagement, RFC 9116 `security.txt` discovery policies, and safe-harbor terms without expensive legal counsel.
@@ -185,11 +185,11 @@ When transitioning to paid commercial operations serving early B2B customers, th
 | Infrastructure Layer | Commercial Provider | Provisioned Commercial Tier | Purpose & Quota | Monthly Cost ($USD) |
 | :--- | :--- | :--- | :--- | :---: |
 | **Application & API Gateway** | Vercel Pro | Pro Team Tier ($20 / seat) | Commercial license, hourly SLA crons, zero cold starts | **$20.00** |
-| **Production Database** | Neon Serverless | Launch Tier Baseline | PostgreSQL 16 (10 GB storage, PITR branching, autoscaling compute) | **$19.00** |
+| **Production Database** | Neon Serverless | Launch Tier (Usage-Based) | PostgreSQL 16 (~180 CU-hrs compute reserve + 10 GB storage at $0.106/CU-hr) | **~$19.00** |
 | **Encrypted Object Storage** | Cloudflare R2 | Pay-As-You-Go ($0.015/GB-mo) | Encrypted report attachments, 50 GB pooled baseline, zero egress fees | **$0.75** |
 | **Transactional Email Delivery** | Resend / Postmark Pro | Essential Commercial Tier | High deliverability minimal-metadata notifications (50,000/mo) | **$20.00** |
 | **Domain & DNS Registration** | Cloudflare Registrar | `.com` / `.security` TLD | Amortized domain registrar fee ($15.00/year) | **$1.25** |
-| **Merchant of Record Gateway** | Lemon Squeezy | MoR Billing & Global Tax | Handles global VAT, sales tax, direct bank payouts to Pakistan (5% + 50¢/tx) | **Variable** |
+| **Merchant of Record Gateway** | Lemon Squeezy | MoR Billing & Global Tax | Handles global VAT, sales tax, direct bank payouts to Pakistan (5% base + 50¢/tx + 0.5% subscription fee) | **Variable** |
 | **TOTAL PRODUCTION OPERATING BASELINE** | — | — | **Commercial Production Cloud Baseline (10–25 Tenants)** | **~$61.00 / mo** |
 
 ### 8.3 Commercial SaaS Subscription Pricing Model (Validation Hypotheses)
@@ -200,7 +200,7 @@ To ensure financial viability and recover cloud operational costs, BugBountyTrac
 | **Open Source / Community** | **$0 / mo** | Open-source libraries, solo maintainers & non-profits | 1 active public program, 1 defender seat, 5 active reports/month, 2 GB encrypted storage, signed RFC 9116 generator, GitHub commit verification. |
 | **Team Launch Plan** | **$49 / mo** | Small software engineering teams (5–25 devs) needing structured intake | 1 active disclosure program (public or invite-only), up to 5 defender seats (with program-scoped decryption), 10 GB encrypted storage, direct presigned R2 uploads, SLA countdown timers, Slack-compatible webhooks, GitHub commit & branch compare verification, Redacted PDF/JSON Closure Evidence exports. |
 
-*With 2 paying customers on the Team Plan ($91.10 net after Lemon Squeezy 5% + $0.50 processing fees), the platform covers 100% of its base commercial cloud operating expenses ($61.00/mo). All pricing figures represent initial validation hypotheses subject to empirical testing during the commercial pilot.*
+*With 2 paying customers on the Team Plan ($49/mo each = $98.00/mo gross), net revenue after Lemon Squeezy processing fees (5% base + $0.50/tx + 0.5% subscription fee = $6.39; net revenue = $91.61, or ~$89.70 if international/bank transfer surcharges apply), the platform covers 100% of its base commercial cloud operating expenses (~$61.00/mo). All pricing figures represent initial validation hypotheses subject to empirical testing during the commercial pilot.*
 
 ---
 

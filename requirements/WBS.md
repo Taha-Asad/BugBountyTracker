@@ -32,11 +32,11 @@
 
 | WBS Code | Req ID | Module / Area | Work Package Name | Deliverable Scope & Acceptance Criteria | Start–End Week | Est. Hours | Human Owner | Predecessor | Status |
 | :--- | :---: | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **WP-1.1** | FR-1.1 | MOD-1: Foundation & Security | Monorepo Scaffolding & CI Pipeline | Next.js 14+ monorepo, ESLint, Prettier, and GitHub Actions CI workflow | W1–W2 | 8 | Taha Asadullah | — | `[DONE]` |
-| **WP-1.2** | FR-8.2 | MOD-1: Foundation & Security | PostgreSQL Schema, Neon RLS & Hash-Chained Audit | Prisma relational schema, PostgreSQL RLS tenant context, and append-only audit ledger with SHA-256 prev_hash | W1–W2 | 12 | Taha Asadullah | WP-1.1 | `[DONE]` |
-| **WP-1.3** | FR-8.1 | MOD-1: Foundation & Security | Early Markdown AST Sanitization Engine | `rehype-sanitize` pipeline neutralizing OWASP XSS cheat sheet attack vectors | W1–W2 | 10 | Taha Asadullah | WP-1.1 | `[DONE]` |
-| **WP-1.4** | NFR-04 | MOD-1: Foundation & Security | Design Tokens & Accessible UI Base | Tailwind CSS tokens meeting WCAG 2.2 AA (24 × 24 px touch targets) | W1–W2 | 10 | Taha Asadullah | WP-1.1 | `[DONE]` |
-| **WP-2.1** | FR-1.3 | MOD-2: Identity & Multi-Tenancy | Tenant Registration Wizard & Profiles | Organization creation, slug reservation, and public program profile | W3–W4 | 8 | Taha Asadullah | WP-1.4 | `[READY]` |
+| **WP-1.1** | FR-1.1 | MOD-1: Foundation & Security | Monorepo Scaffolding & CI Pipeline | Next.js 14+ monorepo, ESLint, Prettier, and GitHub Actions CI workflow | W1–W2 | 8 | Taha Asadullah | — | `[READY]` |
+| **WP-1.2** | FR-8.2 | MOD-1: Foundation & Security | PostgreSQL Schema, Neon RLS & Hash-Chained Audit | Prisma relational schema, PostgreSQL RLS tenant context, and append-only audit ledger with SHA-256 prev_hash | W1–W2 | 12 | Taha Asadullah | WP-1.1 | `[READY]` |
+| **WP-1.3** | FR-8.1 | MOD-1: Foundation & Security | Early Markdown AST Sanitization Engine | `rehype-sanitize` pipeline neutralizing OWASP XSS cheat sheet attack vectors | W1–W2 | 10 | Taha Asadullah | WP-1.1 | `[READY]` |
+| **WP-1.4** | NFR-04 | MOD-1: Foundation & Security | Design Tokens & Accessible UI Base | Tailwind CSS tokens meeting WCAG 2.2 AA (24 × 24 px touch targets) | W1–W2 | 10 | Taha Asadullah | WP-1.1 | `[READY]` |
+| **WP-2.1** | FR-1.3 | MOD-2: Identity & Multi-Tenancy | Tenant Registration Wizard & Profiles | Organization creation, slug reservation, and public program profile | W3–W4 | 8 | Taha Asadullah | WP-1.4 | `[PLANNED]` |
 | **WP-2.2** | FR-1.3 | MOD-2: Identity & Multi-Tenancy | Email / Password Auth & Database-Backed Sessions | Bcrypt/Argon2 password hashing, database-persisted session tokens, and secure HTTP-only cookies | W3–W4 | 11 | Taha Asadullah | WP-2.1 | `[PLANNED]` |
 | **WP-2.3** | FR-1.2 | MOD-2: Identity & Multi-Tenancy | Server-Enforced RBAC Middleware | Access control enforcing Owner, Defender, Hunter, and ReadOnly roles | W3–W4 | 11 | Taha Asadullah | WP-2.2 | `[PLANNED]` |
 | **WP-2.4** | FR-8.3 | MOD-2: Identity & Multi-Tenancy | Shared Store Rate Limiter & Turnstile CAPTCHA | Shared store rate limiting (Postgres/Upstash) and Turnstile CAPTCHA (5 req/hr/IP) | W3–W4 | 10 | Taha Asadullah | WP-1.2 | `[PLANNED]` |
@@ -111,8 +111,8 @@
 
 | Sprint ID | Academic Weeks | Target Work Packages | Key Engineering Deliverables | Prerequisite Gates & Evaluation | Planned Hours | Status |
 | :--- | :--- | :--- | :--- | :--- | :---: | :---: |
-| **Sprint 1** | Weeks 1–2 | WP-1.1, WP-1.2, WP-1.3, WP-1.4 | Monorepo scaffolding, PostgreSQL RLS schema, AST sanitization, and UI tokens | Gate 0: Foundation Review | 40 | `[DONE]` |
-| **Sprint 2** | Weeks 3–4 | WP-2.1, WP-2.2, WP-2.3, WP-2.4 | Tenant registration, DB-backed sessions, server RBAC, and shared store rate limiter | Gate 1: Identity & Multi-Tenancy | 40 | `[READY]` |
+| **Sprint 1** | Weeks 1–2 | WP-1.1, WP-1.2, WP-1.3, WP-1.4 | Monorepo scaffolding, PostgreSQL RLS schema, AST sanitization, and UI tokens | Gate 0: Foundation Review | 40 | `[READY]` |
+| **Sprint 2** | Weeks 3–4 | WP-2.1, WP-2.2, WP-2.3, WP-2.4 | Tenant registration, DB-backed sessions, server RBAC, and shared store rate limiter | Gate 1: Identity & Multi-Tenancy | 40 | `[PLANNED]` |
 | **Sprint 3** | Weeks 5–6 | WP-3.1, WP-3.2, WP-3.3, WP-3.4 | RFC 9116 download, in-browser PGP cleartext signing, DNS TXT verifier, Ed25519 keypair generator | Gate 2: Policy & Keys | 40 | `[PLANNED]` |
 | **Sprint 4** | Weeks 7–8 | WP-4.1, WP-4.2, WP-4.3, WP-4.4 | Dual-recipient encryption, direct R2 presigned upload, pure TS CVSS 3.1 engine, in-browser decryption | **Gate 3: Working Prototype Demonstration** | 40 | `[PLANNED]` |
 | **Sprint 5** | Weeks 9–10 | WP-5.1, WP-5.2, WP-5.3, WP-5.4 | Dual-lane triage threads, metadata email alerts, GitHub commit & branch compare validation, config SHA binder | Gate 4: Remediation Evidence | 38 | `[PLANNED]` |

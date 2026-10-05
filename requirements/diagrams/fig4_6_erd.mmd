@@ -1,0 +1,164 @@
+erDiagram
+    ORGANIZATION ||--o{ SUBSCRIPTION : holds
+    ORGANIZATION ||--o{ PROGRAM : hosts
+    ORGANIZATION ||--o{ USER_MEMBERSHIP : employs
+    ORGANIZATION ||--o{ PROGRAM_INVITATION : issues
+    USER ||--o{ USER_MEMBERSHIP : belongs_to
+    USER ||--o{ PGP_KEY : owns
+    USER ||--o{ SESSION : authenticates
+    PROGRAM ||--o{ REPORT : receives
+    REPORT ||--o{ DISCUSSION_MESSAGE : contains
+    REPORT ||--o{ REMEDIATION_RECORD : verified_by
+    REPORT ||--o{ RETEST_EVIDENCE : tested_by
+    REPORT ||--o{ CLOSURE_EVIDENCE_EXPORT : generates
+    REPORT ||--o{ AUDIT_EVENT : tracks
+
+    ORGANIZATION {
+        string id PK
+        string name
+        string slug UK
+        string domain
+        boolean domain_verified
+        datetime created_at
+    }
+
+    SUBSCRIPTION {
+        string id PK
+        string organization_id FK
+        string plan_tier "COMMUNITY | TEAM"
+        string status "ACTIVE | PAST_DUE | CANCELED"
+        string lemon_squeezy_sub_id UK
+        int max_programs
+        int max_seats
+        int storage_quota_mb
+        datetime current_period_end
+    }
+
+    PROGRAM {
+        string id PK
+        string organization_id FK
+        string name
+        string slug UK
+        string visibility "PUBLIC | INVITE_ONLY"
+        int recipient_set_version
+        string recovery_public_key
+        string policy_markdown
+        datetime created_at
+    }
+
+    PROGRAM_INVITATION {
+        string id PK
+        string program_id FK
+        string token_hash UK
+        string invitee_email
+        datetime expires_at
+        datetime accepted_at
+    }
+
+    USER {
+        string id PK
+        string email UK
+        string password_hash
+        string totp_secret_cipher
+        boolean mfa_enabled
+        string full_name
+        datetime created_at
+    }
+
+    SESSION {
+        string id PK
+        string user_id FK
+        string session_token UK
+        datetime expires_at
+        datetime created_at
+    }
+
+    USER_MEMBERSHIP {
+        string id PK
+        string organization_id FK
+        string user_id FK
+        string role "ORG_OWNER | ORG_DEFENDER | ORG_READONLY"
+    }
+
+    PGP_KEY {
+        string id PK
+        string user_id FK
+        string key_type "PRIMARY_SIGNING | ENCRYPTION_SUBKEY"
+        string public_key_armor
+        string fingerprint UK
+        boolean is_active
+        datetime created_at
+    }
+
+    REPORT {
+        string id PK
+        string organization_id FK
+        string program_id FK
+        string hunter_id FK
+        string guest_token_hash UK
+        string assigned_defender_id FK
+        string state "NEW | TRIAGING | ACCEPTED | FIX_PROPOSED | RETEST_PENDING | VERIFIED_RESEARCHER | VERIFIED_INTERNAL | CLOSED_UNVERIFIED_TIMEOUT | RISK_ACCEPTED | REJECTED_SPAM | REJECTED_INVALID | DUPLICATE | WITHDRAWN"
+        string operational_label "AUTHENTICATION_BYPASS | INJECTION_VULNERABILITY | INFORMATION_DISCLOSURE | CROSS_SITE_SCRIPTING | ACCESS_CONTROL_ISSUE | DENIAL_OF_SERVICE | OTHER"
+        string title_ciphertext "CIPHERTEXT ONLY"
+        string asset_scope
+        string cvss_vector
+        float cvss_suggested
+        float cvss_score
+        string encrypted_payload "CIPHERTEXT ONLY"
+        datetime sla_triage_due
+        datetime sla_remediation_due
+        datetime created_at
+        datetime updated_at
+    }
+
+    DISCUSSION_MESSAGE {
+        string id PK
+        string report_id FK
+        string sender_id FK
+        string lane "RESEARCHER_ORG | REVIEWER_INTERNAL"
+        string encrypted_body "CIPHERTEXT ONLY"
+        datetime created_at
+    }
+
+    REMEDIATION_RECORD {
+        string id PK
+        string report_id FK
+        string evidence_type "CODE_COMMIT | CONFIG_INFRASTRUCTURE"
+        string commit_sha
+        string branch_name
+        string config_hash
+        string deployment_env
+        string deployed_version
+        boolean github_verified
+        datetime created_at
+    }
+
+    RETEST_EVIDENCE {
+        string id PK
+        string report_id FK
+        string verifier_id FK
+        string verifier_type "RESEARCHER | INTERNAL_DEFENDER"
+        boolean fix_confirmed
+        string verification_notes_cipher "CIPHERTEXT ONLY"
+        datetime retest_date
+    }
+
+    CLOSURE_EVIDENCE_EXPORT {
+        string id PK
+        string report_id FK
+        string export_type "PDF | JSON"
+        string export_sha256
+        string closing_officer_id FK
+        datetime generated_at
+    }
+
+    AUDIT_EVENT {
+        string id PK
+        string organization_id FK
+        string report_id FK
+        string actor_id FK
+        string action
+        string justification
+        string prev_hash
+        datetime timestamp
+    }

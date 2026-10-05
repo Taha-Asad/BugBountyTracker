@@ -92,7 +92,7 @@ To eliminate scheduling contradictions, every requirement is categorized by its 
 | **Target Commercial Buyer (Small SaaS Engineering Lead)** | Prospective commercial customer; evaluating the platform for confidential vulnerability intake and fix attestation. | Data confidentiality, ease of setup, non-leaking notifications, fix verification, exportable closure proof. |
 
 ### 1.4 Problem Horizon & Commercial Positioning
-Vulnerability coordination platforms (VDPs) are standard in mature enterprises. However, early-stage startups and small software engineering teams (5–50 developers) lack accessible tooling: commercial SaaS subscriptions exceed $15,000–$30,000/year, and while entry offerings like HackerOne Essential VDP exist, they route unencrypted vulnerability reproduction steps into ordinary web queues and corporate email inboxes without client-side cryptographic isolation, treat remediation as an informal ticket status change, and lack customer-controlled redacted closure exports.
+Vulnerability coordination platforms (VDPs) are standard in mature enterprises. However, early-stage startups and small software engineering teams (5–50 developers) lack accessible tooling: commercial managed-service contracts typically exceed $15,000–$30,000/year, and while entry offerings like HackerOne Essential VDP provide discovery and intake, they operate on a server-managed triage model where exploit reproduction steps are held unencrypted on vendor servers and distributed through standard notification pipelines. Small teams face a difficult trade-off between building ad-hoc disclosure mechanisms and trusting multi-tenant platforms with sensitive zero-day exploit details. Furthermore, standard platforms treat remediation as an informal ticket status change, lacking verifiable git commit linkage and customer-controlled redacted closure exports.
 
 BugBountyTrack fills this specific need with:
 > **Core Value Proposition**: *A confidential vulnerability reporting workspace that helps small software teams receive reports, coordinate fixes, and document how each issue was retested and closed.*
@@ -779,7 +779,7 @@ The platform provides a clean, responsive web interface comprising 8 core screen
   * **Gate 2 (Week 12 Academic Defense Baseline)**: GitHub commit SHA verification, non-code SHA-256 config hashing, empirical retest workflow with 3 separate terminal branches (`VERIFIED_RESEARCHER`, `VERIFIED_INTERNAL`, `CLOSED_UNVERIFIED_TIMEOUT`), failed retest event loopback to `ACCEPTED`, and controlled peer usability evaluation (3–5 peers).
   * **Gate 3 (Weeks 13–14 Commercial Core Intake)**: Guided Onboarding Wizard, offline Organization Master Recovery Key export with test challenge, account-less guest intake, direct-to-R2 presigned upload hardening, and SuperAdmin console.
   * **Gate 4 (Weeks 15–16 Commercial Operations Ready)**: SLA countdown engine with hourly checks, Slack webhooks, redacted PDF/JSON closure evidence export, Lemon Squeezy MoR billing ($49/mo Team & Free Tier), landing page, and legal pack.
-  * **Gate 5 (Weeks 17–18 Commercial Production Release - DoRG)**: Security hardening (CSP, SRI, CSRF, lockout, SSRF checks), self pen-test pass, Sentry observability, and automated disaster recovery sandbox drill.
+  * **Gate 5 (Weeks 17–18 Commercial Production Release - DoRG)**: Security hardening (strict CSP with 'wasm-unsafe-eval' for OpenPGP.js Argon2 S2K execution, SRI, CSRF, lockout, SSRF checks), self pen-test pass, Sentry observability, and automated disaster recovery sandbox drill.
 
 ---
 

@@ -1,0 +1,26 @@
+stateDiagram-v2
+    [*] --> NEW: Report Submitted (Encrypted)
+    NEW --> REJECTED_SPAM: Filter Scanner Spam
+    NEW --> TRIAGING: Defender Opens Ticket
+    TRIAGING --> REJECTED_INVALID: Out-of-Scope / Invalid
+    TRIAGING --> DUPLICATE: Reviewer Links Duplicate
+    TRIAGING --> NEED_MORE_INFO: Clarification Requested
+    NEED_MORE_INFO --> TRIAGING: Researcher Responds
+    NEED_MORE_INFO --> CLOSED_UNVERIFIED_TIMEOUT: Inactive >= 14 Days
+    TRIAGING --> RISK_ACCEPTED: Risk Formally Accepted
+    TRIAGING --> WITHDRAWN: Submitter Retracts
+    TRIAGING --> ACCEPTED: Valid Flaw Confirmed
+
+    ACCEPTED --> FIX_PROPOSED: Commit SHA / Config Hash Provided
+    FIX_PROPOSED --> RETEST_PENDING: Fix Deployed to Staging/Prod
+
+    RETEST_PENDING --> VERIFIED_RESEARCHER: Hunter Attests Fix Mitigated
+    RETEST_PENDING --> VERIFIED_INTERNAL: Defender Attests Fix Mitigated
+    RETEST_PENDING --> CLOSED_UNVERIFIED_TIMEOUT: Grace Period Expired + Reviewer Rationale
+    RETEST_PENDING --> ACCEPTED: Retest Failed (Flaw Persists)
+    
+    VERIFIED_RESEARCHER --> TRIAGING: Regression Identified (Reopen)
+    VERIFIED_INTERNAL --> TRIAGING: Regression Identified (Reopen)
+    CLOSED_UNVERIFIED_TIMEOUT --> TRIAGING: Retest Requested (Reopen)
+    REJECTED_INVALID --> TRIAGING: Dispute Upheld (Reopen)
+    DUPLICATE --> TRIAGING: Distinct Root Cause (Reopen)

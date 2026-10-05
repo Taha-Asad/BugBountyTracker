@@ -18,7 +18,7 @@ flowchart LR
     C --> D["4. Verified Retest<br/>(Independent Proof)"]
 ```
 
-* **The Problem**: Small tech startups and open-source teams cannot afford expensive enterprise bug platforms like HackerOne ($15k–$30k+/year). When ethical hackers find dangerous vulnerabilities, they report them through unencrypted emails or social media DMs. This leaks sensitive zero-days and leads to bugs being forgotten or closed without anyone verifying the fix.
+* **The Problem**: While enterprise managed bounty platforms cater to large organizations with high-overhead managed services, and entry-level programs often route submissions through server-managed, unencrypted pipelines, small engineering teams frequently default to unencrypted emails, contact forms, or ad-hoc trackers. This leaks sensitive zero-day vulnerability details in transit and at rest, creates single points of server compromise, and results in tickets being closed with zero verified proof of remediation.
 * **Our Solution**: **BugBountyTrack** is a lightweight, multi-tenant web platform that gives startups an official `security.txt` beacon, an encrypted intake portal where reports are locked in the browser, and an **accountable fix tracker** that proves a bug was actually patched and retested before the ticket is closed.
 
 ---

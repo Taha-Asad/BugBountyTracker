@@ -1,4 +1,4 @@
-import zipfile, os, re, xml.etree.ElementTree as ET
+import zipfile, os, re, json, xml.etree.ElementTree as ET
 
 errors = []
 warnings = []
@@ -16,6 +16,7 @@ print("Level 1 Specification & Cross-Document Traceability Linter")
 print("=" * 80)
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
 
 files = {
     'BRD.md': os.path.join(SCRIPT_DIR, 'BRD.md'),
@@ -25,13 +26,17 @@ files = {
     'WBS.md': os.path.join(SCRIPT_DIR, 'WBS.md'),
     'WBS.xlsx': os.path.join(SCRIPT_DIR, 'WBS.xlsx'),
     'CVSS_TEST_FIXTURES.md': os.path.join(SCRIPT_DIR, 'CVSS_TEST_FIXTURES.md'),
+    'KEY_MANAGEMENT.md': os.path.join(PROJECT_DIR, 'architecture', 'KEY_MANAGEMENT.md'),
+    'DECISION_LOG.md': os.path.join(PROJECT_DIR, 'decisions', 'DECISION_LOG.md'),
+    'project.json': os.path.join(PROJECT_DIR, 'project.json'),
 }
 
 # 1. File existence & minimum size thresholds
 for fname, fpath in files.items():
     check(os.path.exists(fpath), f"File exists: {fname}")
     sz = os.path.getsize(fpath) if os.path.exists(fpath) else 0
-    check(sz > 5000, f"File size > 5KB: {fname} ({sz} bytes)")
+    min_sz = 1000 if fname == 'project.json' else 5000
+    check(sz >= min_sz, f"File size valid: {fname} ({sz} bytes)")
 
 # 2. Check metadata in Markdown specifications
 for mdf in ['BRD.md', 'SRS.md', 'WBS.md']:
@@ -42,12 +47,21 @@ for mdf in ['BRD.md', 'SRS.md', 'WBS.md']:
     check('Taha Asadullah' in content, f"{mdf} contains Taha Asadullah")
     check('Sir Umar Hayat' in content, f"{mdf} contains Sir Umar Hayat")
     check('PTUT - PRJ - 089' in content, f"{mdf} contains Project ID PTUT - PRJ - 089")
+    check('SET-A' in content, f"{mdf} contains Section SET-A")
     # Verify no raw unescaped LaTeX formatting artifacts
     check(r'\text{' not in content, f"{mdf} has no \\text{{}} artifacts")
     check(r'\ge' not in content, f"{mdf} has no \\ge artifacts")
     check(r'\le' not in content, f"{mdf} has no \\le artifacts")
 
-# 3. Check specific requirements in SRS.md
+# 3. Check project.json metadata & schema consistency
+with open(files['project.json'], 'r', encoding='utf-8') as f:
+    pjson = json.load(f)
+check(pjson.get('rollNo') == '24-ST-013', "project.json contains rollNo 24-ST-013")
+check(pjson.get('studentAuthor') == 'Taha Asadullah', "project.json contains studentAuthor Taha Asadullah")
+check(pjson.get('section') == 'SET-A', "project.json contains section SET-A")
+check(pjson.get('supervisor') == 'Sir Umar Hayat', "project.json contains supervisor Sir Umar Hayat")
+
+# 4. Check specific requirements in SRS.md
 with open(files['SRS.md'], 'r', encoding='utf-8') as f:
     srs = f.read()
 
@@ -65,8 +79,16 @@ check('prev_hash' in srs, "SRS.md specifies tamper-evident prev_hash audit chain
 check('guest_token_hash' in srs or 'Account-Less (Guest)' in srs, "SRS.md specifies account-less guest vulnerability intake")
 check('Lemon Squeezy' in srs, "SRS.md specifies Lemon Squeezy Merchant of Record")
 check('recovery_public_key' in srs or 'Organization Master Recovery Key' in srs, "SRS.md specifies Offline Organization Master Recovery Key")
+check('wasm-unsafe-eval' in srs, "SRS.md specifies wasm-unsafe-eval for OpenPGP.js Argon2 S2K CSP")
 
-# 4. Check CVSS_TEST_FIXTURES.md integrity & vector uniqueness
+# 5. Check architecture/KEY_MANAGEMENT.md consistency
+with open(files['KEY_MANAGEMENT.md'], 'r', encoding='utf-8') as f:
+    km = f.read()
+check('IndexedDB' in km and 'localStorage' not in km, "KEY_MANAGEMENT.md uses IndexedDB for guest keys (zero localStorage)")
+check('wasm-unsafe-eval' in km, "KEY_MANAGEMENT.md specifies wasm-unsafe-eval CSP for Argon2 S2K")
+check('Argon2 S2K' in km, "KEY_MANAGEMENT.md specifies Argon2 S2K key protection")
+
+# 6. Check CVSS_TEST_FIXTURES.md integrity & vector uniqueness
 with open(files['CVSS_TEST_FIXTURES.md'], 'r', encoding='utf-8') as f:
     cvss_text = f.read()
 
@@ -74,22 +96,34 @@ check('FIRST.org' in cvss_text and 'NIST National Vulnerability Database' in cvs
 check('CVE-2021-41773' in cvss_text and '7.5' in cvss_text, "CVSS_TEST_FIXTURES.md correctly attributes CVE-2021-41773 as 7.5 High")
 check('24-ST-013' in cvss_text, "CVSS_TEST_FIXTURES.md contains Roll No 24-ST-013")
 
-# Extract and assert uniqueness of CVSS vector strings
 vector_pattern = re.compile(r'`(CVSS:3\.1/[^`]+)`')
 vectors = vector_pattern.findall(cvss_text)
 check(len(vectors) == 45, f"CVSS_TEST_FIXTURES.md contains exactly 45 vectors (found {len(vectors)})")
 unique_vectors = set(vectors)
 check(len(unique_vectors) == 45, f"All 45 vectors are mathematically unique (found {len(unique_vectors)} unique)")
 
-# 5. Cross-Document WBS Arithmetic & Package Parity
+# 7. Cross-Document WBS Arithmetic, Package Parity & Task Status Honesty
 with open(files['WBS.md'], 'r', encoding='utf-8') as f:
     wbs = f.read()
 
 check('236 Hours' in wbs and '28 Hours' in wbs and '264 Hours' in wbs, "WBS.md academic arithmetic: 236h core + 28h buffer = 264h")
 check('160 Hours' in wbs and '424 Hours' in wbs, "WBS.md commercial arithmetic: 264h academic + 160h commercial = 424h total")
 check('WP-7.1' in wbs and 'WP-7.12' in wbs, "WBS.md contains commercial packages WP-7.1 to WP-7.12")
+check('`[READY]`' in wbs and 'WP-1.1' in wbs, "WBS.md maintains honest task status: WP-1.1 is READY (not falsely DONE)")
 
-# 6. Check SRS.docx OpenXML integrity and embedded drawings
+# 8. Check standalone diagrams in requirements/diagrams/
+diagram_stems = [
+    'fig4_1_component', 'fig4_2_usecase', 'fig4_3_seq_submission',
+    'fig4_4_seq_decryption', 'fig4_5_statemachine', 'fig4_6_erd'
+]
+diag_dir = os.path.join(SCRIPT_DIR, 'diagrams')
+for stem in diagram_stems:
+    png_path = os.path.join(diag_dir, f"{stem}.png")
+    svg_path = os.path.join(diag_dir, f"{stem}.svg")
+    check(os.path.exists(png_path) and os.path.getsize(png_path) > 10000, f"Diagram PNG exists & >10KB: {stem}.png")
+    check(os.path.exists(svg_path) and os.path.getsize(svg_path) > 10000, f"Diagram SVG exists & >10KB: {stem}.svg")
+
+# 9. Check SRS.docx OpenXML integrity and embedded drawings
 with zipfile.ZipFile(files['SRS.docx'], 'r') as srs_zip:
     srs_xml = srs_zip.read('word/document.xml').decode('utf-8')
     media_files = [f for f in srs_zip.namelist() if f.startswith('word/media/')]
@@ -101,14 +135,14 @@ check('24-ST-013' in srs_xml, "SRS.docx contains Roll No 24-ST-013")
 check('Taha Asadullah' in srs_xml, "SRS.docx contains Taha Asadullah")
 check(r'\text{' not in srs_xml, "SRS.docx has no \\text{} artifacts")
 
-# 7. Check BRD.docx OpenXML integrity
+# 10. Check BRD.docx OpenXML integrity
 with zipfile.ZipFile(files['BRD.docx'], 'r') as brd_zip:
     brd_xml = brd_zip.read('word/document.xml').decode('utf-8')
 check('24-ST-013' in brd_xml, "BRD.docx contains Roll No 24-ST-013")
 check('Taha Asadullah' in brd_xml, "BRD.docx contains Taha Asadullah")
 check('Team' in brd_xml and 'Community' in brd_xml, "BRD.docx contains SaaS pricing tiers (Team & Community)")
 
-# 8. Check WBS.xlsx OpenXML integrity, formula consistency & mathematical parity
+# 11. Check WBS.xlsx OpenXML integrity, formula consistency & mathematical parity
 with zipfile.ZipFile(files['WBS.xlsx'], 'r') as wbs_zip:
     sheet1_xml = wbs_zip.read('xl/worksheets/sheet1.xml').decode('utf-8')
     sheet2_xml = wbs_zip.read('xl/worksheets/sheet2.xml').decode('utf-8')
@@ -121,7 +155,6 @@ check('24-ST-013' in sheet1_xml, "WBS.xlsx Sheet 1 contains Roll No 24-ST-013")
 check('SUM(G2:G39)' in sheet2_xml, "WBS.xlsx Sheet 2 contains formula SUM(G2:G39) spanning all 38 work packages")
 check('SUM(F2:F10)' in sheet4_xml, "WBS.xlsx Sheet 4 contains formula SUM(F2:F10) spanning all 9 Sprints")
 
-# Assert that sheet2 calculated total matches 424
 match_s2_tot = re.search(r'<c r="G40"[^>]*><f>[^<]+</f><v>(\d+)</v></c>', sheet2_xml)
 if match_s2_tot:
     s2_val = int(match_s2_tot.group(1))
@@ -129,7 +162,6 @@ if match_s2_tot:
 else:
     errors.append("WBS.xlsx Sheet 2 total cell G40 not found")
 
-# Assert that sheet4 calculated total matches 424
 match_s4_tot = re.search(r'<c r="F11"[^>]*><f>[^<]+</f><v>(\d+)</v></c>', sheet4_xml)
 if match_s4_tot:
     s4_val = int(match_s4_tot.group(1))

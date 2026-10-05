@@ -1,0 +1,53 @@
+flowchart TD
+    subgraph ClientTier["Client Browser Runtime"]
+        UI["React 18 / Next.js UI
+(Guided Onboarding & Redacted Export)"]
+        CryptoEngine["OpenPGP.js & WebCrypto
+(Curve25519 + Neutral Labels)"]
+        ASTSanitizer["rehype-sanitize AST Parser"]
+        LocalKeyStore["IndexedDB Encrypted KeyStore
+(Argon2 S2K Key Protection)"]
+        UI <--> CryptoEngine
+        CryptoEngine <--> LocalKeyStore
+        CryptoEngine --> ASTSanitizer --> UI
+    end
+
+    subgraph AppTier["Application Serverless Tier (Vercel Node 22 LTS)"]
+        APIRoute["Next.js Route Handlers"]
+        AuthMiddleware["DB Sessions, TOTP MFA & Server RBAC"]
+        RateLimiter["Shared Rate Limiter & Turnstile"]
+        SLAEngine["SLA Countdown Engine (Hourly Cron)"]
+        QuotaGuard["Storage Quota Guard (90% / 100%)"]
+        GitHubClient["GitHub REST API Client (Commits & Compare)"]
+        APIRoute --> AuthMiddleware
+        APIRoute --> RateLimiter
+        APIRoute --> SLAEngine
+        APIRoute --> QuotaGuard
+        APIRoute --> GitHubClient
+    end
+
+    subgraph PersistenceTier["Persistence Tier (Cloud)"]
+        PostgresDB[("Neon PostgreSQL 16
+(Row-Level Security & Hash-Chained Audit)")]
+        R2Storage[("Cloudflare R2
+(Encrypted Direct Uploads)")]
+    end
+
+    subgraph ExternalServices["External 3rd-Party Services"]
+        GitHubAPI["GitHub API v3"]
+        ResendEmail["Resend / Postmark API
+(Metadata Alerts)"]
+        DNSResolver["DNS Authority
+(TXT Challenge)"]
+        BillingLemonSqueezy["Lemon Squeezy MoR
+(Global Tax & Payouts)"]
+    end
+
+    CryptoEngine -- "Encrypted Ciphertext (HTTPS)" --> APIRoute
+    APIRoute -- "Prisma ORM (SET LOCAL app.current_tenant_id)" --> PostgresDB
+    CryptoEngine -- "Direct Presigned Upload (≤25MB)" --> R2Storage
+    APIRoute -- "Presign URL & Enforce Quota" --> R2Storage
+    GitHubClient -- "Verify Commit SHA & Branch" --> GitHubAPI
+    APIRoute -- "Send Metadata-Only Notification" --> ResendEmail
+    APIRoute -- "Resolve TXT Record" --> DNSResolver
+    APIRoute -- "Webhooks & Subscriptions" --> BillingLemonSqueezy

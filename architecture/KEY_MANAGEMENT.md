@@ -56,7 +56,7 @@ To prevent adoption drop-off caused by mandatory account creation, BugBountyTrac
    - The organization's offline master recovery key (`K_recovery_pub`).
    - The ephemeral report key (`K_report_pub`).
 3. **Tracking Token Generation**: Upon submission, the server returns an opaque, high-entropy tracking identifier (`BBT-RPT-XXXX`) paired with a cryptographic access token.
-4. **Local Keystore Persistence**: The browser stores `K_report_priv` and the tracking URL in `localStorage`. The researcher is presented with a clear action prompt: *"Bookmark this tracking link or save your recovery code to view replies and verify fixes."*
+4. **Local Keystore Persistence**: The browser stores `K_report_priv` and the tracking URL in an ephemeral `IndexedDB` keystore. The researcher is presented with a clear action prompt: *"Bookmark this tracking link or save your recovery code to view replies and verify fixes."*
 5. **Anonymous Dialogue & Retest**: The researcher accesses `/report/track/:token` to read encrypted reviewer comments and submit retest evidence without ever registering an account or managing passwords.
 6. **Optional Account Binding**: If the researcher later creates a BugBountyTrack account, they can claim historical report tokens to bind findings to their public profile and reputation score.
 
@@ -148,7 +148,7 @@ To prevent notification emails from leaking exploit characteristics or vulnerabl
    Client-side cryptography isolates sensitive exploit payloads from backend database compromises, cloud snapshot theft, and untrusted database administrators. However, **the platform assumes that the delivered client web application (HTML/JS) and the server's public-key distribution endpoint are untampered**. Client-side cryptography cannot protect against a malicious platform operator who alters the delivered JavaScript or substitutes public keys during retrieval.
 2. **Platform Hardening**:
    To minimize the risk of client-side code modification or XSS injection, the application enforces:
-   * Strict Content Security Policy (`script-src 'self'`) blocking third-party scripts.
+   * Strict Content Security Policy (`script-src 'self' 'wasm-unsafe-eval'`) blocking third-party scripts while permitting WebAssembly execution required for OpenPGP.js Argon2 S2K derivation.
    * Subresource Integrity (SRI) on all bundled static chunks.
    * AST-based Markdown sanitization neutralizing HTML tags and embedded scripts inside code blocks.
 3. **Client-Side Rendering Safety**:

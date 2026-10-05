@@ -1,0 +1,22 @@
+sequenceDiagram
+    autonumber
+    actor Defender as Organization Reviewer
+    participant Browser as Defender Browser
+    participant KeyStore as IndexedDB Keystore
+    participant Server as Next.js API Gateway
+    participant DB as Neon PostgreSQL
+
+    Defender->>Browser: Navigates to /reports/BBT-102
+    Browser->>Server: GET /api/v1/reports/BBT-102 (Session Cookie + Tenant Context)
+    Server->>Server: Validate DB Session Auth & Server RBAC (Verify Tenant Ownership)
+    Server->>DB: SELECT title_ciphertext, payload, metadata WHERE tenant_id = :id
+    DB-->>Server: Return Ciphertext Record
+    Server-->>Browser: 200 OK (Ciphertext Payload)
+    Browser-->>Defender: Prompt for Local Encryption Passphrase
+    Defender->>Browser: Enters Passphrase
+    Browser->>KeyStore: Retrieve Encrypted Private Key
+    KeyStore-->>Browser: Encrypted Key Material
+    Browser->>Browser: Unlock Private Key via OpenPGP Argon2 S2K
+    Browser->>Browser: openpgp.decrypt(title_ciphertext, payload, privateKey)
+    Browser->>Browser: rehype-sanitize AST Cleansing (Neutralize Stored XSS)
+    Browser-->>Defender: Renders Plaintext Report in Confidential View
