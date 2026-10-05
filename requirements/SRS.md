@@ -19,9 +19,9 @@
 | **Department Sub-Field** | 9. Cybersecurity, Privacy & LegalTech |
 | **Standard Compliance** | IEEE Std 830-1998 / ISO/IEC/IEEE 29148:2018 |
 | **Client Platform** | Modern Web (Next.js 14+ App Router, React 18+, TypeScript 5.x, Tailwind CSS, OpenPGP.js) |
-| **Backend & API Engine** | Unified Next.js Fullstack (Serverless API Routes on Node.js 22 LTS / Vercel) |
+| **Backend & API Engine** | Unified Next.js Fullstack (Serverless API Routes on Node.js 22 LTS / Vercel Pro) |
 | **Database Architecture** | PostgreSQL 16 (Neon Serverless Cloud) / Prisma ORM 5.x |
-| **Document Release State** | Commercial Baseline & Academic Evaluation Specification (Version 3.0.0) |
+| **Document Release State** | Commercial Baseline & Academic Evaluation Specification (Version 3.2.0) |
 
 ---
 
@@ -78,10 +78,9 @@ To eliminate scheduling contradictions, every requirement is categorized by its 
   * **P1 (Mandatory)**: Core functionality required for a functional prototype demonstration, academic evaluation, and baseline commercial utility.
   * **P2 (Important)**: Secondary capabilities that enhance usability, robustness, SLA tracking, and auditability.
   * **P3 (Nice-to-Have)**: Exploratory enhancements implemented if sprint capacity permits.
-* **Target Delivery Milestones**:
-  * **Milestone 1: Working End-to-End Product (Weeks 1–8)**: Multi-tenant RBAC, browser-side cleartext `security.txt` signing, client OpenPGP encryption, title encryption with neutral operational labels, pure TypeScript CVSS 3.1 calculation, in-browser decryption, basic triage transitions, early Markdown AST sanitization, and PostgreSQL Row-Level Security. Verified at the **Week 7 Live Prototype Gate**.
-  * **Milestone 2: Controlled Pilot & Defense (Weeks 9–12)**: GitHub REST API commit verification for public and private repositories, non-code config SHA-256 hashing, attested retest state machine with 3 distinct terminal closure branches, storage quota enforcement, controlled peer usability evaluation (3–5 peers), and final academic defense.
-  * **Milestone 3: Paid Commercial Launch (Weeks 13–16)**: Guided onboarding wizard, TOTP MFA, private program invitations, SLA countdown timers with automated email reminders, redacted PDF closure evidence export, and production cloud infrastructure deployment.
+* **Target Delivery Milestones (18 Calendar Weeks Total)**:
+  * **Part A: Core Academic Evaluation Baseline (Weeks 1–12, 264 Hours)**: Multi-tenant RBAC, database-backed sessions, browser-side cleartext `security.txt` signing, client OpenPGP encryption (Ed25519/X25519), title encryption with neutral operational labels, pure TypeScript CVSS 3.1 calculation, in-browser decryption, basic triage transitions, early Markdown AST sanitization, PostgreSQL Row-Level Security, GitHub REST API commit & branch compare verification, non-code config SHA-256 hashing, attested retest state machine with 3 distinct terminal closure branches, storage quota enforcement, controlled peer usability evaluation (3–5 peers), and academic defense.
+  * **Part B: Commercial Launch & Deployment Extension (Weeks 13–18, 160 Hours)**: Guided onboarding wizard with mandatory offline Organization Master Recovery Key export challenge, account-less guest submission with secret tracking URLs, direct-to-R2 presigned upload engine with orphan cleanup, SLA countdown engine with hourly scheduled checks and Slack webhooks, redacted PDF/JSON closure evidence export, Merchant of Record (Lemon Squeezy) subscription billing ($49/mo Team & Free Tier), marketing landing page, legal pack (ToS, Privacy, DPA), comprehensive security hardening and self pen-test pass, Sentry observability, and disaster recovery sandbox drill.
 
 ### 1.3 Intended Audience & Stakeholder Matrix
 
@@ -103,34 +102,22 @@ BugBountyTrack fills this specific need with:
 ## 2. Overall Description & System Architecture
 
 ### 2.1 3-Tier System Architecture
-BugBountyTrack employs a decoupled 3-tier web architecture:
-1. **Client Tier (Browser Runtime)**: Next.js 14 App Router, React 18, Tailwind CSS, and `openpgp.js`. Executes client-side key generation, cleartext policy signing, payload encryption (including title ciphertext and neutral operational label selection), local passphrase-protected keystore management, in-browser decryption, and AST Markdown sanitization.
-2. **Application Tier (Serverless Backend)**: Next.js Route Handlers on Node.js 22 LTS (Vercel). Enforces session authentication, server-side RBAC, token-bucket rate limiting, SLA timer tracking, GitHub REST API commit verification, and append-only audit logging. Processes ciphertext only for sensitive fields.
-3. **Persistence Tier (Relational Cloud)**: PostgreSQL 16 on Neon Serverless Cloud via Prisma ORM 5.x. Enforces Row-Level Security (RLS) dynamically per tenant connection. Encrypted file attachments are persisted in Cloudflare R2 object storage with zero egress fees.
+BugBountyTrack is structured into three clean architectural tiers:
+1. **Client Browser Tier**: Next.js 14+ App Router, Tailwind CSS, OpenPGP.js client-side encryption/decryption, and WebCrypto API.
+2. **Serverless Application Tier**: Next.js Route Handlers running on Node.js 22 LTS, enforcing server-side RBAC, database-backed session authentication, SLA countdown monitoring, presigned R2 upload URL generation, and GitHub REST API commit/branch validation.
+3. **Cloud Persistence Tier**: Neon Serverless PostgreSQL 16 (enforcing Row-Level Security and append-only audit ledgers) and Cloudflare R2 (storing client-encrypted binary attachments).
 
 ### 2.2 Defensible Protection Boundary & Cryptographic Assumptions
-Rather than asserting unverifiable "100% zero-knowledge" claims, the platform defines a clear, testable protection boundary:
-
-| Protection Boundary Layer | What is Protected (Ciphertext Only) | What Remains Server-Readable (Plaintext Metadata) | Threats Outside This Boundary |
-| :--- | :--- | :--- | :--- |
-| **Client-Side OpenPGP Payload & Title Isolation** | Specific vulnerability title (`title_ciphertext`), description, reproduction steps, impact analysis, proof-of-concept text, and attachment binaries. | Report ID (`#BBT-xxx`), Organization ID, Created Timestamp, In-Scope Asset URL, Current State, Neutral Operational Category Label (`operational_label` enum: e.g., `AUTHENTICATION_BYPASS`, `INJECTION_VULNERABILITY`), CVSS Vector String, Numeric Score, GitHub Commit SHA, Retest Outcome, and SLA due dates. | Compromised client browser extensions; physical access to client device; malicious frontend injection via compromised CDN/dependency; server memory inspection during transit if client crypto is bypassed. |
-| **Reviewer Internal Notes & Retest Attestation Isolation** | Private triage notes, developer annotations, preliminary patch discussions, retest reproduction notes. Encrypted exclusively for organization reviewer keys. | Note author user ID, created timestamp, parent report ID, verifier type (`RESEARCHER` vs `DEFENDER`), fix confirmation boolean. | Compromised reviewer endpoint; shoulder surfing or unauthorized screen capture on reviewer device. |
-| **Infrastructure Config Baseline** | Original configuration text or proprietary WAF rule file (retained off-platform or in reviewer local storage; client browser calculates SHA-256 digest locally via WebCrypto `crypto.subtle.digest('SHA-256', ...)`). | Cryptographic SHA-256 digest hash (64 hex characters), configuration label, deployment environment (`Staging`, `Pre-Production`, `Production`), verification timestamp. | Malicious or unauthorized alteration of local config file prior to SHA-256 hash generation. |
-| **Client Keystore & Passphrase Secrets** | Primary signing key (Ed25519), active decryption subkey (X25519 / RSA-4096), master user encryption passphrase. | Public keys only (0 plaintext key bytes or passphrases ever transmitted to or stored on server). | Browser cache / IndexedDB clearing without prior armored key export causes unrecoverable loss of legacy decryption capability. |
-
-**Cryptographic Protocol & Architecture Rules**:
-* **Program-Scoped Multi-Defender Key Management**: Rather than relying on a single custodian, encryption targets are bounded to the submitting researcher and the active defenders assigned to that specific program (N ≤ 10). Each defender maintains their own independent keypair.
-
-* **Separation of Passphrase & Password**: User accounts distinguish strictly between the **Login Password** (used for server authentication, hashed with bcrypt at rounds = 12) and the **Local Encryption Passphrase** (retained strictly on client devices, used via WebCrypto PBKDF2/AES-GCM to unlock the local browser `IndexedDB` keystore, never transmitted to or stored on the server).
-* **Key Synchronization & Concurrency Guard (`recipient_set_version`)**: Every program maintains an integer `recipient_set_version` counter. Submissions and replies include the version targeted; if membership changes occur while drafting, the server rejects stale submissions with HTTP `409 Conflict: STALE_RECIPIENT_SET`, prompting the client to refresh public keys and re-encrypt.
-* **Dual-Lane Recipient Isolation**:
-  * *Conversation Thread & Retest Evidence*: Encrypted with symmetric key $K_S$, wrapped for Researcher + Program Defenders.
-  * *Internal Triage Notes*: Encrypted with symmetric key $K_S$, wrapped strictly for Program Defenders (researcher key excluded).
-* **Minimal-Metadata Notifications**: Automated emails (via Resend API) default to zero-leakage subject lines (`[BugBountyTrack] Status Update on Report #BBT-xxx`) and omit vulnerability titles, categories, and target assets.
-* **Historical-Access Isolation & Audited Session Key Re-Wrapping**: Newly onboarded defenders receive access only to future submissions. Historical access to past reports requires an existing authorized defender to locally decrypt the session key ($K_S$), re-wrap it with the new defender's public key, and append the PKESK packet to the envelope. This action is permanently recorded in the audit trail (`HISTORICAL_ACCESS_GRANTED`).
-* **Browser Trust Boundary**: Client-side cryptography isolates sensitive exploit payloads from backend database compromises, cloud snapshot exposures, and untrusted database administrators. However, the system operates within the standard web security model: **the delivered client web application (HTML/JS) and the server's public-key distribution endpoint must be trusted**. Client-side cryptography cannot protect against a malicious platform operator who modifies delivered JavaScript or substitutes public keys.
-* **Append-Only Audit Boundary**: Immutability of the audit ledger is enforced at the database level: PostgreSQL role privileges on `audit_events` grant `INSERT` and `SELECT` operations only, preventing `UPDATE` or `DELETE` actions by any application role.
-
+* **Client-Side OpenPGP Payload Isolation**: Vulnerability titles (`title_ciphertext`), descriptions, reproduction steps, and attachments are encrypted in the submitter's browser using OpenPGP multi-recipient packets prior to network transit. The server and database persist and route ciphertext only.
+* **Algorithm Pinning & Performance**: All keys are standardized exclusively on **v4 Ed25519 (Signing) and X25519 (Encryption)** Curve25519 keys (<50ms generation). Legacy RSA-4096 is deprecated and dropped to eliminate in-browser keygen freezes and satisfy NFR-02 (<1.5s).
+* **Key Storage & Protection**: Private keys in `IndexedDB` are encrypted using OpenPGP's native **Argon2 S2K** string-to-key derivation, separating login credentials from local encryption keys.
+* **Account-Less (Guest) Vulnerability Intake**: External researchers can submit reports without account registration. The browser autonomously generates an ephemeral Curve25519 keypair, encrypts the report to the target program's defenders, the offline recovery key, and the report key, and receives an opaque secret tracking URL (`/report/track/BBT-RPT-XXXX?token=<secret>`) allowing anonymous dialogue and retest submission.
+* **Offline Organization Master Recovery Key**: Generated during onboarding, the public recovery key is added as an extra PKESK on all reports. The private key is exported offline as an emergency recovery kit. Organization activation is gated on a mandatory browser test decryption challenge, ensuring disaster recovery without server-side escrow.
+* **Dual-Lane Recipient Isolation**: Public reports are encrypted for the Submitter + Program Defenders (N ≤ 10) + Org Recovery Key; internal triage notes are encrypted strictly for Program Defenders + Org Recovery Key, excluding the researcher.
+* **Concurrency Guard (`recipient_set_version`)**: Keyrings maintain a version counter; submissions against stale reviewer rosters are rejected with `409 Conflict`.
+* **Historical-Access Isolation & Audited Session Re-Wrapping**: Newly onboarded defenders receive access only to reports submitted after their onboarding. Access to historical reports requires an existing authorized defender to locally decrypt the session key ($K_S$), re-wrap it with the new defender's public key, and append the PKESK packet, emitting an immutable audit event (`HISTORICAL_ACCESS_GRANTED`).
+* **Browser Trust Boundary**: Client-side cryptography isolates sensitive exploit payloads from backend database compromises, cloud snapshot exposures, and untrusted database administrators. However, the system operates within the standard web security model: **the delivered client web application (HTML/JS) and the server's public-key distribution endpoint must be trusted**.
+* **Tamper-Evident Hash-Chained Audit Boundary**: Immutability of the audit ledger is enforced at the database level: PostgreSQL role privileges on `audit_events` grant `INSERT` and `SELECT` operations only, with each record maintaining a cryptographic SHA-256 `prev_hash` chain.
 
 ### 2.3 User Classes & Provisional Personas
 * **Alex Vance (Ethical Researcher / Hunter - Provisional Persona)**: Independent security researcher discovering web flaws. Seeks confidential intake, explicit Safe Harbor terms, clear CVSS scoring, and verifiable closure credit.
@@ -144,7 +131,7 @@ Rather than asserting unverifiable "100% zero-knowledge" claims, the platform de
 * **Database**: PostgreSQL 16 on Neon Serverless Cloud with native Row-Level Security (RLS). Connection pooling via PgBouncer.
 
 ### 2.5 Design & Implementation Constraints
-* **Two-Tier Budget Feasibility**: Operates strictly within free cloud developer tiers ($0.00/month TCO) for academic evaluation, with a verified commercial production architecture costing ~$60–$80/month for up to 10 paying tenants.
+* **Two-Tier Budget Feasibility**: Operates strictly within free cloud developer tiers ($0.00/month TCO) for academic evaluation, with a verified commercial production architecture costing ~$61.00/month covered by 2 paying tenants ($49/mo).
 * **No Server-Side Key Storage**: The server never stores user passphrases or unencrypted private keys.
 * **Plain Technical Language**: Inflated marketing terminology is barred from the specification and codebase.
 
@@ -154,50 +141,52 @@ Rather than asserting unverifiable "100% zero-knowledge" claims, the platform de
 
 ### 3.1 Multi-Tenant Workspaces, Onboarding & Access Governance (FR-1)
 * **FR-1.1 (P1, Core)**: The system shall support multiple organization workspaces within a single database, using an `organization_id` foreign key on all tenant entities.
-* **FR-1.2 (P1, Core)**: The server shall strictly enforce Role-Based Access Control (RBAC) across four roles:
+* **FR-1.2 (P1, Core)**: The server shall strictly enforce Role-Based Access Control (RBAC) across distinct roles:
   * `ORG_OWNER`: Full administrative control over workspace, policies, keys, subscription billing, and member invitations.
   * `ORG_DEFENDER`: Triage permissions, payload decryption, CVSS scoring, retest requests, and internal notes.
   * `ORG_READONLY`: View non-sensitive report metadata, SLA timers, and aggregated program metrics.
   * `HUNTER`: View and update submitted reports, participate in confidential conversation, conduct retests.
-* **FR-1.3 (P1, Core)**: Users shall register and authenticate via email and bcrypt-hashed (rounds = 12) passwords with signed, HTTP-only JWT session cookies. `ORG_OWNER` and `ORG_DEFENDER` roles shall support Time-Based One-Time Password (TOTP) Multi-Factor Authentication.
-* **FR-1.4 (P1, Commercial)**: The platform shall provide a Guided Onboarding Wizard enabling organization leads to complete program configuration (domain DNS challenge, policy scope definition, browser key generation, and `security.txt` signing) within 15 minutes.
+* **FR-1.3 (P1, Core)**: Users shall register and authenticate via email and bcrypt/Argon2-hashed passwords, backed by database-persisted session tokens stored in secure, HTTP-only cookies. `ORG_OWNER` and `ORG_DEFENDER` roles shall support Time-Based One-Time Password (TOTP) Multi-Factor Authentication with encrypted secrets at rest.
+* **FR-1.4 (P1, Commercial)**: The platform shall provide a Guided Onboarding Wizard enabling organization leads to complete program configuration (domain DNS challenge, policy scope definition, browser key generation, offline master recovery key export with test challenge, and `security.txt` signing) within 15 minutes.
 * **FR-1.5 (P2, Commercial)**: The platform shall support both public disclosure programs (`/programs/[slug]`) and private invitation-only programs accessible via cryptographically tokenized invitation URLs (`/programs/[slug]/join?token=...`).
+* **FR-1.6 (P1, Core)**: The platform shall provide **Account-Less (Guest) Vulnerability Intake**: external researchers can submit vulnerability reports without registering an account. The client browser generates an ephemeral Curve25519 keypair, encrypts the report to the program defenders and organization recovery key, and provides the submitter with an opaque secret tracking URL (`/report/track/BBT-RPT-XXXX?token=<secret>`) to review replies and submit retests.
 
 ### 3.2 RFC 9116 Policy & Safe Harbor Generator (FR-2)
 * **FR-2.1 (P1, Core)**: The platform shall generate a compliant RFC 9116 text policy file available for download and preview at `/api/v1/programs/[slug]/security.txt` adhering strictly to RFC 9116 syntax.
-* **FR-2.2 (P1, Core)**: The `security.txt` file shall be signed in the client browser using the organization's **private signing key** and exported as a standard OpenPGP cleartext signed document. The tenant organization downloads this signed document and publishes it on their own root domain at `https://[org-domain]/.well-known/security.txt`, with the `Contact:` directive pointing back to BugBountyTrack's intake portal (`https://bugbountytrack.com/programs/[slug]/submit`).
+* **FR-2.2 (P1, Core)**: The `security.txt` file shall be signed in the client browser using the organization's **private signing key** and exported as a standard OpenPGP cleartext signed document. The tenant organization downloads this signed document and publishes it on their own root domain at `https://[org-domain]/.well-known/security.txt`, with the `Contact:` directive pointing back to BugBountyTrack's intake portal.
 * **FR-2.3 (P1, Core)**: The platform shall verify cleartext signed `security.txt` files using the organization's advertised public key.
 * **FR-2.4 (P1, Core)**: The policy builder shall generate a standardized Safe Harbor policy based on Disclose.io Core terms, defining authorized research, scope boundaries, and explicit limitations without asserting universal third-party legal immunity.
 * **FR-2.5 (P2, Core)**: The platform shall verify domain ownership by performing automated DNS TXT record challenge lookups (`_bbt-challenge.<domain>`) prior to activating a public program.
 
 ### 3.3 Browser-Side OpenPGP Cryptographic Pipeline & Neutral Labeling (FR-3)
-* **FR-3.1 (P1, Core)**: The client browser shall generate OpenPGP keypairs consisting of an Ed25519 primary signing key and an **X25519 or RSA-4096 encryption-capable subkey** adhering to RFC 9580 / RFC 4880.
-* **FR-3.2 (P1, Core)**: Private keys shall be exported armored and stored locally in browser `IndexedDB`, encrypted using AES-GCM with a key derived from the user's master passphrase via PBKDF2 (iterations ≥ 100,000). User accounts distinguish between the Login Password (auth) and the Local Encryption Passphrase (unlocking IndexedDB).
+* **FR-3.1 (P1, Core)**: The client browser shall generate OpenPGP keypairs pinned strictly to **v4 Ed25519 (Signing) and X25519 (Encryption)** Curve25519 algorithms (<50ms generation time), adhering to RFC 9580 / RFC 4880. RSA-4096 is deprecated and excluded.
+* **FR-3.2 (P1, Core)**: Private keys shall be exported armored and stored locally in browser `IndexedDB`, encrypted using OpenPGP's native **Argon2 S2K** string-to-key derivation. User accounts distinguish between the Login Password (auth) and the Local Encryption Passphrase (unlocking IndexedDB).
 * **FR-3.3 (P1, Core)**: When submitting a report, the client shall encrypt the sensitive fields (`title_ciphertext`, `description`, `reproduction_steps`, `impact`, and `attachment_payload`) using OpenPGP multi-recipient encryption targeted to:
-  * The organization's active public encryption subkey (Decryption Custodian).
-  * The reporting researcher's public encryption subkey.
+  * The program's active authorized defenders (N ≤ 10).
+  * The organization's offline master recovery key.
+  * The reporting researcher's public encryption key (or ephemeral report key).
 * **FR-3.4 (P1, Core)**: The client shall capture a server-readable neutral operational category label (`operational_label` enum: `AUTHENTICATION_BYPASS`, `INJECTION_VULNERABILITY`, `INFORMATION_DISCLOSURE`, `CROSS_SITE_SCRIPTING`, `ACCESS_CONTROL_ISSUE`, `DENIAL_OF_SERVICE`, `OTHER`) to facilitate safe dashboard filtering, queue management, and external notifications without leaking exploit titles.
-* **FR-3.5 (P1, Core)**: Encrypted attachment binaries (≤ 25 MB) shall be encrypted client-side with AES-256 session keys wrapped inside the OpenPGP packet prior to upload to Cloudflare R2 object storage.
-* **FR-3.6 (P2, Core)**: Key lifecycle management shall include exportable armored ASCII private key backup workflows, historic key retention in `IndexedDB` for decrypting past reports, and a documented Decryption Custodian succession procedure.
+* **FR-3.5 (P1, Core)**: Encrypted attachment binaries (≤ 25 MB) shall be uploaded directly from the browser to Cloudflare R2 using presigned URLs requested from `/api/uploads/presign`, completely bypassing serverless function payload size ceilings (4.5 MB).
+* **FR-3.6 (P2, Core)**: Key lifecycle management shall include mandatory offline Organization Master Recovery Key export with test challenge, historic key retention in `IndexedDB`, and audited session key re-wrapping (`HISTORICAL_ACCESS_GRANTED`).
 
 ### 3.4 Deterministic CVSS 3.1 Base Scoring Engine (FR-4)
-* **FR-4.1 (P1, Core)**: The platform shall incorporate a pure TypeScript calculation function computing FIRST.org CVSS 3.1 Base scores (0.0 to 10.0), mathematically verified with 100% parity against the 52 canonical test vectors documented in [`CVSS_TEST_FIXTURES.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/requirements/CVSS_TEST_FIXTURES.md) (derived from FIRST.org Appendix A and NIST NVD benchmarks).
+* **FR-4.1 (P1, Core)**: The platform shall incorporate a pure TypeScript calculation function computing FIRST.org CVSS 3.1 Base scores (0.0 to 10.0), mathematically verified with 100% parity against the 45 canonical unique test vectors documented in [`CVSS_TEST_FIXTURES.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/requirements/CVSS_TEST_FIXTURES.md) via `verify_cvss_engine.py`.
 * **FR-4.2 (P1, Core)**: The engine shall evaluate the 8 standard metrics: Attack Vector (`AV:N/A/L/P`), Attack Complexity (`AC:L/H`), Privileges Required (`PR:N/L/H`), User Interaction (`UI:N/R`), Scope (`S:U/C`), Confidentiality (`C:N/L/H`), Integrity (`I:N/L/H`), and Availability (`A:N/L/H`).
 * **FR-4.3 (P1, Core)**: The platform shall provide bidirectional conversion between metric selection and canonical vector strings (e.g., `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H`).
-* **FR-4.4 (P1, Core)**: For every severity assessment, the system shall immutably record the vector string, score, qualitative rating, assessor user ID, and written justification.
+* **FR-4.4 (P1, Core)**: The schema shall decouple the researcher-suggested severity (`cvss_suggested`) from the defender-assigned official rating (`cvss_score`), recording assessor user ID and written justification.
 
 ### 3.5 Confidential Triage, Structured Messaging & SLA Timers (FR-5)
 * **FR-5.1 (P1, Core)**: Authorized organization reviewers shall decrypt report payloads in-browser by unlocking their local private key with their passphrase.
 * **FR-5.2 (P1, Core)**: The triage interface shall support two separate discussion lanes:
-  * **Researcher–Organization Conversation**: Confidential thread encrypted for both Hunter and Defender keys.
-  * **Reviewer Internal Notes**: Private discussion encrypted strictly for organization reviewer keys, inaccessible to researchers.
-* **FR-5.3 (P1, Core)**: External notifications (email via Resend / webhooks) shall convey operational metadata only (`Report ID`, `operational_label`, `Timestamp`, authenticated URL link), containing zero exploit payload bytes.
-* **FR-5.4 (P2, Commercial)**: The system shall track SLA response targets based on severity (e.g., Critical: 48h initial triage, 14d fix; High: 72h triage, 30d fix), rendering countdown timers and sending automated reminder alerts when targets are approaching or breached.
+  * **Researcher–Organization Conversation**: Confidential thread encrypted for Submitter + Program Defenders + Org Recovery Key.
+  * **Reviewer Internal Notes**: Private discussion encrypted strictly for Program Defenders + Org Recovery Key, inaccessible to researchers.
+* **FR-5.3 (P1, Core)**: External notifications (email via Resend/Postmark or Slack-compatible webhooks) shall convey operational metadata only (`Report ID`, `operational_label`, `Timestamp`, authenticated URL link), containing zero exploit payload bytes.
+* **FR-5.4 (P2, Commercial)**: The system shall track SLA response targets based on severity (Critical: 48h initial triage, 14d fix; High: 72h triage, 30d fix), rendering countdown timers and sending automated reminder alerts via hourly scheduled checks.
 * **FR-5.5 (P2, Core)**: Duplicate handling shall be reviewer-driven: reviewers may link related reports internally after authorized in-browser decryption without disclosing details between unrelated researchers.
 
 ### 3.6 Git-Linked Remediation & Evidence Verification (FR-6)
 * **FR-6.1 (P1, Core)**: Remediation claims shall be formally proposed under status `FIX_PROPOSED`, requiring the reviewer to select an evidence type: `CODE_COMMIT` or `CONFIG_INFRASTRUCTURE`.
-* **FR-6.2 (P1, Core)**: For `CODE_COMMIT` evidence, the platform shall query the GitHub REST API v3 (`GET /repos/{owner}/{repo}/commits/{ref}`) using an organization-provided GitHub token or GitHub App installation to verify that the referenced 40-character commit SHA exists, verify commit author, and confirm commit is present on the specified branch across public or private repositories.
+* **FR-6.2 (P1, Core)**: For `CODE_COMMIT` evidence, the platform shall query the GitHub REST API v3 (`GET /repos/{owner}/{repo}/commits/{ref}`) and the compare API to verify that the referenced 40-character commit SHA exists, verify commit author, and confirm commit is present on the specified branch across public or private repositories (with Personal Access Tokens encrypted at rest).
 * **FR-6.3 (P1, Core)**: For `CONFIG_INFRASTRUCTURE` evidence, the client browser shall compute the SHA-256 hash of the configuration document or WAF rule locally via WebCrypto and submit the resulting 64-character hexadecimal hash to establish an immutable baseline on the server.
 * **FR-6.4 (P1, Core)**: The remediation proposal shall record the target deployment environment (`Staging`, `Pre-Production`, `Production`) and version string where the fix is available for retest.
 
@@ -214,20 +203,29 @@ Rather than asserting unverifiable "100% zero-knowledge" claims, the platform de
   * `VERIFIED_RESEARCHER`: The reporting researcher independently confirmed the vulnerability is mitigated on the target deployment.
   * `VERIFIED_INTERNAL`: An authorized organization reviewer certified the fix, recording whether they authored the fix.
   * `CLOSED_UNVERIFIED_TIMEOUT`: Closed following an expired grace period (≥ 14 days) **strictly via an authorized reviewer action with recorded justification**.
-* **FR-7.3 (P1, Core)**: If an empirical retest demonstrates that the vulnerability persists, the state transition shall record a `RETEST_FAILED` audit event and return to `ACCEPTED`, retaining the failed retest evidence in the immutable audit log.
-* **FR-7.4 (P1, Core)**: Any closed state (`VERIFIED_RESEARCHER`, `VERIFIED_INTERNAL`, `CLOSED_UNVERIFIED_TIMEOUT`, `REJECTED`, `DUPLICATE`) may be reopened by `Defender` or `Tenant Owner` recording an immutable justification log, transitioning the report back to `TRIAGING`.
-* **FR-7.5 (P2, Commercial)**: The platform shall generate exportable Redacted Closure Evidence summaries (PDF and JSON/HTML formats) capturing the operational label, report lifecycle timestamps, verified commit SHA/branch, deployment environment, retest attestations, and closing officer identity, suitable for sharing with enterprise clients and security auditors without disclosing raw exploit instructions.
+* **FR-7.3 (P1, Core)**: Additional supported terminal states include:
+  * `RISK_ACCEPTED`: Formal organization acceptance of operational risk without code modification.
+  * `REJECTED_SPAM`: Direct closure of noise or automated scans from `NEW`.
+  * `REJECTED_INVALID`: Validated as non-vulnerability or out of program scope.
+  * `DUPLICATE`: Linked to an existing active or closed report.
+  * `WITHDRAWN`: Voluntarily retracted by the submitting researcher.
+* **FR-7.4 (P1, Core)**: If an empirical retest demonstrates that the vulnerability persists, the state transition shall record a `RETEST_FAILED` audit event and return to `ACCEPTED`, retaining the failed retest evidence in the immutable audit log.
+* **FR-7.5 (P1, Core)**: Reports in `NEED_MORE_INFO` shall automatically transition to closed after 14 days of researcher inactivity.
+* **FR-7.6 (P1, Core)**: Any closed state may be reopened by `Defender` or `Tenant Owner` recording an immutable justification log, transitioning the report back to `TRIAGING`.
+* **FR-7.7 (P2, Commercial)**: The platform shall generate exportable Redacted Closure Evidence summaries (PDF and JSON formats) capturing the operational label, report lifecycle timestamps, verified commit SHA/branch, deployment environment, retest attestations, and closing officer identity, suitable for sharing with enterprise clients and security auditors without disclosing raw exploit instructions. Included in the $49/mo Team plan.
 
 ### 3.8 Application Hardening, Defensive Controls & Storage Quotas (FR-8)
 * **FR-8.1 (P1, Core)**: Decrypted Markdown content shall be parsed and sanitized before rendering using `unified` / `remark-parse` / `rehype-sanitize` enforcing strict HTML tag and attribute allowlists to neutralize Stored XSS.
-* **FR-8.2 (P1, Core)**: PostgreSQL Row-Level Security (RLS) policies shall be enforced on all tenant tables, setting the tenant context dynamically per connection via `SET LOCAL app.current_tenant_id = :org_id`.
-* **FR-8.3 (P1, Core)**: Public report submission endpoints shall enforce token-bucket rate limiting (5 submissions / hour / IP) to mitigate denial-of-service and scanner dumps.
-* **FR-8.4 (P2, Core)**: The system shall enforce a storage quota of 50 MB database volume and 2 GB Cloudflare R2 object volume per tenant organization. The platform shall issue an administrative warning at 90% usage, and strictly reject new allocations with HTTP `413 Payload Too Large` if projected usage exceeds 100%.
-* **FR-8.5 (P1, Core)**: The audit ledger shall enforce append-only constraints: database permissions on `audit_events` shall grant `INSERT` and `SELECT` operations only, preventing `UPDATE` and `DELETE` actions by any application role.
+* **FR-8.2 (P1, Core)**: PostgreSQL Row-Level Security (RLS) policies shall be enforced on all tenant tables, setting tenant context dynamically within interactive transactions via `SET LOCAL app.current_tenant_id = :org_id`.
+* **FR-8.3 (P1, Core)**: Public report submission endpoints shall enforce shared store rate limiting (PostgreSQL / Upstash) and Cloudflare Turnstile CAPTCHA (5 submissions / hour / IP).
+* **FR-8.4 (P2, Core)**: Direct-to-R2 presigned upload routes shall validate storage quotas (2 GB demo, 10 GB Team) at URL issuance time. The system shall display administrative warnings when usage reaches 90% of configured quota, strictly reject new allocations with HTTP `413 Payload Too Large` if projected usage exceeds 100%, and run an automated orphan cleanup job.
+* **FR-8.5 (P1, Core)**: The audit ledger shall enforce append-only constraints with a SHA-256 `prev_hash` chain: database permissions on `audit_events` shall grant `INSERT` and `SELECT` operations only, preventing `UPDATE` and `DELETE` actions by any application role.
+* **FR-8.6 (P2, Commercial)**: The platform shall integrate with Lemon Squeezy as Merchant of Record to handle subscription billing ($49/mo Team and free Community tier), global sales tax and VAT remittance, webhook subscription synchronization, and direct bank payouts to Pakistani accounts.
+* **FR-8.7 (P2, Commercial)**: The platform shall maintain an automated disaster recovery drill script for PostgreSQL and Cloudflare R2 backup restoration in an isolated sandbox, alongside a privileged GDPR tenant hard-deletion purge script.
 
 ### 3.9 Optional Extensions & Future Commercial Releases
 * **FR-9.1 (P3, Optional Extension)**: The platform may record simulated bounty awards (mock credit points only, no financial payout rails or tax documentation) and display a public researcher Hall of Fame leaderboard.
-* **FR-9.2 (Deferred, Later Commercial Roadmap)**: GitLab REST API integration, Enterprise SAML 2.0 / SCIM SSO, FIRST.org CVSS 4.0 MacroVectors, and Stripe Connect real-money settlement.
+* **FR-9.2 (Deferred, Later Commercial Roadmap)**: GitLab REST API integration, Enterprise SAML 2.0 / SCIM SSO, FIRST.org CVSS 4.0 MacroVectors, custom PDF branding, and Stripe Connect real-money settlement.
 
 ---
 
@@ -236,26 +234,28 @@ Rather than asserting unverifiable "100% zero-knowledge" claims, the platform de
 ### 4.1 Textual Use Case Specifications
 
 #### Use Case UC-01: Submit Encrypted Vulnerability Report
-* **Primary Actor**: Ethical Security Researcher (`Hunter`).
-* **Preconditions**: Researcher is authenticated and on the organization's public program page.
+* **Primary Actor**: Ethical Security Researcher (`Hunter` or `Guest Hunter`).
+* **Preconditions**: Researcher is on the organization's public program page.
 * **Main Success Scenario**:
   1. Researcher selects in-scope target asset, selects a neutral operational category label (`operational_label` enum), and enters specific vulnerability title.
   2. Researcher inputs sensitive vulnerability description, reproduction steps, and optional PoC attachment.
-  3. Client browser fetches the organization's active public encryption subkey.
-  4. Client browser generates an ephemeral AES-256 session key, encrypts title (`title_ciphertext`), description, and PoC, and encrypts the session key with both the organization's subkey and the researcher's public key.
-  5. Browser dispatches HTTP POST request with neutral operational metadata and OpenPGP ciphertext payload.
-  6. Backend validates rate limits, confirms tenant asset scope, and persists ciphertext in PostgreSQL.
-  7. System returns Report Reference ID (`#BBT-xxx`) in state `NEW`.
+  3. Client browser generates an ephemeral Curve25519 keypair in memory (<40ms).
+  4. Client browser fetches the organization's active public defender encryption subkeys and the offline master recovery key.
+  5. Client browser generates an ephemeral AES-256 session key, encrypts title (`title_ciphertext`), description, and PoC, and encrypts the session key with the organization's subkeys, recovery key, and ephemeral report key.
+  6. If attachment is present: Browser requests presigned URL from `/api/uploads/presign` and streams encrypted ciphertext directly to Cloudflare R2.
+  7. Browser dispatches HTTP POST request with neutral operational metadata, OpenPGP ciphertext payload, and attachment R2 references.
+  8. Backend validates Turnstile CAPTCHA, tenant asset scope, and persists ciphertext in PostgreSQL.
+  9. System issues an opaque secret tracking URL (`/report/track/BBT-RPT-XXXX?token=<secret>`), displays a bookmark prompt, and sets state to `NEW`.
 * **Extensions**:
-  * *3a. Organization public key missing or invalid*: Browser displays error; submission blocked.
-  * *6a. Rate limit exceeded*: Backend returns `429 Too Many Requests`; submission blocked.
+  * *4a. Organization public key missing or invalid*: Browser displays error; submission blocked.
+  * *8a. Rate limit exceeded*: Backend returns `429 Too Many Requests`; submission blocked.
 
 #### Use Case UC-02: Decrypt & Triage Vulnerability Report
 * **Primary Actor**: Organization Triage Lead (`Defender`).
 * **Preconditions**: Defender is authenticated with `ORG_DEFENDER` role; report is in state `NEW` or `TRIAGING`.
 * **Main Success Scenario**:
   1. Defender navigates to report view. Client retrieves encrypted payload and local private key from `IndexedDB`.
-  2. Defender enters local encryption passphrase to unlock private key.
+  2. Defender enters local encryption passphrase to unlock private key (Argon2 S2K).
   3. Client decrypts AES session key, decrypts ciphertext, sanitizes HTML via AST parser, and renders plaintext.
   4. Defender reviews report, adjusts CVSS 3.1 metrics, inputs assessment justification, and updates state to `ACCEPTED`.
   5. System records CVSS score, vector, and assessor ID in immutable audit log.
@@ -264,6 +264,7 @@ Rather than asserting unverifiable "100% zero-knowledge" claims, the platform de
   * *4a. Report lacks sufficient reproduction details*: Defender updates state to `NEED_MORE_INFO` and posts question in confidential thread.
   * *4b. Report identified as duplicate*: Defender links report to existing Report ID and transitions state to `DUPLICATE`.
   * *4c. Report out of scope or invalid*: Defender updates state to `REJECTED` with required policy citation.
+  * *4d. Spam/Scanner noise*: Defender updates state to `REJECTED_SPAM` directly from `NEW`.
 
 #### Use Case UC-03: Propose Remediation Evidence
 * **Primary Actor**: Organization Triage Lead (`Defender`).
@@ -271,7 +272,7 @@ Rather than asserting unverifiable "100% zero-knowledge" claims, the platform de
 * **Main Success Scenario**:
   1. Defender selects "Propose Remediation" and chooses evidence type `CODE_COMMIT` or `CONFIG_INFRASTRUCTURE`.
   2. If `CODE_COMMIT`: Defender inputs GitHub repository URL, target branch, and 40-character commit SHA.
-  3. System calls GitHub REST API v3 (`GET /repos/{owner}/{repo}/commits/{ref}`) to verify that the commit exists, verify commit author, and confirm commit is present on the specified branch.
+  3. System calls GitHub REST API v3 (`GET /repos/{owner}/{repo}/commits/{ref}`) and compare API to verify that the commit exists, verify commit author, and confirm commit is present on the specified branch.
   4. If `CONFIG_INFRASTRUCTURE`: Browser hashes configuration locally via WebCrypto SHA-256 and transmits the digest.
   5. Defender specifies deployment target (`Staging v1.2.0`) and submits proposal.
   6. System records remediation metadata, transitions state to `FIX_PROPOSED`, and dispatches metadata notification to researcher.
@@ -292,7 +293,7 @@ Rather than asserting unverifiable "100% zero-knowledge" claims, the platform de
 * **Preconditions**: Report is in a terminal closed state (`VERIFIED_RESEARCHER`, `VERIFIED_INTERNAL`, or `CLOSED_UNVERIFIED_TIMEOUT`).
 * **Main Success Scenario**:
   1. Defender clicks "Export Closure Evidence".
-  2. System generates a sanitized PDF/HTML report summarizing: Report reference ID, neutral operational category, initial discovery timestamp, verified GitHub commit SHA and branch, deployment environment URL/version, retest attestation details, and closing officer identity.
+  2. System generates a sanitized PDF/JSON report summarizing: Report reference ID, neutral operational category, initial discovery timestamp, verified GitHub commit SHA and branch, deployment environment URL/version, retest attestation details, and closing officer identity.
   3. All raw exploit code, zero-day reproduction steps, and confidential internal chatter are excluded from the exported document.
   4. Defender downloads the signed PDF for compliance records or enterprise customer verification.
 
@@ -306,10 +307,10 @@ flowchart TD
         UI["React 18 / Next.js UI
 (Guided Onboarding & Redacted Export)"]
         CryptoEngine["OpenPGP.js & WebCrypto
-(Dual Envelope + Neutral Labels)"]
+(Curve25519 + Neutral Labels)"]
         ASTSanitizer["rehype-sanitize AST Parser"]
         LocalKeyStore["IndexedDB Encrypted KeyStore
-(Historic Subkeys)"]
+(Argon2 S2K Key Protection)"]
         UI <--> CryptoEngine
         CryptoEngine <--> LocalKeyStore
         CryptoEngine --> ASTSanitizer --> UI
@@ -317,11 +318,11 @@ flowchart TD
 
     subgraph AppTier["Application Serverless Tier (Vercel Node 22 LTS)"]
         APIRoute["Next.js Route Handlers"]
-        AuthMiddleware["JWT Auth, TOTP MFA & Server RBAC"]
-        RateLimiter["Token-Bucket Rate Limiter"]
-        SLAEngine["SLA Countdown Engine"]
+        AuthMiddleware["DB Sessions, TOTP MFA & Server RBAC"]
+        RateLimiter["Shared Rate Limiter & Turnstile"]
+        SLAEngine["SLA Countdown Engine (Hourly Cron)"]
         QuotaGuard["Storage Quota Guard (90% / 100%)"]
-        GitHubClient["GitHub REST API Client (Public & Private)"]
+        GitHubClient["GitHub REST API Client (Commits & Compare)"]
         APIRoute --> AuthMiddleware
         APIRoute --> RateLimiter
         APIRoute --> SLAEngine
@@ -331,27 +332,29 @@ flowchart TD
 
     subgraph PersistenceTier["Persistence Tier (Cloud)"]
         PostgresDB[("Neon PostgreSQL 16
-(Row-Level Security & Append-Only Audit)")]
+(Row-Level Security & Hash-Chained Audit)")]
         R2Storage[("Cloudflare R2
-(Encrypted Attachments)")]
+(Encrypted Direct Uploads)")]
     end
 
     subgraph ExternalServices["External 3rd-Party Services"]
         GitHubAPI["GitHub API v3"]
-        ResendEmail["Resend Email API
+        ResendEmail["Resend / Postmark API
 (Metadata Alerts)"]
         DNSResolver["DNS Authority
 (TXT Challenge)"]
-        BillingStripe["Commercial Billing
-(M3 Roadmap)"]
+        BillingLemonSqueezy["Lemon Squeezy MoR
+(Global Tax & Payouts)"]
     end
 
     CryptoEngine -- "Encrypted Ciphertext (HTTPS)" --> APIRoute
     APIRoute -- "Prisma ORM (SET LOCAL app.current_tenant_id)" --> PostgresDB
-    APIRoute -- "Upload Encrypted Binary" --> R2Storage
+    CryptoEngine -- "Direct Presigned Upload (≤25MB)" --> R2Storage
+    APIRoute -- "Presign URL & Enforce Quota" --> R2Storage
     GitHubClient -- "Verify Commit SHA & Branch" --> GitHubAPI
     APIRoute -- "Send Metadata-Only Notification" --> ResendEmail
     APIRoute -- "Resolve TXT Record" --> DNSResolver
+    APIRoute -- "Webhooks & Subscriptions" --> BillingLemonSqueezy
 ```
 
 ---
@@ -360,7 +363,7 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    Hunter(["Ethical Researcher (Hunter)"])
+    Hunter(["Ethical Researcher (Hunter / Guest)"])
     Defender(["Triage Lead (Defender)"])
     Owner(["Tenant Owner"])
     ReadOnly(["Management (ReadOnly)"])
@@ -373,11 +376,11 @@ flowchart LR
         UC4["UC-04: Attested Retest & Accountable Closure"]
         UC5["UC-05: Guided Onboarding & RFC 9116 security.txt Signing"]
         UC6["UC-06: View Audit Logs & SLA Countdown Timers"]
-        UC7["UC-07: Export Redacted Closure Evidence (PDF/HTML)"]
-        UC8["UC-08: Armored Private Key Backup, Rotation & Succession"]
+        UC7["UC-07: Export Redacted Closure Evidence (PDF/JSON)"]
+        UC8["UC-08: Offline Org Recovery Key Backup & Decrypt Challenge"]
         UC9["UC-09: Tokenized Private Program Invitations"]
-        UC10["UC-10: Tenant Quota Monitoring & Commercial Subscriptions"]
-        UC11["UC-11: Platform Tenant Provisioning & System Telemetry"]
+        UC10["UC-10: Lemon Squeezy Subscription & Quota Management"]
+        UC11["UC-11: Platform Tenant Provisioning & Abuse Suspension"]
     end
 
     Hunter --> UC1
@@ -405,7 +408,7 @@ flowchart LR
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Hunter as Ethical Researcher
+    actor Hunter as Ethical Researcher (Guest)
     participant Browser as Browser Client
     participant KeyStore as IndexedDB Keystore
     participant Server as Next.js API Gateway
@@ -413,17 +416,16 @@ sequenceDiagram
 
     Hunter->>Browser: Enters Scope, Category Enum, Title, Description & PoC
     Browser->>Server: GET /api/v1/programs/{slug}/encryption-targets
-    Server-->>Browser: Returns recipient_set_version + Program Defender Public Keys
-    Browser->>KeyStore: Fetch Researcher Public Key
-    KeyStore-->>Browser: Researcher Public Key
-    Browser->>Browser: openpgp.encrypt(payload, [HunterKey, DefKey1, ...DefKeyN])
+    Server-->>Browser: Returns recipient_set_version, Defender Public Keys, Recovery Key
+    Browser->>Browser: Autonomous Curve25519 Ephemeral Key Generation (<40ms)
+    Browser->>Browser: openpgp.encrypt(payload, [ReportKey, DefKeys..., RecoveryKey])
     Browser->>Server: POST /api/v1/reports (recipient_set_version, Neutral Label, title_ciphertext, payload_ciphertext)
-    Server->>Server: Validate recipient_set_version, Tenant Scope, Quota Bounds & Rate Limits
+    Server->>Server: Validate recipient_set_version, Turnstile CAPTCHA, Tenant Scope & Quota
     Server->>DB: INSERT INTO reports (recipient_set_version, title_ciphertext, payload, operational_label, state='NEW')
-    DB-->>Server: Record Persisted (Append-Only Audit Event)
-    Server-->>Browser: 201 Created (Report #BBT-102)
-    Browser-->>Hunter: Display Report Confirmation & Encrypted Receipt
-
+    DB-->>Server: Record Persisted (Hash-Chained Audit Event)
+    Server-->>Browser: 201 Created (Report #BBT-102 + Tracking Token)
+    Browser->>KeyStore: Store Tracking Secret & Ephemeral Private Key
+    Browser-->>Hunter: Display Secret Tracking URL & Encrypted Receipt
 ```
 
 ---
@@ -440,8 +442,8 @@ sequenceDiagram
     participant DB as Neon PostgreSQL
 
     Defender->>Browser: Navigates to /reports/BBT-102
-    Browser->>Server: GET /api/v1/reports/BBT-102 (JWT Cookie + Tenant Context)
-    Server->>Server: Validate JWT Auth & Server RBAC (Verify Tenant Ownership)
+    Browser->>Server: GET /api/v1/reports/BBT-102 (Session Cookie + Tenant Context)
+    Server->>Server: Validate DB Session Auth & Server RBAC (Verify Tenant Ownership)
     Server->>DB: SELECT title_ciphertext, payload, metadata WHERE tenant_id = :id
     DB-->>Server: Return Ciphertext Record
     Server-->>Browser: 200 OK (Ciphertext Payload)
@@ -449,7 +451,7 @@ sequenceDiagram
     Defender->>Browser: Enters Passphrase
     Browser->>KeyStore: Retrieve Encrypted Private Key
     KeyStore-->>Browser: Encrypted Key Material
-    Browser->>Browser: WebCrypto PBKDF2/AES-GCM Decrypt Key with Passphrase
+    Browser->>Browser: Unlock Private Key via OpenPGP Argon2 S2K
     Browser->>Browser: openpgp.decrypt(title_ciphertext, payload, privateKey)
     Browser->>Browser: rehype-sanitize AST Cleansing (Neutralize Stored XSS)
     Browser-->>Defender: Renders Plaintext Report in Confidential View
@@ -464,27 +466,35 @@ sequenceDiagram
 | Current State | Event / Trigger Action | Permitted Actor | Guard Conditions & Business Rules | Next State | Required Attestation & Evidence |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `NEW` | Triage Intake Initiated | `Defender` | Report exists, valid ciphertext envelope | `TRIAGING` | Intake timestamp, assigned triager user ID |
+| `NEW` | Filter Scanner Spam | `Defender` | Automated scan output, non-vulnerability | `REJECTED_SPAM` | Spam categorization record |
 | `TRIAGING` | Accept Vulnerability | `Defender` | Flaw in-scope; valid reproduction; CVSS Base score computed | `ACCEPTED` | CVSS 3.1 Base vector string, numeric score, textual justification |
 | `TRIAGING` | Request Clarification | `Defender` | PoC incomplete or unable to reproduce | `NEED_MORE_INFO` | Structured inquiry posted in Researcher–Org discussion lane |
 | `NEED_MORE_INFO` | Submit Clarification | `Hunter` | Supplementary details or revised PoC provided | `TRIAGING` | Encrypted clarification response payload |
-| `TRIAGING` | Reject Submission | `Defender` | Out of program scope, invalid bug, or non-actionable | `REJECTED` | Mandatory rejection category and policy citation |
+| `NEED_MORE_INFO` | Inactivity Timeout | System Cron | Researcher inactive ≥ 14 days after inquiry | `CLOSED_UNVERIFIED_TIMEOUT`| Automated timeout record |
+| `TRIAGING` | Reject Submission | `Defender` | Out of program scope, invalid bug, or non-actionable | `REJECTED_INVALID` | Mandatory rejection category and policy citation |
 | `TRIAGING` | Mark as Duplicate | `Defender` | Identical root cause previously reported; verified in-browser | `DUPLICATE` | Reference to primary parent Report ID |
+| `TRIAGING` | Accept Operational Risk| `Defender` / `Owner` | Management formally accepts risk without fixing | `RISK_ACCEPTED` | Executive risk acceptance justification |
+| `TRIAGING` | Withdraw Finding | `Hunter` | Reporter retracts mistaken submission | `WITHDRAWN` | Submitter retraction statement |
 | `ACCEPTED` | Propose Remediation | `Defender` | Validated GitHub commit SHA or SHA-256 config hash | `FIX_PROPOSED` | 40-char commit SHA + target branch OR config SHA-256 hash |
 | `FIX_PROPOSED` | Deploy Fix & Request Retest | `Defender` | Remediation deployed to designated accessible environment | `RETEST_PENDING` | Deployment environment URL, version tag, retest instructions |
 | `RETEST_PENDING` | Retest Passed (Researcher) | `Hunter` | Fix independently verified mitigated by reporter on target env | `VERIFIED_RESEARCHER` | Empirical retest log, verification date, reporter confirmation |
 | `RETEST_PENDING` | Retest Passed (Internal) | `Defender` | Fix verified mitigated internally; author conflict disclosed | `VERIFIED_INTERNAL` | Reviewer empirical test evidence, conflict-of-interest disclosure |
 | `RETEST_PENDING` | Grace Period Inactivity Closure | `Defender` | Researcher inactive ≥ 14 days after deployment notification | `CLOSED_UNVERIFIED_TIMEOUT` | Explicit reviewer closure action with recorded administrative rationale |
 | `RETEST_PENDING` | Retest Failed (Flaw Persists) | `Hunter` / `Defender` | Empirical retest demonstrates vulnerability remains exploitable | `ACCEPTED` (via `RETEST_FAILED` event) | Detailed failure reproduction notes, error logs; preserves audit record |
-| `VERIFIED_RESEARCHER` / `VERIFIED_INTERNAL` / `CLOSED_UNVERIFIED_TIMEOUT` / `REJECTED` / `DUPLICATE` | Reopen Ticket | `Defender` / `Tenant Owner` | Regression identified or formal dispute upheld | `TRIAGING` | Mandatory reopening audit justification and incident link |
+| `VERIFIED_RESEARCHER` / `VERIFIED_INTERNAL` / `CLOSED_UNVERIFIED_TIMEOUT` / `REJECTED_INVALID` / `DUPLICATE` | Reopen Ticket | `Defender` / `Tenant Owner` | Regression identified or formal dispute upheld | `TRIAGING` | Mandatory reopening audit justification and incident link |
 
 ```mermaid
 stateDiagram-v2
     [*] --> NEW: Report Submitted (Encrypted)
+    NEW --> REJECTED_SPAM: Filter Scanner Spam
     NEW --> TRIAGING: Defender Opens Ticket
-    TRIAGING --> REJECTED: Out-of-Scope / Spam
+    TRIAGING --> REJECTED_INVALID: Out-of-Scope / Invalid
     TRIAGING --> DUPLICATE: Reviewer Links Duplicate
     TRIAGING --> NEED_MORE_INFO: Clarification Requested
     NEED_MORE_INFO --> TRIAGING: Researcher Responds
+    NEED_MORE_INFO --> CLOSED_UNVERIFIED_TIMEOUT: Inactive >= 14 Days
+    TRIAGING --> RISK_ACCEPTED: Risk Formally Accepted
+    TRIAGING --> WITHDRAWN: Submitter Retracts
     TRIAGING --> ACCEPTED: Valid Flaw Confirmed
 
     ACCEPTED --> FIX_PROPOSED: Commit SHA / Config Hash Provided
@@ -496,10 +506,9 @@ stateDiagram-v2
     RETEST_PENDING --> ACCEPTED: Retest Failed (Flaw Persists)
     
     VERIFIED_RESEARCHER --> TRIAGING: Regression Identified (Reopen)
-
     VERIFIED_INTERNAL --> TRIAGING: Regression Identified (Reopen)
     CLOSED_UNVERIFIED_TIMEOUT --> TRIAGING: Retest Requested (Reopen)
-    REJECTED --> TRIAGING: Dispute Upheld (Reopen)
+    REJECTED_INVALID --> TRIAGING: Dispute Upheld (Reopen)
     DUPLICATE --> TRIAGING: Distinct Root Cause (Reopen)
 ```
 
@@ -515,6 +524,7 @@ erDiagram
     ORGANIZATION ||--o{ PROGRAM_INVITATION : issues
     USER ||--o{ USER_MEMBERSHIP : belongs_to
     USER ||--o{ PGP_KEY : owns
+    USER ||--o{ SESSION : authenticates
     PROGRAM ||--o{ REPORT : receives
     REPORT ||--o{ DISCUSSION_MESSAGE : contains
     REPORT ||--o{ REMEDIATION_RECORD : verified_by
@@ -534,8 +544,9 @@ erDiagram
     SUBSCRIPTION {
         string id PK
         string organization_id FK
-        string plan_tier "STARTER | TEAM_PRO"
-        string status "ACTIVE | TRIALING | PAST_DUE"
+        string plan_tier "COMMUNITY | TEAM"
+        string status "ACTIVE | PAST_DUE | CANCELED"
+        string lemon_squeezy_sub_id UK
         int max_programs
         int max_seats
         int storage_quota_mb
@@ -549,6 +560,7 @@ erDiagram
         string slug UK
         string visibility "PUBLIC | INVITE_ONLY"
         int recipient_set_version
+        string recovery_public_key
         string policy_markdown
         datetime created_at
     }
@@ -562,14 +574,21 @@ erDiagram
         datetime accepted_at
     }
 
-
     USER {
         string id PK
         string email UK
         string password_hash
-        string totp_secret
+        string totp_secret_cipher
         boolean mfa_enabled
         string full_name
+        datetime created_at
+    }
+
+    SESSION {
+        string id PK
+        string user_id FK
+        string session_token UK
+        datetime expires_at
         datetime created_at
     }
 
@@ -595,12 +614,14 @@ erDiagram
         string organization_id FK
         string program_id FK
         string hunter_id FK
+        string guest_token_hash UK
         string assigned_defender_id FK
-        string state "NEW | TRIAGING | ACCEPTED | FIX_PROPOSED | RETEST_PENDING | VERIFIED_RESEARCHER | VERIFIED_INTERNAL | CLOSED_UNVERIFIED_TIMEOUT"
+        string state "NEW | TRIAGING | ACCEPTED | FIX_PROPOSED | RETEST_PENDING | VERIFIED_RESEARCHER | VERIFIED_INTERNAL | CLOSED_UNVERIFIED_TIMEOUT | RISK_ACCEPTED | REJECTED_SPAM | REJECTED_INVALID | DUPLICATE | WITHDRAWN"
         string operational_label "AUTHENTICATION_BYPASS | INJECTION_VULNERABILITY | INFORMATION_DISCLOSURE | CROSS_SITE_SCRIPTING | ACCESS_CONTROL_ISSUE | DENIAL_OF_SERVICE | OTHER"
         string title_ciphertext "CIPHERTEXT ONLY"
         string asset_scope
         string cvss_vector
+        float cvss_suggested
         float cvss_score
         string encrypted_payload "CIPHERTEXT ONLY"
         datetime sla_triage_due
@@ -644,7 +665,7 @@ erDiagram
     CLOSURE_EVIDENCE_EXPORT {
         string id PK
         string report_id FK
-        string export_type "PDF | JSON_HTML"
+        string export_type "PDF | JSON"
         string export_sha256
         string closing_officer_id FK
         datetime generated_at
@@ -657,6 +678,7 @@ erDiagram
         string actor_id FK
         string action
         string justification
+        string prev_hash
         datetime timestamp
     }
 ```
@@ -668,31 +690,32 @@ erDiagram
 ### 5.1 User Interfaces & Screen Catalog
 The platform provides a clean, responsive web interface comprising 8 core screens:
 1. **`SCR-01: Public Program Discovery (/programs/[slug])`**: Displays organization logo, Safe Harbor statement, in-scope domains, rules of engagement, and active PGP public key.
-2. **`SCR-02: Cryptographic Report Submission (/programs/[slug]/submit)`**: Form for neutral operational category selection, specific title, asset selection, CVSS calculator, encrypted description, PoC input, and file attachment dropzone.
+2. **`SCR-02: Cryptographic Report Submission (/programs/[slug]/submit)`**: Form for neutral operational category selection, specific title, asset selection, CVSS calculator, encrypted description, PoC input, and file attachment dropzone (supporting guest intake).
 3. **`SCR-03: Triage & Confidential Discussion Desk (/dashboard/reports/[id])`**: Passphrase-unlocked view displaying decrypted report, dual-lane discussion threads, SLA countdown timers, CVSS adjustment controls, and state transitions.
 4. **`SCR-04: Remediation Proposal Modal`**: Form for selecting evidence type (`CODE_COMMIT` vs. `CONFIG_INFRASTRUCTURE`), inputting GitHub commit SHA, and recording target deployment environment.
 5. **`SCR-05: Attested Retest Form`**: Formal modal prompting for empirical retest results, deployment URL, test logs, and certification sign-off.
 6. **`SCR-06: Organization Policy & Key Settings (/settings/security-txt)`**: Interface for generating RFC 9116 text, in-browser cleartext PGP signing, armored key backup/succession, and DNS TXT verification.
-7. **`SCR-07: Guided Onboarding Wizard (/onboarding)`**: Multi-step setup wizard guiding new organization owners through domain DNS challenge verification, policy definition, local PGP key generation, and RFC 9116 publication in under 15 minutes.
-8. **`SCR-08: Redacted Closure Evidence Export Modal (/dashboard/reports/[id]/export)`**: Configuration modal allowing defenders to generate and download sanitized, audit-ready PDF/HTML closure evidence summaries.
+7. **`SCR-07: Guided Onboarding Wizard (/onboarding)`**: Multi-step setup wizard guiding new organization owners through domain DNS challenge verification, policy definition, local PGP key generation, offline master recovery key export challenge, and RFC 9116 publication in under 15 minutes.
+8. **`SCR-08: Redacted Closure Evidence Export Modal (/dashboard/reports/[id]/export)`**: Configuration modal allowing defenders to generate and download sanitized, audit-ready PDF/JSON closure evidence summaries.
 
 ### 5.2 Software & External API Interfaces
-* **GitHub REST API v3**: `GET /repos/{owner}/{repo}/commits/{ref}` verifying 40-character commit SHAs, author identity, and repository branch for public and private repositories.
+* **GitHub REST API v3**: `GET /repos/{owner}/{repo}/commits/{ref}` and compare API verifying commit SHAs, author identity, and repository branch membership across public and private repositories.
 * **DNS Resolver (Node.js `dns.promises`)**: `resolveTxt()` resolving `_bbt-challenge.<domain>` records for domain ownership validation.
 * **Resend / Postmark API v1**: `POST /emails` dispatching metadata-only transaction notifications over TLS.
-* **Cloudflare R2 Object Storage (S3 API Client)**: `PutObjectCommand` and `GetObjectCommand` storing client-encrypted attachments with zero egress fees.
+* **Cloudflare R2 Object Storage (S3 API Client)**: `PutObjectCommand` and `GetObjectCommand` storing client-encrypted attachments with zero egress fees via presigned URLs.
+* **Lemon Squeezy API v1**: Merchant of Record checkout sessions, webhook handlers for subscription lifecycle, and customer portal.
 
 ---
 
 ## 6. Non-Functional Requirements (NFR)
 
 * **NFR-01 (API Latency Target)**: 95% of non-cryptographic API requests (`GET /api/v1/programs`, `GET /api/v1/reports`) shall respond within ≤ 300 ms under a concurrent load of 10 requests on reference hardware (Node.js 22 serverless runtime).
-* **NFR-02 (Client Cryptographic Benchmark)**: Client-side OpenPGP key generation and payload encryption (≤ 100 KB text) shall complete within ≤ 1,500 ms on modern desktop browsers (Chromium 120+, Apple M-series or Intel Core i5 reference).
+* **NFR-02 (Client Cryptographic Benchmark)**: Client-side OpenPGP key generation and payload encryption (≤ 100 KB text) shall complete within ≤ 1,500 ms on modern desktop browsers (Chromium 120+, Apple M-series or Intel Core i5 reference). Pinned Curve25519 executes in <50ms.
 * **NFR-03 (Row-Level Security Dynamic Context)**: The database driver shall set tenant context dynamically on pooled connections via `SET LOCAL app.current_tenant_id = :org_id` within every transactional query block, preventing tenant context leaks across connection pool reuse.
 * **NFR-04 (WCAG 2.2 AA Accessibility)**: All interactive touch targets shall meet the minimum criterion of 24 × 24 CSS px per WCAG 2.2 AA (with 44 × 44 CSS px enforced on primary mobile navigation controls as an enhanced target). Color contrast ratios shall maintain ≥ 4.5:1 for normal text and ≥ 3.0:1 for large text.
 * **NFR-05 (Stored XSS Neutralization)**: The Markdown rendering engine shall parse input into an Abstract Syntax Tree (AST) and sanitize via `rehype-sanitize` against a strict allowlist. It shall neutralize 100% of standard test attack vectors from the OWASP Cross-Site Scripting Filter Evasion Cheat Sheet (including `<script>`, `javascript:`, `onerror=`, and `data:` URIs).
-* **NFR-06 (Storage Quota Enforcement)**: Tenant storage shall be capped at 50 MB database volume and 2 GB Cloudflare R2 object volume per tenant organization. The platform shall display administrative warnings when usage reaches 90% of configured quota, and strictly reject new allocations with HTTP `413 Payload Too Large` if projected usage exceeds 100%.
-* **NFR-07 (Append-Only Audit Ledger Integrity)**: The PostgreSQL `audit_events` table shall enforce database-level grant constraints permitting `INSERT` and `SELECT` operations only, preventing record modification or deletion even in the event of application-level credential compromise.
+* **NFR-06 (Storage Quota Enforcement)**: Tenant storage shall be capped at 50 MB database volume and 2 GB Cloudflare R2 object volume for demo tenants, and 10 GB for Team tenants. The platform shall display administrative warnings when usage reaches 90% of configured quota, and strictly reject new allocations with HTTP `413 Payload Too Large` if projected usage exceeds 100%.
+* **NFR-07 (Append-Only Audit Ledger Integrity)**: The PostgreSQL `audit_events` table shall enforce database-level grant constraints permitting `INSERT` and `SELECT` operations only, with a cryptographic `prev_hash` chain preventing record modification or deletion even in the event of application-level credential compromise.
 * **NFR-08 (SLA Countdown Engine Accuracy)**: The SLA countdown monitor shall evaluate report targets with hourly precision, flagging breached targets and dispatching automated reminders within 60 minutes of deadline expiration.
 
 ---
@@ -703,39 +726,42 @@ The platform provides a clean, responsive web interface comprising 8 core screen
 
 | Requirement ID | Functional Capability Description | Target Delivery Milestone | Automated Test Case ID | WBS Package Code |
 | :--- | :--- | :--- | :--- | :--- |
-| **FR-1.1** | Multi-tenant schema isolation & monorepo | M1 (W1–W8) | `TC-SEC-01` (Tenant RLS isolation test) | `WP-1.1` / `WP-1.2` |
-| **FR-1.2** | Server-enforced 4-tier RBAC middleware | M1 (W1–W8) | `TC-AUTH-02` (Role boundary verification) | `WP-2.3` |
-| **FR-1.3** | Auth, signed JWT, session revocation & TOTP MFA | M1 / M3 | `TC-AUTH-01` (Password hashing, JWT & session kill) | `WP-2.2` / `WP-7.1` |
-| **FR-1.4** | Guided onboarding wizard & checklist | M3 (W13–W15) | `TC-ONBOARD-01` (Onboarding flow completion test) | `WP-7.2` |
-| **FR-1.5** | Private program access (`token_hash` invite) | M3 (W13–W15) | `TC-INVITE-01` (Tokenized invite redemption test) | `WP-7.3` |
-| **FR-2.1** | RFC 9116 `security.txt` endpoint & download | M1 (W1–W8) | `TC-POL-01` (RFC 9116 syntax validator) | `WP-3.1` |
-| **FR-2.2** | Browser cleartext PGP signing of policy | M1 (W1–W8) | `TC-POL-02` (Cleartext signature verification) | `WP-3.2` |
-| **FR-2.5** | DNS TXT challenge domain verification | M1 (W1–W8) | `TC-POL-03` (DNS TXT record challenge mock) | `WP-3.3` |
-| **FR-3.1** | WebCrypto keypair generation (Ed25519+X25519)| M1 (W1–W8) | `TC-CRYPTO-01` (Keypair subkey capability check) | `WP-3.4` |
-| **FR-3.2** | Passphrase-encrypted IndexedDB keystore | M1 (W1–W8) | `TC-CRYPTO-02` (Local keystore decrypt assertion) | `WP-3.4` |
-| **FR-3.3** | Multi-defender encryption (`recipient_set_version`)| M1 (W1–W8) | `TC-CRYPTO-03` (Multi-defender decryption test) | `WP-4.1` |
-| **FR-3.4** | Neutral operational category labeling | M1 (W1–W8) | `TC-CRYPTO-05` (Operational label categorization test) | `WP-4.1` |
-| **FR-3.5** | Encrypted attachment upload (Cloudflare R2) | M1 (W1–W8) | `TC-CRYPTO-04` (Encrypted attachment stream test)| `WP-4.2` |
-| **FR-3.6** | Key backup UI & audited session re-wrapping | M1 / M3 | `TC-CRYPTO-06` (Session key re-wrap audit assertion) | `WP-7.4` |
-| **FR-4.1** | Deterministic CVSS 3.1 Base scoring engine | M1 (W1–W8) | `TC-CVSS-01` (45 verified vectors in CVSS_TEST_FIXTURES.md) | `WP-4.3` |
-| **FR-5.1** | In-browser decryption & working prototype | M1 (W1–W8) | `TC-TRIAGE-01` (In-browser decrypt pipeline test) | `WP-4.4` |
-| **FR-5.2** | Dual-lane triage (Conversation vs. Internal) | M2 (W9–W12) | `TC-TRIAGE-02` (Internal notes key isolation test) | `WP-5.1` |
-| **FR-5.3** | Minimal-metadata alerts & duplicate linking | M2 (W9–W12) | `TC-NOTIF-01` (Minimal-metadata email dispatch mock) | `WP-5.2` |
-| **FR-5.4** | SLA countdown timers & Outbox worker retry | M3 / M4 | `TC-SLA-01` (Outbox retry & idempotency test) | `WP-7.5` |
-| **FR-6.2** | GitHub REST API commit SHA validation | M2 (W9–W12) | `TC-VCS-01` (GitHub API commit & branch mock) | `WP-5.3` |
-| **FR-6.3** | Infrastructure config SHA-256 hash binder | M2 (W9–W12) | `TC-VCS-02` (Hash reproducibility test) | `WP-5.4` |
-| **FR-7.1** | Basic intake triage transitions (NEW->ACCEPTED)| M1 (W1–W8) | `TC-STATE-01` (Intake state transition test) | `WP-4.4` |
-| **FR-7.2** | Attested retest state machine (3 fan-outs) | M2 (W9–W12) | `TC-STATE-02` (Mandatory retest attestation check)| `WP-6.1` |
-| **FR-7.3** | Failed retest event loopback to `ACCEPTED` | M2 (W9–W12) | `TC-STATE-03` (Failed retest transition & log test) | `WP-6.1` |
-| **FR-7.4** | Ticket reopening audit logging | M2 (W9–W12) | `TC-STATE-04` (Reopen justification audit log test) | `WP-6.1` |
-| **FR-7.5** | Redacted closure evidence export (PDF/JSON)| M4 (W16–W18) | `TC-EXPORT-01` (Redacted export sanitization check) | `WP-7.6` |
-| **FR-8.1** | AST Markdown HTML sanitization | M1 (W1–W8) | `TC-SEC-02` (OWASP XSS cheat sheet corpus test) | `WP-1.3` |
-| **FR-8.2** | PostgreSQL Row-Level Security isolation | M1 (W1–W8) | `TC-SEC-01` (Tenant RLS boundary test) | `WP-1.2` |
-| **FR-8.3** | Token-bucket rate limiting (5 req/hr/IP) | M1 (W1–W8) | `TC-SEC-03` (Token-bucket rate limit test) | `WP-2.4` |
-| **FR-8.4** | Storage quota monitor & enforcement | M2 (W9–W12) | `TC-SEC-04` (Tenant quota enforcement test) | `WP-6.2` |
-| **FR-8.5** | Append-only audit database grants | M1 (W1–W8) | `TC-SEC-05` (Audit table UPDATE/DELETE rejection) | `WP-1.2` |
-| **FR-8.6** | Production Cloud & Stripe Subscription Engine | M4 (W16–W18) | `TC-BILL-01` (Stripe webhook idempotency & downgrade) | `WP-7.7` |
-| **FR-8.7** | Disaster recovery restore & hard deletion | M4 (W16–W18) | `TC-OPS-01` (Automated DB & R2 restore sandbox drill) | `WP-7.8` |
+| **FR-1.1** | Multi-tenant schema isolation & monorepo | Part A (W1–W8) | `TC-SEC-01` (Tenant RLS isolation test) | `WP-1.1` / `WP-1.2` |
+| **FR-1.2** | Server-enforced 4-tier RBAC middleware | Part A (W1–W8) | `TC-AUTH-02` (Role boundary verification) | `WP-2.3` |
+| **FR-1.3** | DB sessions, password auth & TOTP MFA | Part A / Part B | `TC-AUTH-01` (Password hashing, DB session kill) | `WP-2.2` / `WP-7.1` |
+| **FR-1.4** | Guided onboarding & offline recovery key | Part B (W13–W14)| `TC-ONBOARD-01` (Onboarding flow completion test) | `WP-7.2` |
+| **FR-1.5** | Private program access (`token_hash` invite) | Part B (W13–W14)| `TC-INVITE-01` (Tokenized invite redemption test) | `WP-7.3` |
+| **FR-1.6** | Account-less guest vulnerability intake | Part B (W13–W14)| `TC-GUEST-01` (Guest intake & secret tracking test) | `WP-7.3` |
+| **FR-2.1** | RFC 9116 `security.txt` endpoint & download | Part A (W1–W8) | `TC-POL-01` (RFC 9116 syntax validator) | `WP-3.1` |
+| **FR-2.2** | Browser cleartext PGP signing of policy | Part A (W1–W8) | `TC-POL-02` (Cleartext signature verification) | `WP-3.2` |
+| **FR-2.5** | DNS TXT challenge domain verification | Part A (W1–W8) | `TC-POL-03` (DNS TXT record challenge mock) | `WP-3.3` |
+| **FR-3.1** | WebCrypto keypair generation (Ed25519/X25519)| Part A (W1–W8) | `TC-CRYPTO-01` (Curve25519 capability check) | `WP-3.4` |
+| **FR-3.2** | Argon2 S2K encrypted IndexedDB keystore | Part A (W1–W8) | `TC-CRYPTO-02` (Local keystore decrypt assertion) | `WP-3.4` |
+| **FR-3.3** | Multi-defender encryption (`recipient_set_version`)| Part A (W1–W8) | `TC-CRYPTO-03` (Multi-defender decryption test) | `WP-4.1` |
+| **FR-3.4** | Neutral operational category labeling | Part A (W1–W8) | `TC-CRYPTO-05` (Operational label categorization test) | `WP-4.1` |
+| **FR-3.5** | Direct-to-R2 presigned upload (≤ 25 MB) | Part A / Part B | `TC-CRYPTO-04` (Direct R2 presigned upload test) | `WP-4.2` / `WP-7.4` |
+| **FR-3.6** | Offline recovery key & audited re-wrapping | Part A / Part B | `TC-CRYPTO-06` (Session key re-wrap audit assertion) | `WP-7.2` |
+| **FR-4.1** | Deterministic CVSS 3.1 Base scoring engine | Part A (W1–W8) | `TC-CVSS-01` (45 verified vectors in CVSS_TEST_FIXTURES.md) | `WP-4.3` |
+| **FR-4.4** | Decoupled suggested vs assigned CVSS score | Part A (W1–W8) | `TC-CVSS-02` (Suggested vs assigned score test) | `WP-4.3` |
+| **FR-5.1** | In-browser decryption & working prototype | Part A (W1–W8) | `TC-TRIAGE-01` (In-browser decrypt pipeline test) | `WP-4.4` |
+| **FR-5.2** | Dual-lane triage (Conversation vs. Internal) | Part A (W9–W10)| `TC-TRIAGE-02` (Internal notes key isolation test) | `WP-5.1` |
+| **FR-5.3** | Minimal-metadata alerts & duplicate linking | Part A (W9–W10)| `TC-NOTIF-01` (Minimal-metadata email dispatch mock) | `WP-5.2` |
+| **FR-5.4** | SLA countdown engine & Slack webhooks | Part B (W15–W16)| `TC-SLA-01` (Hourly SLA cron & webhook test) | `WP-7.5` |
+| **FR-6.2** | GitHub REST API commit SHA & branch check | Part A (W9–W10)| `TC-VCS-01` (GitHub API commit & compare mock) | `WP-5.3` |
+| **FR-6.3** | Infrastructure config SHA-256 hash binder | Part A (W9–W10)| `TC-VCS-02` (Hash reproducibility test) | `WP-5.4` |
+| **FR-7.1** | Basic intake triage transitions (NEW->ACCEPTED)| Part A (W1–W8) | `TC-STATE-01` (Intake state transition test) | `WP-4.4` |
+| **FR-7.2** | Attested retest state machine (3 fan-outs) | Part A (W11–W12)| `TC-STATE-02` (Mandatory retest attestation check)| `WP-6.1` |
+| **FR-7.3** | Expanded states (RISK_ACCEPTED, REJECTED_SPAM)| Part A (W11–W12)| `TC-STATE-03` (Expanded state transitions check) | `WP-6.1` |
+| **FR-7.4** | Failed retest event loopback to `ACCEPTED` | Part A (W11–W12)| `TC-STATE-04` (Failed retest transition & log test) | `WP-6.1` |
+| **FR-7.6** | Ticket reopening audit logging | Part A (W11–W12)| `TC-STATE-05` (Reopen justification audit log test) | `WP-6.1` |
+| **FR-7.7** | Redacted closure evidence export (PDF/JSON)| Part B (W15–W16)| `TC-EXPORT-01` (Redacted export sanitization check) | `WP-7.6` |
+| **FR-8.1** | AST Markdown HTML sanitization | Part A (W1–W8) | `TC-SEC-02` (OWASP XSS cheat sheet corpus test) | `WP-1.3` |
+| **FR-8.2** | PostgreSQL Row-Level Security isolation | Part A (W1–W8) | `TC-SEC-01` (Tenant RLS boundary test) | `WP-1.2` |
+| **FR-8.3** | Shared store rate limiter & Turnstile | Part A (W3–W4) | `TC-SEC-03` (Turnstile & shared rate limit test) | `WP-2.4` |
+| **FR-8.4** | Storage quota monitor & presigned direct R2 | Part A / Part B | `TC-SEC-04` (Tenant quota enforcement test) | `WP-6.2` / `WP-7.4` |
+| **FR-8.5** | Append-only audit ledger with SHA-256 hash | Part A (W1–W8) | `TC-SEC-05` (Audit table UPDATE/DELETE rejection) | `WP-1.2` |
+| **FR-8.6** | Merchant of Record (Lemon Squeezy) Billing | Part B (W15–W16)| `TC-BILL-01` (Lemon Squeezy webhook idempotency) | `WP-7.7` |
+| **FR-8.7** | Disaster recovery restore & hard deletion | Part B (W17–W18)| `TC-OPS-01` (Automated DB & R2 restore sandbox drill) | `WP-7.12` |
 
 ### 7.2 Verification Test Pyramid & Acceptance Criteria
 * **Unit Tests (Jest / TypeScript)**:
@@ -749,11 +775,11 @@ The platform provides a clean, responsive web interface comprising 8 core screen
   * Outbox worker test asserting exponential retry on delivery failure and idempotency deduplication.
   * Append-only database assertion confirming that attempting `UPDATE` or `DELETE` on `audit_events` throws a database permission error.
 * **Acceptance Gates Across Delivery Milestones**:
-  * **Milestone Gate 1 (Week 7 Live Prototype)**: Core intake, client encryption targeting program defenders, local key unlocking, in-browser decryption, AST sanitization, pure TypeScript CVSS 3.1 scoring, basic state transitions (`NEW` → `TRIAGING` → `ACCEPTED`), and PostgreSQL RLS tenant isolation.
-  * **Milestone Gate 2 (Week 12 Academic Defense Baseline)**: GitHub commit SHA verification, non-code SHA-256 config hashing, empirical retest workflow with 3 separate terminal branches (`VERIFIED_RESEARCHER`, `VERIFIED_INTERNAL`, `CLOSED_UNVERIFIED_TIMEOUT`), failed retest event loopback to `ACCEPTED`, and controlled peer usability evaluation (3–5 peers).
-  * **Milestone Gate 3 (Weeks 13–15 Commercial Pilot Milestone)**: Guided Onboarding Wizard, TOTP MFA, private program invitations (`token_hash`), and multi-defender key management with audited session re-wrapping.
-  * **Milestone Gate 4 (Weeks 16–18 Commercial Launch Gate - DoRG)**: Automated PostgreSQL + R2 backup restore drill in sandbox, customer hard-deletion workflow, Stripe subscription billing lifecycle (checkout, webhooks, failed card grace period, cancellation downgrade), notification outbox worker, and redacted PDF/JSON closure evidence export.
-
+  * **Gate 1 (Week 7 Live Prototype)**: Core intake, client encryption targeting program defenders, local key unlocking, in-browser decryption, AST sanitization, pure TypeScript CVSS 3.1 scoring, basic state transitions (`NEW` → `TRIAGING` → `ACCEPTED`), and PostgreSQL RLS tenant isolation.
+  * **Gate 2 (Week 12 Academic Defense Baseline)**: GitHub commit SHA verification, non-code SHA-256 config hashing, empirical retest workflow with 3 separate terminal branches (`VERIFIED_RESEARCHER`, `VERIFIED_INTERNAL`, `CLOSED_UNVERIFIED_TIMEOUT`), failed retest event loopback to `ACCEPTED`, and controlled peer usability evaluation (3–5 peers).
+  * **Gate 3 (Weeks 13–14 Commercial Core Intake)**: Guided Onboarding Wizard, offline Organization Master Recovery Key export with test challenge, account-less guest intake, direct-to-R2 presigned upload hardening, and SuperAdmin console.
+  * **Gate 4 (Weeks 15–16 Commercial Operations Ready)**: SLA countdown engine with hourly checks, Slack webhooks, redacted PDF/JSON closure evidence export, Lemon Squeezy MoR billing ($49/mo Team & Free Tier), landing page, and legal pack.
+  * **Gate 5 (Weeks 17–18 Commercial Production Release - DoRG)**: Security hardening (CSP, SRI, CSRF, lockout, SSRF checks), self pen-test pass, Sentry observability, and automated disaster recovery sandbox drill.
 
 ---
 

@@ -7,7 +7,7 @@
   "rollNo": "24-ST-013",
   "session": "2024-2028",
   "batch": "24-SET-Fall",
-  "section": "SET-A",
+  "section": "SET-B",
   "officialEmail": "24-st-013@students.ptut.edu.pk",
   "supervisor": "Sir Umar Hayat",
   "name": "BugBountyTrack — Multi-Tenant Vulnerability Disclosure Platform with Cryptographic Payload Isolation and Evidence-Based Remediation Traceability",
@@ -36,5 +36,5 @@
     "standards": ["RFC-9116", "CVSS-3.1"]
   },
   "activePhase": "Phase 1: Requirements Analysis & Engineering (Gate 1: DoR)",
-  "activeMilestone": "Week 1-2: Discovery, BRD, IEEE 830 SRS & WBS Baseline Certified (v3.1.0)"
+  "activeMilestone": "Week 1-2: Discovery, BRD, IEEE 830 SRS & WBS Baseline Certified (v3.2.0)"
 }

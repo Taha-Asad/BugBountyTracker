@@ -4,7 +4,7 @@
 **Academic Level**: Fifth-Semester Project (Evaluated Prototype)  
 **Student**: Taha Asadullah (Software Engineering Technology)  
 **Sub-Field**: Application Security & Secure Software Engineering  
-**Document Suite Version**: Version 3.1.0 (Commercial Baseline & Academic Defense Specification)  
+**Document Suite Version**: Version 3.2.0 (Commercial Baseline & Academic Defense Specification)  
 **Last Updated**: October 2026  
 
 ---
@@ -18,23 +18,25 @@ flowchart LR
     C --> D["4. Verified Retest<br/>(Independent Proof)"]
 ```
 
-* **The Problem**: Small tech startups and open-source teams cannot afford expensive enterprise bug platforms like HackerOne ($\$15\text{k}-\$30\text{k}+/\text{year}$). When ethical hackers find dangerous vulnerabilities, they report them through unencrypted emails or social media DMs. This leaks sensitive zero-days and leads to bugs being forgotten or closed without anyone verifying the fix.
+* **The Problem**: Small tech startups and open-source teams cannot afford expensive enterprise bug platforms like HackerOne ($15k–$30k+/year). When ethical hackers find dangerous vulnerabilities, they report them through unencrypted emails or social media DMs. This leaks sensitive zero-days and leads to bugs being forgotten or closed without anyone verifying the fix.
 * **Our Solution**: **BugBountyTrack** is a lightweight, multi-tenant web platform that gives startups an official `security.txt` beacon, an encrypted intake portal where reports are locked in the browser, and an **accountable fix tracker** that proves a bug was actually patched and retested before the ticket is closed.
 
 ---
 
 ## 2. The Three Core Pillars
 
-### Pillar 1: The Public Door (`security.txt` & Account Portal)
+### Pillar 1: The Public Door (`security.txt` & Account-Less Intake)
 * A startup hosts a standard text file (`acme.com/.well-known/security.txt`) pointing to their BugBountyTrack program page.
 * Anyone can read the startup's disclosure policy, in-scope domains, and safe harbor terms.
-* To prevent automated spam and abuse, researchers must register a verified account before submitting findings.
+* **Zero-Friction Guest Intake**: Researchers can submit reports without creating an account. The browser generates an ephemeral Curve25519 keypair and issues a high-entropy secret tracking URL (`/report/track/BBT-RPT-XXXX?token=<secret>`). Researchers can optionally register later to bind anonymous reports to their reputation profile.
 
-### Pillar 2: The Multi-Defender Lockbox (Client-Side OpenPGP)
-* When a researcher submits an exploit, their browser encrypts the report with **OpenPGP** before sending it to our server.
-* **Bounded Program-Scoped Multi-Defender Model ($N \le 10$)**:
-  1. **Dual-Lane Isolation**: Public vulnerability submissions are encrypted for the reporting researcher and all authorized program defenders ($N \le 10$). Internal triage notes are encrypted exclusively for authorized program defenders, strictly excluding the researcher's key.
+### Pillar 2: The Multi-Defender Lockbox (Client-Side OpenPGP & Recovery)
+* When a researcher submits an exploit, their browser encrypts the report with **OpenPGP** (standardized on fast Curve25519 / Ed25519/X25519, <50ms keygen) before sending it to our server.
+* **Direct-to-R2 Encrypted Attachments**: Evidence files up to 25 MB are encrypted in-browser and uploaded directly to Cloudflare R2 via presigned URLs, bypassing Vercel serverless payload limits (4.5 MB).
+* **Bounded Program-Scoped Multi-Defender Model (N ≤ 10)**:
+  1. **Dual-Lane Isolation**: Public vulnerability submissions are encrypted for the reporting researcher and all authorized program defenders (N ≤ 10). Internal triage notes are encrypted exclusively for authorized program defenders, strictly excluding the researcher's key.
   2. **Historical-Access Isolation**: Newly joined defenders receive keys only for reports filed after their onboarding. Access to historical reports requires an explicit, audited client-side session key re-wrapping operation by an existing authorized defender.
+  3. **Offline Organization Master Recovery Key**: During organization onboarding, an offline Curve25519 recovery keypair is generated. The private key must be saved offline (paper/vault) and verified via an onboarding decryption challenge. It acts as an emergency recipient for payload session keys, preventing catastrophic data loss if all defenders lose their devices.
 * **What the Server Sees**: The database only stores scrambled ciphertext, a neutral `operational_label` enum, and encrypted title ciphertext (`title_ciphertext`). Even if an attacker dumps our database, they cannot read the secret vulnerability details or PoC code.
 * **Safe Display**: When an authorized defender opens the report, their browser unlocks the text in memory and renders the code safely without running any malicious scripts.
 
@@ -46,6 +48,7 @@ flowchart LR
   1. `VERIFIED_RESEARCHER`: The original hacker re-tests and confirms the bug is fixed.
   2. `VERIFIED_INTERNAL`: Another team member tests and confirms the fix (our audit log records who tested it and whether they wrote the code).
   3. `CLOSED_UNVERIFIED_TIMEOUT`: If the hacker disappears, an authorized manager must click an explicit button and record a written reason. A timeout **never** counts as a passed test.
+* **Expanded State Machine & Tamper-Evident Ledger**: Supports `RISK_ACCEPTED`, `REJECTED_SPAM`, `REJECTED_INVALID`, `DUPLICATE`, and `WITHDRAWN`. All triage events are permanently anchored in a SHA-256 `prev_hash` tamper-evident audit ledger.
 * **Retest Failure**: If a retest fails, it records an audit event (`RETEST_FAILED`) and returns the report to `ACCEPTED` triage.
 
 ---
@@ -58,27 +61,31 @@ flowchart LR
 | **Commit Hashes & Retest Logs** | The Server & Both Parties | Plaintext (PostgreSQL columns) | Provides an unalterable audit trail of who verified the fix. |
 | **Operational Label Enum** | The Server & Both Parties | Plaintext (`INJECTION`, `AUTH_BYPASS`, etc.) | Enables triage routing without leaking exploit specifics. |
 | **Exploit Steps, PoC Code, & Title Ciphertext** | **Only Hunter & Authorized Defenders** | Scrambled OpenPGP Ciphertext | Protects confidential zero-day details from leaks. |
+| **Audit Log Hash Chain (`prev_hash`)** | The Server & Both Parties | SHA-256 Cryptographic Chain | Guarantees tamper-evidence across all state transitions. |
 
 ### Edge Case Handling
-* **What if someone loses their private key?**  
-  If the researcher loses their key, they can no longer read past messages, but authorized defenders still can. There is no server-side "reset password" backdoor for private keys, preserving the cryptographic guarantee.
+* **What if a defender loses their laptop or browser keystore?**  
+  Other active defenders can still decrypt all reports. For catastrophe recovery (e.g., solo admin loses device), the organization's Offline Master Recovery Key can decrypt payload session keys without any server-side backdoor.
 * **What if the hacker ghosts us?**  
   The company isn't stuck forever. After a configurable grace period, a manager can close the ticket, but it is explicitly stamped as *"Closed without verification because researcher was unresponsive."*
 
 ---
 
-## 4. The 16-Week Implementation Roadmap (352 Total Engineering Hours)
+## 4. The 18-Week Implementation Roadmap (424 Total Engineering Hours)
 
 ```
-PART A — Academic Evaluation Baseline (Weeks 1–12, 264h):
+PART A — Academic Evaluation Baseline (Weeks 1–12, 264h across Sprints 1–6):
   Weeks 1–3:   Design blueprints, database schemas, and user flows (SRS, Architecture, CVSS Engine).
-  Weeks 4–6:   Build Next.js app, login system, rate limiting, and OpenPGP key setup.
-  Weeks 7–9:   Build report forms, CVSS 3.1 calculator, and encrypted triage communication.
+  Weeks 4–6:   Build Next.js app, login system, rate limiting, and OpenPGP Curve25519 key setup.
+  Weeks 7–9:   Build report forms, guest intake, CVSS 3.1 calculator, and encrypted triage communication.
   Weeks 10–12: GitHub commit checking, retest state machine, and OWASP evaluation study.
+  Deliverable: Evaluated prototype for university FYP defense (236h core + 28h buffer = 264h).
 
-PART B — Commercial Launch Extension (Weeks 13–16, 88h):
-  Weeks 13–14: Stripe subscription billing ($49 Starter, $149 Team), seat management, and key re-wrapping.
-  Weeks 15–16: Redacted PDF/JSON closure evidence export, Sentry observability, and production launch gates.
+PART B — Commercial Launch Extension (Weeks 13–18, 160h across Sprints 7–9):
+  Weeks 13–14: Lemon Squeezy Merchant of Record integration ($49/mo Team plan, global VAT, Pakistani bank payouts).
+  Weeks 15–16: Direct-to-R2 presigned encrypted uploads (25 MB), Argon2 S2K passphrase derivation, offline master recovery key.
+  Weeks 17–18: Tamper-evident prev_hash audit ledger, disaster recovery backup drill, Sentry observability, and launch gates.
+  Deliverable: Commercial SaaS release (144h core + 16h buffer = 160h).
 ```
 
 ---
@@ -86,9 +93,9 @@ PART B — Commercial Launch Extension (Weeks 13–16, 88h):
 ## 5. Why the Examination Committee & HOD Will Approve It
 
 1. **No Fake Buzzwords**: We avoid unpredictable "AI triage" or untested claims. Everything runs on deterministic math (FIRST.org CVSS 3.1), audited libraries (`openpgp.js`), and clean database design.
-2. **Solid Application Security**: Demonstrates browser-side asymmetric cryptography (OpenPGP), AST-level XSS prevention, and multi-tenant data isolation.
+2. **Solid Application Security**: Demonstrates browser-side asymmetric cryptography (Curve25519), AST-level XSS prevention, and multi-tenant data isolation.
 3. **Real Software Engineering**: Solves the actual problem of bug tracking—proving that a fix actually occurred rather than trusting an informal status drop-down.
-4. **Feasible Timeline**: By cutting out real-money Stripe payments and automated exploit scanners, a solo student can comfortably build, test, and demo this evaluated prototype in one semester.
+4. **Feasible Timeline & Defensible Economics**: Cleanly bifurcated into a 264h Academic Evaluation prototype and a 160h Commercial Launch extension governed by a proven Merchant of Record.
 
 ---
 
@@ -99,4 +106,7 @@ PART B — Commercial Launch Extension (Weeks 13–16, 88h):
 | **Academic Proposal** | [`requirements/HOD_PROPOSAL.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/requirements/HOD_PROPOSAL.md) | Formal 2–3 page document for HOD and supervisor review. |
 | **Key Architecture** | [`architecture/KEY_MANAGEMENT.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/architecture/KEY_MANAGEMENT.md) | Detailed technical specifications for OpenPGP key mechanics and trust boundaries. |
 | **Decision Log** | [`decisions/DECISION_LOG.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/decisions/DECISION_LOG.md) | Living register of confirmed decisions, assumptions, and deferred features. |
-| **Working SRS Draft** | [`requirements/SRS.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/requirements/SRS.md) | Detailed requirements specification (to be updated after proposal approval). |
+| **Business Requirements** | [`requirements/BRD.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/requirements/BRD.md) | Certified commercial and business requirements specification. |
+| **Working SRS Draft** | [`requirements/SRS.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/requirements/SRS.md) | Detailed IEEE 830-1998 software requirements specification. |
+| **Work Breakdown Structure** | [`requirements/WBS.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/requirements/WBS.md) | 18-week, 424-hour engineering plan across 9 Sprints and 38 work packages. |
+

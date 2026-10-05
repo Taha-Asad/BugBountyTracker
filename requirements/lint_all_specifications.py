@@ -11,7 +11,7 @@ def check(condition, desc):
         errors.append(desc)
 
 print("=" * 80)
-print("BUGBOUNTYTRACK SPECIFICATION INTEGRITY LINTER (VERSION 3.1.0)")
+print("BUGBOUNTYTRACK SPECIFICATION INTEGRITY LINTER (VERSION 3.2.0)")
 print("Level 1 Specification & Cross-Document Traceability Linter")
 print("=" * 80)
 
@@ -61,6 +61,10 @@ check('CLOSED_UNVERIFIED_TIMEOUT' in srs, "SRS.md specifies CLOSED_UNVERIFIED_TI
 check('RETEST_FAILED' in srs, "SRS.md specifies RETEST_FAILED event returning to ACCEPTED")
 check('INSERT' in srs and 'SELECT' in srs, "SRS.md specifies append-only audit boundary")
 check('Redacted closure evidence export' in srs or 'Redacted Closure Evidence' in srs, "SRS.md specifies Redacted Closure Evidence Export")
+check('prev_hash' in srs, "SRS.md specifies tamper-evident prev_hash audit chain")
+check('guest_token_hash' in srs or 'Account-Less (Guest)' in srs, "SRS.md specifies account-less guest vulnerability intake")
+check('Lemon Squeezy' in srs, "SRS.md specifies Lemon Squeezy Merchant of Record")
+check('recovery_public_key' in srs or 'Organization Master Recovery Key' in srs, "SRS.md specifies Offline Organization Master Recovery Key")
 
 # 4. Check CVSS_TEST_FIXTURES.md integrity & vector uniqueness
 with open(files['CVSS_TEST_FIXTURES.md'], 'r', encoding='utf-8') as f:
@@ -68,7 +72,6 @@ with open(files['CVSS_TEST_FIXTURES.md'], 'r', encoding='utf-8') as f:
 
 check('FIRST.org' in cvss_text and 'NIST National Vulnerability Database' in cvss_text, "CVSS_TEST_FIXTURES.md cites FIRST.org Examples Guide & NIST NVD")
 check('CVE-2021-41773' in cvss_text and '7.5' in cvss_text, "CVSS_TEST_FIXTURES.md correctly attributes CVE-2021-41773 as 7.5 High")
-
 check('24-ST-013' in cvss_text, "CVSS_TEST_FIXTURES.md contains Roll No 24-ST-013")
 
 # Extract and assert uniqueness of CVSS vector strings
@@ -83,8 +86,8 @@ with open(files['WBS.md'], 'r', encoding='utf-8') as f:
     wbs = f.read()
 
 check('236 Hours' in wbs and '28 Hours' in wbs and '264 Hours' in wbs, "WBS.md academic arithmetic: 236h core + 28h buffer = 264h")
-check('88 Hours' in wbs and '352 Hours' in wbs, "WBS.md commercial arithmetic: 264h academic + 88h commercial = 352h total")
-check('WP-7.1' in wbs and 'WP-7.9' in wbs, "WBS.md contains commercial packages WP-7.1 to WP-7.9")
+check('160 Hours' in wbs and '424 Hours' in wbs, "WBS.md commercial arithmetic: 264h academic + 160h commercial = 424h total")
+check('WP-7.1' in wbs and 'WP-7.12' in wbs, "WBS.md contains commercial packages WP-7.1 to WP-7.12")
 
 # 6. Check SRS.docx OpenXML integrity and embedded drawings
 with zipfile.ZipFile(files['SRS.docx'], 'r') as srs_zip:
@@ -103,7 +106,7 @@ with zipfile.ZipFile(files['BRD.docx'], 'r') as brd_zip:
     brd_xml = brd_zip.read('word/document.xml').decode('utf-8')
 check('24-ST-013' in brd_xml, "BRD.docx contains Roll No 24-ST-013")
 check('Taha Asadullah' in brd_xml, "BRD.docx contains Taha Asadullah")
-check('Starter' in brd_xml and 'Team' in brd_xml, "BRD.docx contains SaaS pricing tiers")
+check('Team' in brd_xml and 'Community' in brd_xml, "BRD.docx contains SaaS pricing tiers (Team & Community)")
 
 # 8. Check WBS.xlsx OpenXML integrity, formula consistency & mathematical parity
 with zipfile.ZipFile(files['WBS.xlsx'], 'r') as wbs_zip:
@@ -113,26 +116,26 @@ with zipfile.ZipFile(files['WBS.xlsx'], 'r') as wbs_zip:
     sheet4_xml = wbs_zip.read('xl/worksheets/sheet4.xml').decode('utf-8')
     sheet5_xml = wbs_zip.read('xl/worksheets/sheet5.xml').decode('utf-8')
 
-check('352 Total Hours' in sheet1_xml, "WBS.xlsx Sheet 1 contains 352 Total Hours")
+check('424 Total Hours' in sheet1_xml, "WBS.xlsx Sheet 1 contains 424 Total Hours")
 check('24-ST-013' in sheet1_xml, "WBS.xlsx Sheet 1 contains Roll No 24-ST-013")
-check('SUM(G2:G35)' in sheet2_xml, "WBS.xlsx Sheet 2 contains formula SUM(G2:G35) spanning all 34 work packages")
-check('SUM(F2:F9)' in sheet4_xml, "WBS.xlsx Sheet 4 contains formula SUM(F2:F9) spanning all 8 Sprints")
+check('SUM(G2:G39)' in sheet2_xml, "WBS.xlsx Sheet 2 contains formula SUM(G2:G39) spanning all 38 work packages")
+check('SUM(F2:F10)' in sheet4_xml, "WBS.xlsx Sheet 4 contains formula SUM(F2:F10) spanning all 9 Sprints")
 
-# Assert that sheet2 calculated total matches 352
-match_s2_tot = re.search(r'<c r="G36"[^>]*><f>[^<]+</f><v>(\d+)</v></c>', sheet2_xml)
+# Assert that sheet2 calculated total matches 424
+match_s2_tot = re.search(r'<c r="G40"[^>]*><f>[^<]+</f><v>(\d+)</v></c>', sheet2_xml)
 if match_s2_tot:
     s2_val = int(match_s2_tot.group(1))
-    check(s2_val == 352, f"WBS.xlsx Sheet 2 total engineering hours == 352 (computed {s2_val})")
+    check(s2_val == 424, f"WBS.xlsx Sheet 2 total engineering hours == 424 (computed {s2_val})")
 else:
-    errors.append("WBS.xlsx Sheet 2 total cell G36 not found")
+    errors.append("WBS.xlsx Sheet 2 total cell G40 not found")
 
-# Assert that sheet4 calculated total matches 352
-match_s4_tot = re.search(r'<c r="F10"[^>]*><f>[^<]+</f><v>(\d+)</v></c>', sheet4_xml)
+# Assert that sheet4 calculated total matches 424
+match_s4_tot = re.search(r'<c r="F11"[^>]*><f>[^<]+</f><v>(\d+)</v></c>', sheet4_xml)
 if match_s4_tot:
     s4_val = int(match_s4_tot.group(1))
-    check(s4_val == 352, f"WBS.xlsx Sheet 4 total sprint hours == 352 (computed {s4_val})")
+    check(s4_val == 424, f"WBS.xlsx Sheet 4 total sprint hours == 424 (computed {s4_val})")
 else:
-    errors.append("WBS.xlsx Sheet 4 total cell F10 not found")
+    errors.append("WBS.xlsx Sheet 4 total cell F11 not found")
 
 print(f"\nSpecification Linting Results: {len(passes)} checks PASSED, {len(errors)} checks FAILED.")
 for p in passes:
@@ -143,4 +146,5 @@ if errors:
         print(f"  [FAIL] {e}")
     exit(1)
 else:
-    print("\nALL SPECIFICATION INTEGRITY CHECKS PASSED PERFECTLY!")
+    print("\nALL SPECIFICATION INTEGRITY CHECKS PASSED PERFECTLY!\n")
+    exit(0)
