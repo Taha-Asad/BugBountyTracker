@@ -33,7 +33,7 @@
 - **DEC-013**: **Program-Scoped Multi-Defender Key Management & Recipient Boundary**:
   - Program directory and public policy pages are discoverable.
   - Submissions support both frictionless account-less guest intake (DEC-020) and registered researcher accounts.
-  - Report decryption access is bounded to the submitting researcher/ephemeral key, the offline organization recovery key, and active defenders explicitly assigned to that specific program ($N \le 10$).
+  - Report decryption access is bounded to the submitting researcher/ephemeral key, the offline organization recovery key, and active defenders explicitly assigned to that specific program (up to 10 authorized defenders).
   - Key concurrency is governed by an integer `recipient_set_version`; submissions and replies targeting stale versions are rejected with `409 Conflict`.
 - **DEC-014**: **Evidence Preservation & Safe Rendering**: Original vulnerability descriptions, PoC text, and sensitive remediation notes are preserved unmodified. Safe rendering (AST-level HTML escaping, strict markdown parsing, code-block containment) is enforced on the client after decryption.
 - **DEC-015**: **Remediation & Retest Verification Rules**:
@@ -77,9 +77,14 @@
   - Browser requests presigned S3/R2 direct `PUT` URL from `/api/uploads/presign` after validating storage quota.
   - Automated cron job cleans up orphaned unconfirmed uploads.
 - **DEC-024 (ADR-013)**: **Cryptographic Primitives Pinning & Hash-Chained Audit Ledger**:
-  - Standardizes on v4 Ed25519 / X25519 Curve25519 keys; drops RSA-4096 to guarantee NFR-02 (<1.5s browser keygen).
-  - Uses OpenPGP native Argon2 S2K for browser key storage protection.
+  - Standardizes on RFC 9580 Version 6 Ed25519 / X25519 Curve25519 keys with 64-character SHA-256 fingerprints; drops legacy RSA-4096 and v4 keys to eliminate in-browser keygen freezes and target sub-50ms bare keygen.
+  - Uses OpenPGP native Argon2id S2K (`t=3, m=65536, p=4`) for browser key storage protection.
   - Audit log table includes a SHA-256 `prev_hash` column forming a tamper-evident hash chain.
+- **DEC-025 (ADR-014)**: **Versioned JSON Guest Recovery Package & Durable Guest Identity**:
+  - Standardizes guest recovery exclusively on a single versioned `.bbt-recovery.json` bundle protected with client-side Argon2id S2K; defers 24-word mnemonic seeds to eliminate server-side lookup or seed-derivation coupling.
+  - Tracking URL contains only `#token=<access_token>` in hash fragment; address bar is immediately scrubbed via `window.history.replaceState`.
+  - Establishes a durable, report-scoped `guest_actor_id` (UUIDv4) decoupled from mutable bearer token hashes.
+  - Enforces strict program-level authorization boundaries and atomic membership updates via `PROGRAM_DEFENDER`.
 
 ---
 

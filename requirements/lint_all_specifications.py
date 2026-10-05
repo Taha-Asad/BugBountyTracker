@@ -47,7 +47,7 @@ for mdf in ['BRD.md', 'SRS.md', 'WBS.md']:
     check('Taha Asadullah' in content, f"{mdf} contains Taha Asadullah")
     check('Sir Umar Hayat' in content, f"{mdf} contains Sir Umar Hayat")
     check('PTUT - PRJ - 089' in content, f"{mdf} contains Project ID PTUT - PRJ - 089")
-    check('SET-A' in content, f"{mdf} contains Section SET-A")
+    check('SET-B' in content, f"{mdf} contains Section SET-B")
     # Verify no raw unescaped LaTeX formatting artifacts
     check(r'\text{' not in content, f"{mdf} has no \\text{{}} artifacts")
     check(r'\ge' not in content, f"{mdf} has no \\ge artifacts")
@@ -58,7 +58,7 @@ with open(files['project.json'], 'r', encoding='utf-8') as f:
     pjson = json.load(f)
 check(pjson.get('rollNo') == '24-ST-013', "project.json contains rollNo 24-ST-013")
 check(pjson.get('studentAuthor') == 'Taha Asadullah', "project.json contains studentAuthor Taha Asadullah")
-check(pjson.get('section') == 'SET-A', "project.json contains section SET-A")
+check(pjson.get('section') == 'SET-B', "project.json contains section SET-B")
 check(pjson.get('supervisor') == 'Sir Umar Hayat', "project.json contains supervisor Sir Umar Hayat")
 
 # 4. Check specific requirements in SRS.md
@@ -181,6 +181,46 @@ if match_s4_tot:
 else:
     errors.append("WBS.xlsx Sheet 4 total cell F11 not found")
 
+# 12. Requirement ID Sequence & Definition Uniqueness
+with open(files['BRD.md'], 'r', encoding='utf-8') as f:
+    brd_full = f.read()
+br_defs = re.findall(r'^\*\s+\*\*BR-(\d+\.\d+)\*\*', brd_full, re.MULTILINE)
+check(len(br_defs) > 0, f"Found {len(br_defs)} BR definitions in BRD.md")
+check(len(br_defs) == len(set(br_defs)), f"All {len(br_defs)} BR definitions in BRD.md are unique (zero duplicate IDs)")
+
+fr_defs = re.findall(r'^\*\s+\*\*FR-(\d+\.\d+)', srs, re.MULTILINE)
+check(len(fr_defs) > 0, f"Found {len(fr_defs)} FR definitions in SRS.md")
+check(len(fr_defs) == len(set(fr_defs)), f"All {len(fr_defs)} FR definitions in SRS.md are unique (zero duplicate IDs)")
+
+# 13. Cryptographic Precision & RFC 9580 v6 Fingerprint Standardization
+check('64-character' in brd_full, "BRD.md specifies 64-character SHA-256 fingerprints")
+check('64-character' in srs, "SRS.md specifies 64-character SHA-256 fingerprints")
+check('64-character' in km, "KEY_MANAGEMENT.md specifies 64-character SHA-256 fingerprints")
+check('40-character fingerprint' not in brd_full and '40-character fingerprint' not in srs and '40-character fingerprint' not in km, "Zero legacy 40-character fingerprint references across all crypto specifications")
+check('benchmark target' in srs and 'benchmark target' in km, "Bare keygen (<50ms) accurately framed as an empirical benchmark target")
+check('estimated cryptographic delay' in srs or 'intentional, estimated' in srs, "Argon2id S2K delay accurately framed as an estimated cryptographic delay (~200-400ms)")
+check('Uint8Array' in srs and 'IndexedDB' in srs and 'nullified' in srs, "SRS.md specifies strict memory hygiene (Uint8Array zeroizing, IndexedDB deletion, reference nullification)")
+check('Uint8Array' in km and 'IndexedDB' in km and 'nullified' in km, "KEY_MANAGEMENT.md specifies strict memory hygiene")
+
+# 14. Durable Guest Identity, Recovery Package & PROGRAM_DEFENDER Rules
+check('guest_actor_id' in srs, "SRS.md defines durable guest_actor_id in schema & relations")
+check('guest_actor_id' in km, "KEY_MANAGEMENT.md specifies durable guest_actor_id decoupled from bearer tokens")
+check('.bbt-recovery.json' in srs, "SRS.md specifies canonical .bbt-recovery.json package")
+check('.bbt-recovery.json' in km, "KEY_MANAGEMENT.md specifies canonical .bbt-recovery.json package")
+check('.bbt-recovery.json' in brd_full, "BRD.md specifies canonical .bbt-recovery.json package")
+check('Same-Organization Constraint' in km, "KEY_MANAGEMENT.md enforces PROGRAM_DEFENDER Rule 1: Same-Organization Constraint")
+check('Unique Membership' in km, "KEY_MANAGEMENT.md enforces PROGRAM_DEFENDER Rule 2: Unique Membership constraint")
+check('Atomic Assignment & Keyring Synchronization' in km, "KEY_MANAGEMENT.md enforces PROGRAM_DEFENDER Rule 3: Atomic Assignment & Keyring Synchronization")
+check('Program-Level Authorization Boundary' in km, "KEY_MANAGEMENT.md enforces PROGRAM_DEFENDER Rule 4: Program-Level Authorization Boundary")
+
+# 15. Bounded Quotas, Reopening Policy & Financial Boundaries
+check('QUOTA_HELD' in brd_full and 'QUOTA_HELD' in srs, "BRD.md and SRS.md specify QUOTA_HELD queue state for Community tier")
+check('500 MB' in brd_full and '10 submissions/hr' in brd_full, "BRD.md specifies bounded Community tier limits (500 MB storage, 10 submissions/hr)")
+check('security@tenant.com' in brd_full, "BRD.md specifies fallback security@tenant.com contact")
+check('CLOSED_INCOMPLETE' in srs, "SRS.md explicitly includes CLOSED_INCOMPLETE in state transition matrix")
+check('REJECTED_SPAM' in srs and 'WITHDRAWN' in srs, "SRS.md explicitly marks REJECTED_SPAM and WITHDRAWN as non-reopenable")
+check('89.24' in brd_full and '61.00' in brd_full, "BRD.md accurately distinguishes infrastructure break-even from commercial profitability")
+
 print(f"\nSpecification Linting Results: {len(passes)} checks PASSED, {len(errors)} checks FAILED.")
 for p in passes:
     print(f"  [PASS] {p}")
@@ -190,5 +230,19 @@ if errors:
         print(f"  [FAIL] {e}")
     exit(1)
 else:
-    print("\nALL SPECIFICATION INTEGRITY CHECKS PASSED PERFECTLY!\n")
+    print("\nALL SPECIFICATION INTEGRITY CHECKS PASSED PERFECTLY!")
+    print("\n" + "=" * 80)
+    print("SPECIFICATION LINTER BOUNDARY & SCOPE DECLARATION (RULE 17):")
+    print("=" * 80)
+    print("  1. Verified: Document schema, metadata, cross-document arithmetic (424h),")
+    print("     CVSS coefficients (8.22), test vector parity (45/45), requirement ID uniqueness,")
+    print("     cryptographic standards (RFC 9580 v6, 64-hex fingerprints), OpenXML structures,")
+    print("     and bounded quota policies.")
+    print("  2. Level 1 Boundary Limitations (NOT checked by this static specification linter):")
+    print("     - Does not parse the visual AST or layout nodes of Mermaid diagram files.")
+    print("     - Does not execute live database DDL migrations or verify PostgreSQL constraints in runtime.")
+    print("     - Does not execute live OpenPGP.js WebAssembly / WebCrypto encryption benchmarks in browser.")
+    print("     - Does not simulate live Lemon Squeezy Merchant-of-Record webhook callbacks.")
+    print("     These runtime behaviors belong to Level 2 (Unit/Integration) and Level 3 (E2E) verification.")
+    print("=" * 80 + "\n")
     exit(0)

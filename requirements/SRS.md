@@ -12,7 +12,7 @@
 | **Student Author** | Taha Asadullah |
 | **Roll Number / Student ID** | `24-ST-013` |
 | **Session** | Session 2024–2028 |
-| **Batch / Section** | Batch 24-SET-Fall / Section SET-A |
+| **Batch / Section** | Batch 24-SET-Fall / Section SET-B |
 | **Official Student Email** | `24-st-013@students.ptut.edu.pk` |
 | **FYP Project Supervisor** | Sir Umar Hayat |
 | **Project Identifier** | `PTUT - PRJ - 089` |
@@ -109,11 +109,11 @@ BugBountyTrack is structured into three clean architectural tiers:
 
 ### 2.2 Defensible Protection Boundary & Cryptographic Assumptions
 * **Client-Side OpenPGP Payload Isolation**: Vulnerability titles (`title_ciphertext`), descriptions, reproduction steps, and attachments are encrypted in the submitter's browser using OpenPGP multi-recipient packets prior to network transit. The server and database persist and route ciphertext only.
-* **Algorithm Pinning & Performance**: All keys are standardized exclusively on **v4 Ed25519 (Signing) and X25519 (Encryption)** Curve25519 keys (<50ms generation). Legacy RSA-4096 is deprecated and dropped to eliminate in-browser keygen freezes and satisfy NFR-02 (<1.5s).
-* **Key Storage & Protection**: Private keys in `IndexedDB` are encrypted using OpenPGP's native **Argon2 S2K** string-to-key derivation, separating login credentials from local encryption keys.
-* **Account-Less (Guest) Vulnerability Intake**: External researchers can submit reports without account registration. The browser autonomously generates an ephemeral Curve25519 keypair, encrypts the report to the target program's defenders, the offline recovery key, and the report key, and receives an opaque secret tracking URL (`/report/track/BBT-RPT-XXXX?token=<secret>`) allowing anonymous dialogue and retest submission.
+* **Algorithm Pinning & Performance**: All keys are standardized exclusively on **RFC 9580 Version 6 Ed25519 (Signing) and X25519 (Encryption)** Curve25519 keys (targeting sub-50ms bare key generation) with 64-character hexadecimal SHA-256 fingerprints. Legacy RSA-4096 and OpenPGP v4 keys are deprecated and excluded to eliminate in-browser keygen freezes, satisfy NFR-02 (<1.5s), and adhere to modern standards.
+* **Key Storage & Protection**: Private keys in `IndexedDB` are encrypted using OpenPGP's native **Argon2id S2K** string-to-key derivation (`t=3, m=65536, p=4`), introducing an intentional, estimated cryptographic delay of ~200–400ms on modern client hardware to resist brute-force attacks while separating login credentials from local encryption keys.
+* **Account-Less (Guest) Vulnerability Intake**: External researchers can submit reports without account registration. The browser autonomously generates an ephemeral RFC 9580 v6 Curve25519 keypair, encrypts the report to the target program's defenders, the offline recovery key, and the report key, and receives an opaque secret tracking URL (`/report/track/BBT-RPT-XXXX#token=<secret>`) and downloadable versioned `.bbt-recovery.json` package allowing anonymous dialogue and retest submission.
 * **Offline Organization Master Recovery Key**: Generated during onboarding, the public recovery key is added as an extra PKESK on all reports. The private key is exported offline as an emergency recovery kit. Organization activation is gated on a mandatory browser test decryption challenge, ensuring disaster recovery without server-side escrow.
-* **Dual-Lane Recipient Isolation**: Public reports are encrypted for the Submitter + Program Defenders (N ≤ 10) + Org Recovery Key; internal triage notes are encrypted strictly for Program Defenders + Org Recovery Key, excluding the researcher.
+* **Dual-Lane Recipient Isolation**: Public reports are encrypted for the Submitter + Program Defenders (up to 10 authorized defenders) + Org Recovery Key; internal triage notes are encrypted strictly for Program Defenders + Org Recovery Key, excluding the researcher.
 * **Concurrency Guard (`recipient_set_version`)**: Keyrings maintain a version counter; submissions against stale reviewer rosters are rejected with `409 Conflict`.
 * **Historical-Access Isolation & Audited Session Re-Wrapping**: Newly onboarded defenders receive access only to reports submitted after their onboarding. Access to historical reports requires an existing authorized defender to locally decrypt the session key ($K_S$), re-wrap it with the new defender's public key, and append the PKESK packet, emitting an immutable audit event (`HISTORICAL_ACCESS_GRANTED`).
 * **Browser Trust Boundary**: Client-side cryptography isolates sensitive exploit payloads from backend database compromises, cloud snapshot exposures, and untrusted database administrators. However, the system operates within the standard web security model: **the delivered client web application (HTML/JS) and the server's public-key distribution endpoint must be trusted**.
@@ -149,13 +149,15 @@ BugBountyTrack is structured into three clean architectural tiers:
 * **FR-1.3 (P1, Core)**: Users shall register and authenticate via email and bcrypt/Argon2-hashed passwords, backed by database-persisted session tokens stored in secure, HTTP-only cookies. `ORG_OWNER` and `ORG_DEFENDER` roles shall support Time-Based One-Time Password (TOTP) Multi-Factor Authentication with encrypted secrets at rest.
 * **FR-1.4 (P1, Commercial)**: The platform shall provide a Guided Onboarding Wizard enabling organization leads to complete program configuration (domain DNS challenge, policy scope definition, browser key generation, offline master recovery key export with client-side test challenge, and `security.txt` signing) within 15 minutes.
 * **FR-1.5 (P2, Commercial)**: The platform shall support both public disclosure programs (`/programs/[slug]`) and private invitation-only programs accessible via cryptographically tokenized invitation URLs (`/programs/[slug]/join?token=...`). Public programs permit unauthenticated guest submissions. Private programs require a valid invitation token (`token_hash`) to submit; guests possessing an invitation token may submit without registering, but uninvited anonymous submissions to private programs are rejected.
-* **FR-1.6 (P1, Core)**: The platform shall provide **Account-Less (Guest) Vulnerability Intake**: external researchers can submit vulnerability reports without registering an account. The client browser generates an ephemeral Curve25519 keypair and creates three distinct, cryptographically isolated items:
-  * **Guest Access Token** (`guest_access_token`): Authenticates retrieval of the encrypted report record via bearer token over HTTPS.
-  * **Ephemeral Report Private Key** (`guest_private_key`): Curve25519 private key stored in `IndexedDB` that decrypts the report session key in-browser.
-  * **Guest Recovery Package**: An exportable ASCII-armored block or 24-word recovery seed containing `{ report_id, guest_access_token, encrypted_private_key }` protected with an optional user passphrase.
-  * **URL Fragment Protection**: Tracking URLs are formatted as `/report/track/BBT-RPT-XXXX#token=<access_token>&key=<privkey_export>`. Because the URI fragment (following `#`) is strictly handled client-side by the browser runtime and is never transmitted in HTTP request lines, credentials are systematically protected against leakage in server access logs, reverse proxies, WAF logs, and HTTP `Referer` headers.
-  * **Multi-Device Portability**: Guests accessing from a different browser or device can navigate to `/report/restore` and import their Guest Recovery Package to restore access and decrypt historical and future messages.
-  * **Acceptance Criteria**: Submit anonymously -> export recovery package -> clear browser cache/storage -> open in clean browser -> import recovery package -> decrypt confidential messages -> submit retest attestation.
+* **FR-1.6 (P1, Core)**: The platform shall provide **Account-Less (Guest) Vulnerability Intake**: external researchers can submit vulnerability reports without registering an account. The client browser generates an ephemeral RFC 9580 v6 Curve25519 keypair and creates three distinct, cryptographically isolated items:
+  * **Durable Guest Actor Identity (`guest_actor_id`)**: A persistent UUIDv4 generated at intake and assigned to `REPORT.guest_actor_id`, referenced across all subsequent discussion messages, retest evidence, and audit events. Rotating access tokens does not alter historical attribution.
+  * **Guest Access Token (`guest_access_token`)**: An opaque, high-entropy bearer token returned by the server upon submission to authorize HTTP retrieval of the encrypted report record. The server stores only its cryptographic hash (`guest_token_hash`).
+  * **Ephemeral Report Private Key (`K_report_priv`)**: RFC 9580 Curve25519 private key stored in `IndexedDB` that decrypts the report session key in-browser.
+  * **Versioned Downloadable Recovery Package (`.bbt-recovery.json`)**: An exportable JSON package (schema version 1) containing `{ version: 1, report_id, guest_actor_id, access_token, key_format: "openpgp-rfc9580-v6", key_fingerprint, encrypted_private_key, checksum }` protected with Argon2id S2K. Mnemonic 24-word recovery is explicitly deferred to preserve zero-knowledge server guarantees.
+  * **URL Fragment Protection & Address Bar Scrubbing**: Tracking URLs are formatted as `/report/track/BBT-RPT-XXXX#token=<access_token>`. The private key is **never** included in the URL. Upon initial load, page JavaScript reads the fragment into runtime memory and immediately scrubs the address bar via `window.history.replaceState(null, '', window.location.pathname)`.
+  * **Telemetry Sanitization**: Application telemetry hooks (Sentry `beforeSend`) shall explicitly strip URI fragments, `Authorization` headers, and all decrypted vulnerability payloads.
+  * **Multi-Device Portability & Clean-Browser Acceptance**: Guests accessing from a different browser or device can navigate to `/report/restore` and import their `.bbt-recovery.json` file.
+  * **Acceptance Criteria**: Submit anonymously -> download `.bbt-recovery.json` -> clear browser cache/storage -> open in clean browser -> import recovery package -> decrypt confidential messages -> submit retest attestation.
 
 ### 3.2 RFC 9116 Policy & Safe Harbor Generator (FR-2)
 * **FR-2.1 (P1, Core)**: The platform shall generate a compliant RFC 9116 text policy file available for download and preview at `/api/v1/programs/[slug]/security.txt` adhering strictly to RFC 9116 syntax.
@@ -165,15 +167,15 @@ BugBountyTrack is structured into three clean architectural tiers:
 * **FR-2.5 (P2, Core)**: The platform shall verify domain ownership by performing automated DNS TXT record challenge lookups (`_bbt-challenge.<domain>`) prior to activating a public program.
 
 ### 3.3 Browser-Side OpenPGP Cryptographic Pipeline & Neutral Labeling (FR-3)
-* **FR-3.1 (P1, Core)**: The client browser shall generate OpenPGP keypairs pinned strictly to **Curve25519 (Ed25519 for signing, X25519 for encryption)** in accordance with RFC 9580 / RFC 4880. Generating bare Curve25519 keypairs in under 50ms is designated as a benchmark target on evergreen desktop and modern mobile browsers. Legacy RSA-4096 is deprecated and excluded.
-* **FR-3.2 (P1, Core)**: Private keys shall be exported armored and stored locally in browser `IndexedDB`, encrypted using OpenPGP Argon2id S2K (`argon2id`, memory=64MB, iterations=3). User accounts distinguish between the Login Password (auth) and the Local Encryption Passphrase (unlocking IndexedDB). To support WebAssembly execution of Argon2 in OpenPGP.js, the Content Security Policy shall include `'wasm-unsafe-eval'`.
+* **FR-3.1 (P1, Core)**: The client browser shall generate OpenPGP keypairs pinned strictly to **RFC 9580 Version 6 Curve25519 (Ed25519 for signing, X25519 for encryption)**. Key fingerprints shall be formatted as 64-character hexadecimal strings (SHA-256). Generating bare Curve25519 keypairs in under 50ms is designated as an empirical benchmark target on modern browsers. Legacy RSA-4096 and OpenPGP v4 keys are deprecated and excluded.
+* **FR-3.2 (P1, Core)**: Private keys shall be exported armored and stored locally in browser `IndexedDB`, encrypted using OpenPGP Argon2id S2K (`t=3, memory=64MB, p=4`). User accounts distinguish between the Login Password (auth) and the Local Encryption Passphrase (unlocking IndexedDB). To support WebAssembly execution of Argon2 in OpenPGP.js, the Content Security Policy shall include `'wasm-unsafe-eval'`.
 * **FR-3.3 (P1, Core)**: When submitting a report, the client shall encrypt the sensitive fields (`title_ciphertext`, `description`, `reproduction_steps`, `impact`, and `attachment_payload`) using OpenPGP multi-recipient encryption targeted to:
-  * The program's active authorized defenders (N ≤ 10).
+  * The program's active authorized defenders assigned via `PROGRAM_DEFENDER` (up to 10 authorized defenders).
   * The organization's offline master recovery key.
   * The reporting researcher's public encryption key (or ephemeral report key).
 * **FR-3.4 (P1, Core)**: The client shall capture a server-readable neutral operational category label (`operational_label` enum: `AUTHENTICATION_BYPASS`, `INJECTION_VULNERABILITY`, `INFORMATION_DISCLOSURE`, `CROSS_SITE_SCRIPTING`, `ACCESS_CONTROL_ISSUE`, `DENIAL_OF_SERVICE`, `OTHER`) to facilitate safe dashboard filtering, queue management, and external notifications without leaking exploit titles.
-* **FR-3.5 (P1, Core)**: Encrypted attachment binaries (≤ 25 MB) shall be uploaded directly from the browser to Cloudflare R2 using presigned URLs requested from `/api/uploads/presign`, completely bypassing serverless function payload size ceilings (4.5 MB).
-* **FR-3.6 (P2, Core)**: Key lifecycle management shall include a mandatory offline Organization Master Recovery Key. During organization setup, an offline Curve25519 recovery keypair is generated and passphrase-protected with Argon2id S2K. The Organization Owner must export the key offline and complete an in-browser verification challenge by selecting and loading the recovery file into browser memory to decrypt an ephemeral test challenge payload locally. The private recovery key is never transmitted across the network, never stored in server databases, and is immediately purged from browser memory and `IndexedDB` once verified. Recovery operations are restricted to `ORG_OWNER` with mandatory TOTP MFA step-up and trigger an immediate notification and audit alert to all active program defenders.
+* **FR-3.5 (P1, Core)**: Encrypted attachment binaries (up to 25 MB) shall be uploaded directly from the browser to Cloudflare R2 using presigned URLs requested from `/api/uploads/presign`, completely bypassing serverless function payload size ceilings (4.5 MB).
+* **FR-3.6 (P2, Core)**: Key lifecycle management shall include a mandatory offline Organization Master Recovery Key. During organization setup, an offline Curve25519 recovery keypair is generated and passphrase-protected with Argon2id S2K conforming to RFC 9580 v6. The Organization Owner must export the key offline and complete an in-browser verification challenge by selecting and loading the recovery file into browser memory to decrypt an ephemeral test challenge payload locally. The private recovery key is never transmitted across the network and never stored in server databases. In managed JavaScript runtime environments where garbage collection prohibits guaranteed zeroization of memory, the application exercises strict security hygiene: temporary typed arrays (`Uint8Array`) are explicitly zeroized where supported, persisted credentials are deleted from `IndexedDB`, and all in-memory JavaScript references are immediately nullified to allow prompt garbage collection. Recovery operations are restricted to `ORG_OWNER` with mandatory TOTP MFA step-up and trigger an immediate notification and audit alert to all active program defenders.
 
 ### 3.4 Deterministic CVSS 3.1 Base Scoring Engine (FR-4)
 * **FR-4.1 (P1, Core)**: The platform shall incorporate a pure TypeScript calculation function computing FIRST.org CVSS 3.1 Base scores (0.0 to 10.0), mathematically verified with 100% parity against the 45 canonical unique test vectors documented in [`CVSS_TEST_FIXTURES.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/requirements/CVSS_TEST_FIXTURES.md) via `verify_cvss_engine.py` using the official FIRST.org coefficient 8.22.
@@ -218,14 +220,14 @@ BugBountyTrack is structured into three clean architectural tiers:
   * `WITHDRAWN`: Voluntarily retracted by the submitting researcher.
 * **FR-7.4 (P1, Core)**: If an empirical retest demonstrates that the vulnerability persists, the state transition shall record a `RETEST_FAILED` audit event and return to `ACCEPTED`, retaining the failed retest evidence in the immutable audit log.
 * **FR-7.5 (P1, Core)**: Reports in `NEED_MORE_INFO` shall automatically transition to `CLOSED_INCOMPLETE` after 14 days of researcher inactivity without clarification, recording an automated timeout event. Reopening is permitted if the researcher subsequently provides the required clarification.
-* **FR-7.6 (P1, Core)**: Any closed state may be reopened by `Defender` or `Tenant Owner` recording an immutable justification log, transitioning the report back to `TRIAGING`.
+* **FR-7.6 (P1, Core)**: The system shall permit reopening a closed report exclusively from remediation closures (`VERIFIED_RESEARCHER`, `VERIFIED_INTERNAL`, `CLOSED_UNVERIFIED_TIMEOUT`), intake abandonment (`CLOSED_INCOMPLETE`), or disputed non-remediation outcomes (`RISK_ACCEPTED`, `REJECTED_INVALID`, `DUPLICATE`). Reopening requires an authorized Defender or Tenant Owner action recording an immutable justification log, transitioning the ticket back to `TRIAGING`. Scanner spam (`REJECTED_SPAM`) and voluntary retractions (`WITHDRAWN`) cannot be reopened.
 * **FR-7.7 (P2, Commercial)**: The platform shall generate exportable Redacted Closure Evidence summaries (PDF and JSON formats) capturing the operational label, report lifecycle timestamps, verified commit SHA/branch, deployment environment, retest attestations, and closing officer identity, suitable for sharing with enterprise clients and security auditors without disclosing raw exploit instructions. Included in the $49/mo Team plan.
 
 ### 3.8 Application Hardening, Defensive Controls & Storage Quotas (FR-8)
 * **FR-8.1 (P1, Core)**: Decrypted Markdown content shall be parsed and sanitized before rendering using `unified` / `remark-parse` / `rehype-sanitize` enforcing strict HTML tag and attribute allowlists to neutralize Stored XSS.
 * **FR-8.2 (P1, Core)**: PostgreSQL Row-Level Security (RLS) policies shall be enforced on all tenant tables, setting tenant context dynamically within interactive transactions via `SET LOCAL app.current_tenant_id = :org_id`.
 * **FR-8.3 (P1, Core)**: Public report submission endpoints shall enforce shared store rate limiting (PostgreSQL / Upstash) and Cloudflare Turnstile CAPTCHA (5 submissions / hour / IP).
-* **FR-8.4 (P2, Core)**: Direct-to-R2 presigned upload routes shall validate storage quotas (2 GB demo, 10 GB Team) at URL issuance time. The system shall display administrative warnings when usage reaches 90% of configured quota, strictly reject new allocations with HTTP `413 Payload Too Large` if projected usage exceeds 100%, and run an automated orphan cleanup job.
+* **FR-8.4 (P2, Core)**: Direct-to-R2 presigned upload routes shall validate storage quotas (500 MB Community, 2 GB demo, 10 GB Team) at URL issuance time. For Community tier tenants exceeding the 5 active reports limit, submissions 6+ shall be encrypted and held in a `QUOTA_HELD` intake queue. If hard storage (500 MB) or rate limits (10 submissions/hr) are saturated, intake returns HTTP 429/507 directing submitters to the program's fallback email (`security@tenant.com`). The system shall display administrative warnings when usage reaches 90% of configured quota, strictly reject new allocations with HTTP `413 Payload Too Large` if projected usage exceeds 100%, and run an automated orphan cleanup job.
 * **FR-8.5 (P1, Core)**: The audit ledger shall enforce append-only constraints with a SHA-256 `prev_hash` chain: database permissions on `audit_events` shall grant `INSERT` and `SELECT` operations only, preventing `UPDATE` and `DELETE` actions by any application role.
 * **FR-8.6 (P2, Commercial)**: The platform shall integrate with Lemon Squeezy as Merchant of Record to handle subscription billing ($49/mo Team and free Community tier), global sales tax and VAT remittance, webhook subscription synchronization, and direct bank payouts to Pakistani accounts.
 * **FR-8.7 (P2, Commercial)**: The platform shall maintain an automated disaster recovery drill script for PostgreSQL and Cloudflare R2 backup restoration in an isolated sandbox, alongside a privileged GDPR tenant hard-deletion purge script.
@@ -246,14 +248,14 @@ BugBountyTrack is structured into three clean architectural tiers:
 * **Main Success Scenario**:
   1. Researcher selects in-scope target asset, selects a neutral operational category label (`operational_label` enum), and enters specific vulnerability title.
   2. Researcher inputs sensitive vulnerability description, reproduction steps, and optional PoC attachment.
-  3. Client browser generates an ephemeral Curve25519 keypair in memory (<50ms).
+  3. Client browser generates an ephemeral RFC 9580 v6 Curve25519 keypair in memory (<50ms target).
   4. Client browser fetches the program's active public defender encryption subkeys and the offline master recovery key.
   5. Client browser generates an ephemeral AES-256 session key, encrypts title (`title_ciphertext`), description, and PoC, and encrypts the session key with the program defenders' subkeys, recovery key, and ephemeral report key.
   6. If attachment is present: Browser requests presigned URL from `/api/uploads/presign` and streams encrypted ciphertext directly to Cloudflare R2.
   7. Browser dispatches HTTP POST request with neutral operational metadata, OpenPGP ciphertext payload, and attachment R2 references.
   8. Backend validates Turnstile CAPTCHA, tenant asset scope, and persists ciphertext in PostgreSQL.
-  9. System issues a Guest Access Token, stores ephemeral private key in `IndexedDB`, and displays a Secret Tracking URL using a client-side URI fragment (`/report/track/BBT-RPT-XXXX#token=<secret>&key=<privkey>`).
-  10. System generates a downloadable and copyable **Guest Recovery Package** (armored bundle) to enable multi-device restoration, and sets report state to `NEW`.
+  9. System issues a Guest Access Token, stores ephemeral private key in `IndexedDB`, and displays a Secret Tracking URL using a client-side URI fragment (`/report/track/BBT-RPT-XXXX#token=<secret>`). Client JavaScript immediately executes `window.history.replaceState` to scrub the token from the browser address bar.
+  10. System generates a downloadable **Guest Recovery Package** (`.bbt-recovery.json`, version 1) containing `{ report_id, guest_actor_id, access_token, encrypted_private_key, checksum }` to enable multi-device restoration, and sets report state to `NEW`.
 * **Extensions**:
   * *4a. Organization public key missing or invalid*: Browser displays error; submission blocked.
   * *8a. Rate limit exceeded*: Backend returns `429 Too Many Requests`; submission blocked.
@@ -371,42 +373,53 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    Hunter(["Ethical Researcher (Hunter / Guest)"])
-    Defender(["Triage Lead (Defender)"])
-    Owner(["Tenant Owner"])
-    ReadOnly(["Management (ReadOnly)"])
-    Admin(["Platform SuperAdmin"])
+    subgraph Actors["Platform Actors"]
+        Hunter(["Ethical Researcher<br/>(Hunter / Guest)"])
+        Defender(["Triage Lead<br/>(Defender)"])
+        Owner(["Tenant Owner"])
+        ReadOnly(["Management<br/>(ReadOnly)"])
+        Admin(["Platform<br/>SuperAdmin"])
+    end
 
-    subgraph BugBountyTrack["BugBountyTrack Platform"]
-        UC1["UC-01: Submit Encrypted Report (Ciphertext Title + Neutral Label)"]
-        UC2["UC-02: Decrypt & Triage Report (Dual-Lane)"]
-        UC3["UC-03: Propose Remediation (GitHub Commit SHA / Config Hash)"]
-        UC4["UC-04: Attested Retest & Accountable Closure"]
-        UC5["UC-05: Guided Onboarding & RFC 9116 security.txt Signing"]
-        UC6["UC-06: View Audit Logs & SLA Countdown Timers"]
-        UC7["UC-07: Export Redacted Closure Evidence (PDF/JSON)"]
-        UC8["UC-08: Offline Org Recovery Key Backup & Decrypt Challenge"]
-        UC9["UC-09: Tokenized Private Program Invitations"]
-        UC10["UC-10: Lemon Squeezy Subscription & Quota Management"]
-        UC11["UC-11: Platform Tenant Provisioning & Abuse Suspension"]
-        UC12["UC-12: Guest Recovery Package Export & Multi-Device Import"]
+    subgraph IntakeModule["Intake & Disclosure"]
+        UC1["UC-01: Encrypted Report Intake"]
+        UC9["UC-09: Tokenized Invitations"]
+        UC12["UC-12: Guest Key Recovery (.bbt-recovery.json)"]
+    end
+
+    subgraph TriageModule["Triage & Remediation Verification"]
+        UC2["UC-02: Decrypt & Triage (Dual-Lane)"]
+        UC3["UC-03: Propose Remediation (Commit SHA/Config)"]
+        UC4["UC-04: Attested Retest Closure"]
+        UC7["UC-07: Redacted Evidence Export"]
+    end
+
+    subgraph AdminModule["Governance & Operations"]
+        UC5["UC-05: Onboarding & security.txt"]
+        UC8["UC-08: Master Key Offline Backup"]
+        UC6["UC-06: SLA Timers & Audit Ledger"]
+        UC10["UC-10: Subscription & Quota"]
+        UC11["UC-11: Platform Administration"]
     end
 
     Hunter --> UC1
-    Hunter --> UC4
     Hunter --> UC9
+    Hunter --> UC4
     Hunter --> UC12
+
     Defender --> UC2
     Defender --> UC3
     Defender --> UC4
     Defender --> UC6
     Defender --> UC7
+
     Owner --> UC5
     Owner --> UC6
     Owner --> UC7
     Owner --> UC8
     Owner --> UC9
     Owner --> UC10
+
     ReadOnly --> UC6
     Admin --> UC11
 ```
@@ -433,10 +446,11 @@ sequenceDiagram
     Server->>Server: Validate recipient_set_version, Turnstile CAPTCHA, Tenant Scope & Quota
     Server->>DB: INSERT INTO reports (recipient_set_version, title_ciphertext, payload, operational_label, state='NEW')
     DB-->>Server: Record Persisted (Hash-Chained Audit Event)
-    Server-->>Browser: 201 Created (Report #BBT-102 + Guest Access Token)
+    Server-->>Browser: 201 Created (Report #BBT-102 + Guest Access Token + guest_actor_id)
     Browser->>KeyStore: Store Tracking Secret & Ephemeral Private Key in IndexedDB
-    Browser->>Browser: Assemble Armored Guest Recovery Package (Token + Encrypted Key)
-    Browser-->>Hunter: Display Fragment URL (#token=...&key=...) & Downloadable Recovery Package
+    Browser->>Browser: Assemble Versioned JSON Recovery Package (.bbt-recovery.json v1)
+    Browser->>Browser: history.replaceState (Scrub #token from Address Bar)
+    Browser-->>Hunter: Display Secret Tracking URL (#token=...) & Download .bbt-recovery.json
 ```
 
 ---
@@ -453,16 +467,16 @@ sequenceDiagram
     participant DB as Neon PostgreSQL
 
     Defender->>Browser: Navigates to /reports/BBT-102
-    Browser->>Server: GET /api/v1/reports/BBT-102 (Session Cookie + Tenant Context)
-    Server->>Server: Validate DB Session Auth & Server RBAC (Verify Tenant Ownership)
-    Server->>DB: SELECT title_ciphertext, payload, metadata WHERE tenant_id = :id
+    Browser->>Server: GET /api/v1/reports/BBT-102 (Session Cookie)
+    Server->>Server: Validate DB Session & Program Authorization (PROGRAM_DEFENDER check)
+    Server->>DB: SELECT r.* FROM reports r JOIN program_defenders pd ON pd.program_id = r.program_id WHERE r.id = :id AND pd.user_id = :uid AND pd.is_active = TRUE
     DB-->>Server: Return Ciphertext Record
     Server-->>Browser: 200 OK (Ciphertext Payload)
     Browser-->>Defender: Prompt for Local Encryption Passphrase
     Defender->>Browser: Enters Passphrase
     Browser->>KeyStore: Retrieve Encrypted Private Key
     KeyStore-->>Browser: Encrypted Key Material
-    Browser->>Browser: Unlock Private Key via OpenPGP Argon2 S2K
+    Browser->>Browser: Unlock Private Key via OpenPGP Argon2id S2K
     Browser->>Browser: openpgp.decrypt(title_ciphertext, payload, privateKey)
     Browser->>Browser: rehype-sanitize AST Cleansing (Neutralize Stored XSS)
     Browser-->>Defender: Renders Plaintext Report in Confidential View
@@ -492,7 +506,7 @@ sequenceDiagram
 | `RETEST_PENDING` | Retest Passed (Internal) | `Defender` | Fix verified mitigated internally; author conflict disclosed | `VERIFIED_INTERNAL` | Reviewer empirical test evidence, conflict-of-interest disclosure |
 | `RETEST_PENDING` | Grace Period Inactivity Closure | `Defender` | Researcher inactive ≥ 14 days after deployment notification | `CLOSED_UNVERIFIED_TIMEOUT` | Explicit reviewer closure action with recorded administrative rationale |
 | `RETEST_PENDING` | Retest Failed (Flaw Persists) | `Hunter` / `Defender` | Empirical retest demonstrates vulnerability remains exploitable | `ACCEPTED` (via `RETEST_FAILED` event) | Detailed failure reproduction notes, error logs; preserves audit record |
-| `VERIFIED_RESEARCHER` / `VERIFIED_INTERNAL` / `CLOSED_UNVERIFIED_TIMEOUT` / `CLOSED_INCOMPLETE` / `REJECTED_INVALID` / `DUPLICATE` | Reopen Ticket | `Defender` / `Tenant Owner` | Regression identified or formal dispute upheld | `TRIAGING` | Mandatory reopening audit justification and incident link |
+| `VERIFIED_RESEARCHER` / `VERIFIED_INTERNAL` / `CLOSED_UNVERIFIED_TIMEOUT` / `CLOSED_INCOMPLETE` / `RISK_ACCEPTED` / `REJECTED_INVALID` / `DUPLICATE` | Reopen Ticket | `Defender` / `Tenant Owner` | Regression identified, risk re-evaluated, or formal dispute upheld | `TRIAGING` | Mandatory reopening audit justification and incident link |
 
 ```mermaid
 stateDiagram-v2
@@ -628,7 +642,7 @@ erDiagram
         string user_id FK
         string key_type "PRIMARY_SIGNING | ENCRYPTION_SUBKEY"
         string public_key_armor
-        string fingerprint UK
+        string fingerprint UK "64 hex chars (RFC 9580 v6 SHA-256)"
         boolean is_active
         datetime created_at
     }
@@ -638,9 +652,10 @@ erDiagram
         string organization_id FK
         string program_id FK
         string hunter_id FK "nullable"
-        string guest_token_hash UK "nullable"
-        string guest_public_key "nullable (Curve25519 armor)"
-        string guest_recovery_hash "nullable"
+        string guest_actor_id UK "nullable (durable UUIDv4 assigned at intake)"
+        string guest_token_hash UK "nullable (active bearer token hash)"
+        string guest_public_key "nullable (RFC 9580 v6 Curve25519 armor)"
+        string guest_recovery_hash "nullable (SHA-256 of .bbt-recovery.json)"
         string assigned_defender_id FK "nullable"
         string state "NEW | TRIAGING | ACCEPTED | NEED_MORE_INFO | FIX_PROPOSED | RETEST_PENDING | VERIFIED_RESEARCHER | VERIFIED_INTERNAL | CLOSED_UNVERIFIED_TIMEOUT | CLOSED_INCOMPLETE | RISK_ACCEPTED | REJECTED_SPAM | REJECTED_INVALID | DUPLICATE | WITHDRAWN"
         string operational_label "AUTHENTICATION_BYPASS | INJECTION_VULNERABILITY | INFORMATION_DISCLOSURE | CROSS_SITE_SCRIPTING | ACCESS_CONTROL_ISSUE | DENIAL_OF_SERVICE | OTHER"
@@ -664,7 +679,7 @@ erDiagram
         string report_id FK
         string sender_actor_type "REGISTERED_USER | GUEST_RESEARCHER | SYSTEM_AUTOMATION"
         string sender_user_id FK "nullable"
-        string sender_guest_id "nullable"
+        string sender_guest_actor_id "nullable (references guest_actor_id)"
         string lane "RESEARCHER_ORG | REVIEWER_INTERNAL"
         string encrypted_body "CIPHERTEXT ONLY"
         datetime created_at
@@ -688,7 +703,7 @@ erDiagram
         string report_id FK
         string verifier_actor_type "RESEARCHER_REGISTERED | RESEARCHER_GUEST | DEFENDER_INTERNAL | MANAGER_TIMEOUT"
         string verifier_user_id FK "nullable"
-        string verifier_guest_token_hash "nullable"
+        string verifier_guest_actor_id "nullable (references guest_actor_id)"
         boolean fix_confirmed
         string verification_notes_cipher "CIPHERTEXT ONLY"
         datetime retest_date
@@ -709,13 +724,22 @@ erDiagram
         string report_id FK
         string actor_type "REGISTERED_USER | GUEST_RESEARCHER | SYSTEM_AUTOMATION"
         string actor_user_id FK "nullable"
-        string actor_guest_id "nullable"
+        string actor_guest_actor_id "nullable (references guest_actor_id)"
         string action
         string justification "nullable"
         string prev_hash
         datetime timestamp
     }
 ```
+
+#### Entity Governance & Data Integrity Rules
+1. **`PROGRAM_DEFENDER` Governance Rules**:
+   - **Same-Organization Constraint**: A user can only be assigned to a program if `user.organization_id == program.organization_id`. Cross-tenant defender assignments are blocked by database constraints.
+   - **Unique Membership Constraint**: Enforced compound uniqueness on `@@unique([program_id, user_id])`.
+   - **Atomic Assignment & Versioning**: Inserting or removing a `PROGRAM_DEFENDER` record must execute within an atomic transaction that increments the parent `program.recipient_set_version`.
+   - **Program-Level Authorization Boundary**: Report retrieval, attachment presigning, and closure exports verify active membership in `PROGRAM_DEFENDER` for the specific `program_id`, not merely general tenant membership.
+2. **Durable Guest Actor Model**:
+   - `REPORT.guest_actor_id` establishes an immutable UUIDv4 identity generated at intake. All subsequent discussion messages, retest attestations, and audit records reference this durable ID. Rotating or re-issuing `guest_token_hash` allows credential recovery without altering historical attribution.
 
 ---
 

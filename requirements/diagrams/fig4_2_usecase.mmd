@@ -1,39 +1,50 @@
 flowchart LR
-    Hunter(["Ethical Researcher (Hunter / Guest)"])
-    Defender(["Triage Lead (Defender)"])
-    Owner(["Tenant Owner"])
-    ReadOnly(["Management (ReadOnly)"])
-    Admin(["Platform SuperAdmin"])
+    subgraph Actors["Platform Actors"]
+        Hunter(["Ethical Researcher<br/>(Hunter / Guest)"])
+        Defender(["Triage Lead<br/>(Defender)"])
+        Owner(["Tenant Owner"])
+        ReadOnly(["Management<br/>(ReadOnly)"])
+        Admin(["Platform<br/>SuperAdmin"])
+    end
 
-    subgraph BugBountyTrack["BugBountyTrack Platform"]
-        UC1["UC-01: Submit Encrypted Report (Ciphertext Title + Neutral Label)"]
-        UC2["UC-02: Decrypt & Triage Report (Dual-Lane)"]
-        UC3["UC-03: Propose Remediation (GitHub Commit SHA / Config Hash)"]
-        UC4["UC-04: Attested Retest & Accountable Closure"]
-        UC5["UC-05: Guided Onboarding & RFC 9116 security.txt Signing"]
-        UC6["UC-06: View Audit Logs & SLA Countdown Timers"]
-        UC7["UC-07: Export Redacted Closure Evidence (PDF/JSON)"]
-        UC8["UC-08: Offline Org Recovery Key Backup & Decrypt Challenge"]
-        UC9["UC-09: Tokenized Private Program Invitations"]
-        UC10["UC-10: Lemon Squeezy Subscription & Quota Management"]
-        UC11["UC-11: Platform Tenant Provisioning & Abuse Suspension"]
-        UC12["UC-12: Guest Recovery Package Export & Multi-Device Import"]
+    subgraph IntakeModule["Intake & Disclosure"]
+        UC1["UC-01: Encrypted Report Intake"]
+        UC9["UC-09: Tokenized Invitations"]
+        UC12["UC-12: Guest Key Recovery (.bbt-recovery.json)"]
+    end
+
+    subgraph TriageModule["Triage & Remediation Verification"]
+        UC2["UC-02: Decrypt & Triage (Dual-Lane)"]
+        UC3["UC-03: Propose Remediation (Commit SHA/Config)"]
+        UC4["UC-04: Attested Retest Closure"]
+        UC7["UC-07: Redacted Evidence Export"]
+    end
+
+    subgraph AdminModule["Governance & Operations"]
+        UC5["UC-05: Onboarding & security.txt"]
+        UC8["UC-08: Master Key Offline Backup"]
+        UC6["UC-06: SLA Timers & Audit Ledger"]
+        UC10["UC-10: Subscription & Quota"]
+        UC11["UC-11: Platform Administration"]
     end
 
     Hunter --> UC1
-    Hunter --> UC4
     Hunter --> UC9
+    Hunter --> UC4
     Hunter --> UC12
+
     Defender --> UC2
     Defender --> UC3
     Defender --> UC4
     Defender --> UC6
     Defender --> UC7
+
     Owner --> UC5
     Owner --> UC6
     Owner --> UC7
     Owner --> UC8
     Owner --> UC9
     Owner --> UC10
+
     ReadOnly --> UC6
     Admin --> UC11

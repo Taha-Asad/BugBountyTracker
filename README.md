@@ -17,7 +17,7 @@
 | **Official Email** | `24-st-013@students.ptut.edu.pk` |
 | **Academic Institution** | Punjab Tianjin University of Technology (PTUT), Lahore |
 | **Department** | Department of Software Engineering Technology |
-| **Session / Batch / Section** | Session 2024–2028 / Batch 24-SET-Fall / Section SET-A |
+| **Session / Batch / Section** | Session 2024–2028 / Batch 24-SET-Fall / Section SET-B |
 | **FYP Supervisor** | Sir Umar Hayat |
 | **Primary Architecture** | Decoupled 3-Tier Web App (Next.js 14+ App Router, Node.js 22 LTS, Neon PostgreSQL 16, OpenPGP.js, Tailwind CSS) |
 | **Document Suite Version** | **Version 3.2.0** (Commercial Baseline & Academic Defense Specification) |

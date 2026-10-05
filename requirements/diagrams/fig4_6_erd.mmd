@@ -96,7 +96,7 @@ erDiagram
         string user_id FK
         string key_type "PRIMARY_SIGNING | ENCRYPTION_SUBKEY"
         string public_key_armor
-        string fingerprint UK
+        string fingerprint UK "64 hex chars (RFC 9580 v6 SHA-256)"
         boolean is_active
         datetime created_at
     }
@@ -106,9 +106,10 @@ erDiagram
         string organization_id FK
         string program_id FK
         string hunter_id FK "nullable"
-        string guest_token_hash UK "nullable"
-        string guest_public_key "nullable (Curve25519 armor)"
-        string guest_recovery_hash "nullable"
+        string guest_actor_id UK "nullable (durable UUIDv4 assigned at intake)"
+        string guest_token_hash UK "nullable (active bearer token hash)"
+        string guest_public_key "nullable (RFC 9580 v6 Curve25519 armor)"
+        string guest_recovery_hash "nullable (SHA-256 of .bbt-recovery.json)"
         string assigned_defender_id FK "nullable"
         string state "NEW | TRIAGING | ACCEPTED | NEED_MORE_INFO | FIX_PROPOSED | RETEST_PENDING | VERIFIED_RESEARCHER | VERIFIED_INTERNAL | CLOSED_UNVERIFIED_TIMEOUT | CLOSED_INCOMPLETE | RISK_ACCEPTED | REJECTED_SPAM | REJECTED_INVALID | DUPLICATE | WITHDRAWN"
         string operational_label "AUTHENTICATION_BYPASS | INJECTION_VULNERABILITY | INFORMATION_DISCLOSURE | CROSS_SITE_SCRIPTING | ACCESS_CONTROL_ISSUE | DENIAL_OF_SERVICE | OTHER"
@@ -132,7 +133,7 @@ erDiagram
         string report_id FK
         string sender_actor_type "REGISTERED_USER | GUEST_RESEARCHER | SYSTEM_AUTOMATION"
         string sender_user_id FK "nullable"
-        string sender_guest_id "nullable"
+        string sender_guest_actor_id "nullable (references guest_actor_id)"
         string lane "RESEARCHER_ORG | REVIEWER_INTERNAL"
         string encrypted_body "CIPHERTEXT ONLY"
         datetime created_at
@@ -156,7 +157,7 @@ erDiagram
         string report_id FK
         string verifier_actor_type "RESEARCHER_REGISTERED | RESEARCHER_GUEST | DEFENDER_INTERNAL | MANAGER_TIMEOUT"
         string verifier_user_id FK "nullable"
-        string verifier_guest_token_hash "nullable"
+        string verifier_guest_actor_id "nullable (references guest_actor_id)"
         boolean fix_confirmed
         string verification_notes_cipher "CIPHERTEXT ONLY"
         datetime retest_date
@@ -177,7 +178,7 @@ erDiagram
         string report_id FK
         string actor_type "REGISTERED_USER | GUEST_RESEARCHER | SYSTEM_AUTOMATION"
         string actor_user_id FK "nullable"
-        string actor_guest_id "nullable"
+        string actor_guest_actor_id "nullable (references guest_actor_id)"
         string action
         string justification "nullable"
         string prev_hash

@@ -2,7 +2,8 @@
 
 **Project**: BugBountyTrack  
 **Academic Level**: Fifth-Semester Project (Evaluated Prototype)  
-**Student**: Taha Asadullah (Software Engineering Technology)  
+**Student**: Taha Asadullah (Software Engineering Technology, Section SET-B, Roll No: 24-ST-013)  
+**Supervisor**: Sir Umar Hayat  
 **Sub-Field**: Application Security & Secure Software Engineering  
 **Document Suite Version**: Version 3.2.0 (Commercial Baseline & Academic Defense Specification)  
 **Last Updated**: October 2026  
@@ -28,13 +29,13 @@ flowchart LR
 ### Pillar 1: The Public Door (`security.txt` & Account-Less Intake)
 * A startup hosts a standard text file (`acme.com/.well-known/security.txt`) pointing to their BugBountyTrack program page.
 * Anyone can read the startup's disclosure policy, in-scope domains, and safe harbor terms.
-* **Zero-Friction Guest Intake**: Researchers can submit reports without creating an account. The browser generates an ephemeral Curve25519 keypair and issues a high-entropy secret tracking URL protected by a client-side URI fragment (`/report/track/BBT-RPT-XXXX#token=<secret>&key=<privkey>`), ensuring tokens and keys are never transmitted to the server in request lines or leaked in access logs. Researchers also receive an armored Guest Recovery Package for multi-device restoration. Researchers can optionally register later to bind anonymous reports to their reputation profile.
+* **Zero-Friction Guest Intake**: Researchers can submit reports without creating an account. The browser generates an ephemeral RFC 9580 v6 Curve25519 keypair and issues a high-entropy secret tracking URL protected by a client-side URI fragment (`/report/track/BBT-RPT-XXXX#token=<access_token>`). The access token authorizes report retrieval, while the private key remains strictly client-side in browser `IndexedDB`. The fragment is scrubbed from the address bar on load via `window.history.replaceState`. Researchers also download a canonical, versioned `.bbt-recovery.json` Guest Recovery Package for multi-device or clean-browser restoration. Researchers can optionally register later to bind anonymous reports to their reputation profile.
 
 ### Pillar 2: The Multi-Defender Lockbox (Client-Side OpenPGP & Recovery)
-* When a researcher submits an exploit, their browser encrypts the report with **OpenPGP** (standardized on RFC 9580 Curve25519 / Ed25519/X25519, targeting sub-50ms bare keygen, distinct from the intentional ~200–400ms Argon2id passphrase derivation delay) before sending it to our server.
+* When a researcher submits an exploit, their browser encrypts the report with **OpenPGP** (standardized strictly on RFC 9580 v6 Curve25519 / Ed25519/X25519 with 64-character SHA-256 fingerprints, targeting sub-50ms bare keygen as an empirical benchmark target, distinct from the intentional, estimated ~200–400ms Argon2id passphrase derivation delay) before sending it to our server.
 * **Direct-to-R2 Encrypted Attachments**: Evidence files up to 25 MB are encrypted in-browser and uploaded directly to Cloudflare R2 via presigned URLs, bypassing Vercel serverless payload limits (4.5 MB).
-* **Bounded Program-Scoped Multi-Defender Model (N ≤ 10 via `PROGRAM_DEFENDER`)**:
-  1. **Dual-Lane Isolation**: Public vulnerability submissions are encrypted for the reporting researcher and all authorized program defenders (N ≤ 10). Internal triage notes are encrypted exclusively for authorized program defenders, strictly excluding the researcher's key.
+* **Bounded Program-Scoped Multi-Defender Model (N <= 10 via `PROGRAM_DEFENDER`)**:
+  1. **Dual-Lane Isolation**: Public vulnerability submissions are encrypted for the reporting researcher, the organization's offline recovery key, and all authorized program defenders assigned via `PROGRAM_DEFENDER` (N <= 10). Internal triage notes are encrypted exclusively for authorized program defenders and the offline recovery key, strictly excluding the researcher's key.
   2. **Historical-Access Isolation**: Newly joined defenders receive keys only for reports filed after their onboarding. Access to historical reports requires an explicit, audited client-side session key re-wrapping operation by an existing authorized defender.
   3. **Offline Organization Master Recovery Key**: During organization onboarding, an offline Curve25519 recovery keypair is generated. The private key must be saved offline (paper/vault) and verified via an onboarding client-side decryption challenge (zero server upload). It acts as an emergency recipient for payload session keys, preventing catastrophic data loss if all defenders lose their devices.
 * **What the Server Sees**: The database only stores scrambled ciphertext, a neutral `operational_label` enum, and encrypted title ciphertext (`title_ciphertext`). Even if an attacker dumps our database, they cannot read the secret vulnerability details or PoC code.

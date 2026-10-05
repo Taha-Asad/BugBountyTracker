@@ -116,7 +116,7 @@ s1_rows = [
     (9, [('B9', 6, 'Single Accountable Author'), ('C9', 7, 'Taha Asadullah (Roll No: 24-ST-013)')]),
     (10, [('B10', 4, 'Academic Institution'), ('C10', 5, 'Punjab Tianjin University of Technology (PTUT), Lahore')]),
     (11, [('B11', 6, 'Department'), ('C11', 7, 'Department of Software Engineering Technology')]),
-    (12, [('B12', 4, 'Session / Batch / Section'), ('C12', 5, 'Session 2024–2028 / Batch 24-SET-Fall / Section SET-A')]),
+    (12, [('B12', 4, 'Session / Batch / Section'), ('C12', 5, 'Session 2024–2028 / Batch 24-SET-Fall / Section SET-B')]),
     (13, [('B13', 6, 'Official Student Email'), ('C13', 7, '24-st-013@students.ptut.edu.pk')]),
     (14, [('B14', 4, 'Project Supervisor'), ('C14', 5, 'Sir Umar Hayat')]),
     (15, [('B15', 6, 'Client Platform'), ('C15', 7, 'Modern Web (Next.js 14+ App Router, React 18+, TypeScript 5.x, Tailwind CSS, OpenPGP.js)')]),

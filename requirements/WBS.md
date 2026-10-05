@@ -15,7 +15,7 @@
 | **Single Accountable Author**| Taha Asadullah (Roll No: **`24-ST-013`**) |
 | **Academic Institution** | Punjab Tianjin University of Technology (PTUT), Lahore |
 | **Department** | Department of Software Engineering Technology |
-| **Session / Batch / Section**| Session 2024–2028 / Batch 24-SET-Fall / Section SET-A |
+| **Session / Batch / Section**| Session 2024–2028 / Batch 24-SET-Fall / Section SET-B |
 | **Official Student Email** | `24-st-013@students.ptut.edu.pk` |
 | **Project Supervisor** | Sir Umar Hayat |
 | **Client Platform** | Modern Web (Next.js 14+ App Router, React 18+, TypeScript 5.x, Tailwind CSS, OpenPGP.js) |
