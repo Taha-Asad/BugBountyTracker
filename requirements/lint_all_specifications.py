@@ -221,6 +221,23 @@ check('CLOSED_INCOMPLETE' in srs, "SRS.md explicitly includes CLOSED_INCOMPLETE 
 check('REJECTED_SPAM' in srs and 'WITHDRAWN' in srs, "SRS.md explicitly marks REJECTED_SPAM and WITHDRAWN as non-reopenable")
 check('89.24' in brd_full and '61.00' in brd_full, "BRD.md accurately distinguishes infrastructure break-even from commercial profitability")
 
+# 16. Academic & Professional Attribution Hygiene (Zero AI Agent Bleed into Specifications)
+forbidden_personas = [
+    'Alexander', 'Victoria', 'Arthur', 'Julian', 'Marcus', 'Elena',
+    'Cyra', 'Garrison', 'Nadia', 'Vance', 'Pendleton', 'Sterling',
+    'Rostova', 'Kaelen', 'Drake', 'Al-Mansoor', 'Crow Parliament'
+]
+hygiene_files = [
+    ('SRS.md', srs),
+    ('BRD.md', brd_full),
+    ('WBS.md', wbs),
+    ('KEY_MANAGEMENT.md', km),
+    ('CVSS_TEST_FIXTURES.md', cvss_text)
+]
+for doc_name, doc_content in hygiene_files:
+    for persona in forbidden_personas:
+        check(persona not in doc_content, f"{doc_name} has zero bleed of internal agent persona '{persona}'")
+
 print(f"\nSpecification Linting Results: {len(passes)} checks PASSED, {len(errors)} checks FAILED.")
 for p in passes:
     print(f"  [PASS] {p}")

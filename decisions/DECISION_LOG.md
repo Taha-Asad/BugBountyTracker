@@ -21,7 +21,7 @@
 - **DEC-001**: Project target is a university Fifth-Semester Project under the Application Security sub-field with an approximate 16-week execution window, delivering an **evaluated prototype**.
 - **DEC-002**: Technical stack baseline: Next.js 14+ (App Router, TypeScript), Node.js 22 LTS, Neon PostgreSQL 16 (Prisma ORM), OpenPGP.js (client-side cryptography), Cloudflare R2, and Tailwind CSS.
 - **DEC-003**: Elimination of hype: No automated AI/LLM triage and no live exploit/PoC automated scanners.
-- **DEC-004**: Active mentoring posture is "Build with me", pairing Alexander Cross (`CROSS-DIR`) as orchestrator and Victoria Vance (`VANCE-REQ`) as requirements lead.
+- **DEC-004**: Engineering methodology adheres to continuous requirement validation and test-driven design ("Build with me" interactive paired execution).
 - **DEC-005**: All project artifacts must reside in `projects/BugBountyTrack/` conforming to `projects/PROJECT_SCHEMA.md`.
 - **DEC-006**: **Core Objective**: Focus on structured vulnerability reporting connected to verifiable fix references, retest evidence, and accountable closure.
 - **DEC-007**: **State Machine Verification Scope**: The remediation state machine is an **integration-tested finite state machine** enforced at the application and database level; it is not claimed to be mathematically formally verified.

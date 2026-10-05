@@ -110,21 +110,21 @@ projects/BugBountyTrack/
 
 ## 4-Tier Verification Architecture
 
-To uphold the *Observe, Build, Verify* ethos of Crow Parliament, quality assurance is structured into four distinct verification layers:
+To uphold the rigorous *Observe, Build, Verify* engineering ethos, quality assurance is structured into four distinct verification layers:
 
 ```mermaid
 flowchart TD
-    L1["Level 1: Specification Integrity Linter<br/>(lint_all_specifications.py — 112 checks)"] --> L2["Level 2: CVSS Mathematical Engine & Rejection Tests<br/>(verify_cvss_engine.py — 45 scoring vectors + 6 negative tests)"]
+    L1["Level 1: Specification Integrity Linter<br/>(lint_all_specifications.py — 128 checks)"] --> L2["Level 2: CVSS Mathematical Engine & Rejection Tests<br/>(verify_cvss_engine.py — 45 scoring vectors + 6 negative tests)"]
     L2 --> L3["Level 3: Cryptographic Integration Tests<br/>(OpenPGP dual-envelope, guest recovery, session key re-wrapping)"]
     L3 --> L4["Level 4: Operational Launch Gates<br/>(DoR -> DoAC -> DoCC -> DoQV -> DoSA -> DoOR -> DoRG)"]
 ```
 
 | Layer | Verification Target | Mechanism | Status |
 | :--- | :--- | :--- | :--- |
-| **Level 1: Specification Linter** | Document cross-references, arithmetic, schema consistency, OpenXML formulas, honest task statuses, diagram assets, guest recovery, and CSP rules | Automated AST & regex linter (`lint_all_specifications.py`) | **112 / 112 Passed (100%)** |
+| **Level 1: Specification Linter** | Document cross-references, arithmetic, schema consistency, OpenXML formulas, honest task statuses, diagram assets, guest recovery, and CSP rules | Automated AST & regex linter (`lint_all_specifications.py`) | **128 / 128 Passed (100%)** |
 | **Level 2: CVSS Engine & Parser Tests** | CVSS 3.1 Base Score equations (official 8.22 coefficient), metric weights, Roundup() parity, and strict parser rejection (duplicates, syntax) | Pure Python mathematical verification engine (`verify_cvss_engine.py`) | **45 / 45 Scoring + 6 / 6 Negative Passed (100%)** |
 | **Level 3: Cryptographic Integration** | Multi-defender encryption, guest recovery package, session key re-wrapping, DOM isolation | Vitest & Playwright browser integration suite (Scheduled: Sprints 3–4) | *Phase 3 Gate* |
-| **Level 4: Operational Launch Gates** | End-to-end production readiness, security threat models, SLOs | Crow Parliament Phase Gate Governance protocol (`DoR` to `DoRG`) | *Phase 4–7 Gates* |
+| **Level 4: Operational Launch Gates** | End-to-end production readiness, security threat models, SLOs | Phase Gate Governance protocol (`DoR` to `DoRG`) | *Phase 4–7 Gates* |
 
 ---
 

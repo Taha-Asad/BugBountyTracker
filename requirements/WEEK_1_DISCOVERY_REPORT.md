@@ -23,7 +23,7 @@ Active Milestone: Week 1 of 16 — Problem Discovery & User Personas
 Early-stage technology startups and independent software projects operate under persistent cybersecurity risk but are economically excluded from commercial bug bounty platforms (e.g., HackerOne, Bugcrowd) due to prohibitive enterprise subscription costs ($15,000–$30,000+/year) and complex onboarding overhead. Consequently, security researchers who discover critical vulnerabilities are forced to disclose sensitive exploit payloads across unencrypted communication channels (email, public GitHub issues, social media DMs), introducing severe confidentiality leakage risks and legal ambiguity under anti-hacking laws. Furthermore, existing issue trackers treat bug resolution as an informal textual update, creating a "fix-and-forget" verification gap where patches are deployed without verifiable Git commit linkage or empirical researcher retesting. BugBountyTrack resolves this dilemma by delivering a lightweight, multi-tenant Vulnerability Disclosure Platform (VDP) that automates RFC 9116 security.txt policy generation, enforces zero-knowledge client-side OpenPGP exploit payload encryption, provides deterministic CVSS 3.1 scoring, and governs remediation through an evidence-based, Git-linked retest state machine.
 
 2. TARGET USER PERSONAS SUMMARY:
-- Persona 1: Alex Vance (The Hunter) — 23, Independent Security Researcher. Motivations: Ethical disclosure, verifiable portfolio credit, bounty recognition. Primary Pain Points: Fear of legal liability (CFAA) due to missing safe harbor policies, zero confidentiality when sending zero-days over email, unacknowledged reports ("ghosting"), and subjective severity downgrading.
+- Persona 1: Alex Rivera (The Hunter) — 23, Independent Security Researcher. Motivations: Ethical disclosure, verifiable portfolio credit, bounty recognition. Primary Pain Points: Fear of legal liability (CFAA) due to missing safe harbor policies, zero confidentiality when sending zero-days over email, unacknowledged reports ("ghosting"), and subjective severity downgrading.
 - Persona 2: Sarah Chen (The Defender) — 31, CTO / Lead Engineer at a 6-person FinTech SaaS. Motivations: Protect user data, maintain high security posture on a bootstrapped budget, streamline intake. Primary Pain Points: Drowning in scanner spam/invalid reports, lack of in-house GPG tooling, fear of exploit exposure if database is breached, and lack of proof that committed patches actually mitigate reported flaws.
 
 3. THE 5 CORE MVP FEATURES (LOCKED FOR WEEK 7 PROTOTYPE GATE):
@@ -55,8 +55,8 @@ Full IEEE-compliant Week 1 discovery report, persona empathy maps, and operation
 | **Claimed Date** | October 2, 2026 |
 | **Active Milestone** | **Week 1 of 16**: Problem Discovery & User Personas |
 | **SDLC Phase Gate** | **Gate 1: Definition of Ready (DoR)** |
-| **Lead Requirements Engineer** | Victoria "Tori" Vance (`VANCE-REQ`), Crow Parliament |
-| **Engineering Coordinator** | Alexander Cross (`CROSS-DIR`), Crow Parliament |
+| **Student Author & Project Lead** | Taha Asadullah (Roll No: `24-ST-013`, Section: `SET-B`) |
+| **Academic Supervisor** | Sir Umar Hayat (Assistant Professor, PTUT Lahore) |
 | **Deliverable File Path** | [`projects/BugBountyTrack/requirements/WEEK_1_DISCOVERY_REPORT.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/requirements/WEEK_1_DISCOVERY_REPORT.md) |
 
 ---
@@ -130,7 +130,7 @@ To ensure the system addresses concrete human workflows, two detailed personas w
 
 ```mermaid
 mindmap
-  root((Alex Vance<br/>The Hunter))
+  root((Alex Rivera<br/>The Hunter))
     Motivations
       Ethical discovery
       Portfolio reputation
@@ -154,7 +154,7 @@ mindmap
 ```
 
 #### Demographic & Professional Profile
-* **Name**: Alex Vance
+* **Name**: Alex Rivera
 * **Age**: 23
 * **Role**: Independent Security Researcher / Undergraduate Cybersec Student
 * **Experience**: 2 years part-time bug bounty hunting, Top 5% on university CTF teams
@@ -172,7 +172,7 @@ mindmap
 * **Subjective Severity Downgrades**: Frustrated when a company acknowledges a Remote Code Execution (RCE) bug but unilaterally labels it "Low Severity" to avoid acknowledgment.
 * **Incomplete Fixes**: Often discovers that a developer applied a superficial client-side regex fix, but the report was prematurely closed without asking Alex to re-verify.
 
-#### Empathy Map (Alex Vance)
+#### Empathy Map (Alex Rivera)
 
 | Dimension | User Expression & Internal State |
 | :--- | :--- |
@@ -323,7 +323,7 @@ The BugBountyTrack engineering plan adheres strictly to the sequential 16-week P
 | **Week 1** | **Problem Discovery & User Personas** *(Current)* | Formal Discovery Report, 2 Personas, Problem Statement, 5 MVP Features (**Gate 1: DoR Part I**). |
 | **Week 2** | **Software Requirements Specification (SRS)** | IEEE 830 compliant SRS, Use Case Diagrams, quantified NFRs (**Gate 1: DoR Complete**). |
 | **Week 3** | **High-Level Architecture & Cloud Topology** | 3-Tier Architecture, DFD Level 0 & 1, system boundaries, ADRs (**Gate 2: DoAC Part I**). |
-| **Week 4** | **Database Modeling & UI Wireframes** | Normalized PostgreSQL ERD, indexing strategies, API contracts, Julian Mercer UI wireframes (**Gate 2.5: DoDE**). |
+| **Week 4** | **Database Modeling & UI Wireframes** | Normalized PostgreSQL ERD, indexing strategies, API contracts, UI/UX interaction wireframes (**Gate 2.5: DoDE**). |
 | **Week 5** | **Project Scaffolding & Core Auth Layer** | Next.js + Tailwind + Prisma scaffolding, multi-tenant RBAC, bcrypt password security. |
 | **Week 6** | **Core Domain Logic & Vertical Slice** | CVSS 3.1 calculation engine, RFC 9116 generator, client-side OpenPGP integration (**Gate 3: DoCC**). |
 | **Week 7** | **Live Working Prototype Milestone Gate** | End-to-end user journey demonstration, Midterm Progress Report, evaluation slide deck. |
@@ -336,9 +336,9 @@ The BugBountyTrack engineering plan adheres strictly to the sequential 16-week P
 
 ---
 
-## 8. Gate 1 (DoR) Sign-Off & Verification
+## 8. Gate 1 (DoR) Sign-Off & Academic Verification
 
-This deliverable has been authored by **Victoria "Tori" Vance** (`VANCE-REQ`) and audited by **Alexander Cross** (`CROSS-DIR`) under the governance of the Crow Parliament Constitution ([`RULEBOOK.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/RULEBOOK.md)).
+This deliverable has been authored by **Taha Asadullah** (Roll No: **`24-ST-013`**, Section: **`SET-B`**) under the academic supervision of **Sir Umar Hayat** at Punjab Tianjin University of Technology (PTUT), Lahore.
 
 * **Criterion 1: Problem Discovery Complete**: Verified. Core operational frictions, industry economics, and academic scope boundaries are fully documented.
 * **Criterion 2: Detailed User Personas Established**: Verified. 2 comprehensive personas (Hunter and Defender) with complete demographics, goals, pain points, and empathy maps are specified.

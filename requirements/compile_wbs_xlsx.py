@@ -231,7 +231,7 @@ s3_xml_parts = [
     build_cell('C1', 15, 'Human Accountable (Taha)') +
     build_cell('D1', 15, 'Supervisor (Sir Umar)') +
     build_cell('E1', 15, 'Faculty Panel (PTUT)') +
-    build_cell('F1', 15, 'Internal AI Advisory Squad') +
+    build_cell('F1', 15, 'Technical Standards & Reference') +
     '</row>'
 ]
 

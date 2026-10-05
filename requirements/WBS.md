@@ -94,16 +94,16 @@
 * **C (Consulted)**: Sir Umar Hayat (Academic Supervisor providing guidance and defense evaluation).
 * **I (Informed)**: Department Faculty Panel (Academic stakeholders updated at milestone boundaries).
 
-| Module Code | Module Name | Human Accountable (Taha) | Supervisor (Sir Umar) | Faculty Panel (PTUT) | Internal AI Advisory Squad (Crow Parliament) |
-| :--- | :--- | :---: | :---: | :---: | :---: |
-| **MOD-1** | Foundation, RLS & Markdown Sanitization | **A / R** | C | I | Advised by Arthur (Arch) & Cyra (Sec) |
-| **MOD-2** | Multi-Tenancy, Auth & Server RBAC | **A / R** | C | I | Advised by Marcus (Forge) & Cyra (Sec) |
-| **MOD-3** | RFC 9116 Policy & Browser Keygen | **A / R** | C | I | Advised by Victoria (Req) & Cyra (Sec) |
-| **MOD-4** | Client Cryptography & CVSS 3.1 | **A / R** | C | I | Advised by Cyra (Sec) & Elena (QA) |
-| **MOD-5** | Confidential Triage & GitHub Validation | **A / R** | C | I | Advised by Marcus (Forge) & Julian (UX) |
-| **MOD-6** | Attested Retest & Quota Management | **A / R** | C | I | Advised by Elena (QA) & Garrison (SRE) |
-| **MOD-7** | Commercial Deployment, Billing & Hardening | **A / R** | C | I | Advised by Garrison (SRE) & Nadia (Release) |
-| **ACAD** | Usability Study & FYP Defense | **A / R** | C | I | Advised by Alexander (Steward) & Victoria (Req) |
+| Module Code | Module Name | Human Accountable (Taha) | Supervisor (Sir Umar) | Faculty Panel (PTUT) | Technical Standards & Governance Reference |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| **MOD-1** | Foundation, RLS & Markdown Sanitization | **A / R** | C | I | PostgreSQL Row-Level Security & OWASP ASVS v4.0 |
+| **MOD-2** | Multi-Tenancy, Auth & Server RBAC | **A / R** | C | I | NIST SP 800-63B Authentication & Multi-Tenant RBAC |
+| **MOD-3** | RFC 9116 Policy & Browser Keygen | **A / R** | C | I | IETF RFC 9116 (security.txt) & W3C WebCrypto API |
+| **MOD-4** | Client Cryptography & CVSS 3.1 | **A / R** | C | I | IETF RFC 9580 (OpenPGP v6) & FIRST CVSS 3.1 Standard |
+| **MOD-5** | Confidential Triage & GitHub Validation | **A / R** | C | I | GitHub REST API v3 & ISO/IEC 29147 Vulnerability Disclosure |
+| **MOD-6** | Attested Retest & Quota Management | **A / R** | C | I | ISO/IEC 30111 Vulnerability Handling Processes |
+| **MOD-7** | Commercial Deployment, Billing & Hardening | **A / R** | C | I | SaaS Merchant-of-Record & Cloud Security Hardening |
+| **ACAD** | Usability Study & FYP Defense | **A / R** | C | I | IEEE 830-1998 Standards & PTUT FYP Evaluation Criteria |
 
 ---
 
