@@ -36,5 +36,5 @@
     "standards": ["RFC-9116", "CVSS-3.1"]
   },
   "activePhase": "Phase 1: Requirements Analysis & Engineering (Gate 1: DoR)",
-  "activeMilestone": "Week 1-2: Discovery, BRD, IEEE 830 SRS & WBS Baseline Certified"
+  "activeMilestone": "Week 1-2: Discovery, BRD, IEEE 830 SRS & WBS Baseline Certified (v3.1.0)"
 }

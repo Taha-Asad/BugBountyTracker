@@ -2,102 +2,134 @@
 
 **Project**: BugBountyTrack — Vulnerability Disclosure Platform with Remediation Tracking  
 **Document**: Architecture Design Note (`ARCH-NOTE-001`)  
-**Status**: Active Architecture Reference  
-**Standard**: OpenPGP Specification & `openpgp.js` Library Integration
+**Status**: Active Architecture Reference (Version 3.1.0)  
+**Standard**: OpenPGP Specification (RFC 4880 / RFC 9580) & `openpgp.js` Integration  
 
 ---
 
 ## 1. Overview & Core Cryptographic Objective
 
-BugBountyTrack incorporates end-to-end PGP encryption to protect sensitive vulnerability details and triage communications. The platform architecture guarantees that sensitive vulnerability proof-of-concepts, reproduction payloads, and remediation notes remain confidential against server-side database exposure.
+BugBountyTrack incorporates client-side OpenPGP encryption to protect sensitive vulnerability reproduction steps, proof-of-concept payloads, attachments, and remediation discussions against database compromise, cloud snapshot theft, and unauthorized server-side access.
 
-The cryptographic subsystem relies on the actively maintained `openpgp.js` library running client-side in the user's web browser.
+The cryptographic subsystem executes in the user's web browser using `openpgp.js`. The server functions strictly as an untrusted message routing and ciphertext persistence layer for encrypted payloads.
 
 ---
 
-## 2. Recipient Scope & Multi-Recipient PGP Mechanics
+## 2. Recipient Scope & Multi-Defender Protocol
 
 ```mermaid
 flowchart TD
-    subgraph Browser["Client Browser (Researcher or Defender)"]
+    subgraph Browser["Client Browser (Submitter / Defender)"]
         Msg["Plaintext Payload<br/>(PoC / Remediation Note / Attachment)"]
-        K_S["Ephemeral Symmetric Key (AES-256)"]
+        K_S["Ephemeral Symmetric Key K_S (AES-256)"]
         Msg -->|"Encrypt with K_S"| Ciphertext["Encrypted Data Packet"]
         
-        K_S -->|"Encrypt with Lead Public Key"| PKESK1["PKESK 1 (Triage Lead)"]
-        K_S -->|"Encrypt with Hunter Public Key"| PKESK2["PKESK 2 (Researcher)"]
+        K_S -->|"Wrap for Hunter"| PKESK_H["PKESK (Researcher Key)"]
+        K_S -->|"Wrap for Def 1"| PKESK_D1["PKESK (Defender 1 Key)"]
+        K_S -->|"Wrap for Def N"| PKESK_DN["PKESK (Defender N Key)"]
         
-        Combined["OpenPGP Armored Message<br/>(PKESK1 + PKESK2 + Ciphertext)"]
-        PKESK1 --> Combined
-        PKESK2 --> Combined
+        Combined["OpenPGP Armored Envelope<br/>(PKESK_H + PKESK_D1..N + Ciphertext)"]
+        PKESK_H --> Combined
+        PKESK_D1 --> Combined
+        PKESK_DN --> Combined
         Ciphertext --> Combined
     end
-    Combined -->|"Upload via HTTPS"| Svr[("Server & Database<br/>(Stores Armored Block)")]
+    Combined -->|"POST with recipient_set_version"| Svr[("Server & Database<br/>(Verifies version & stores ciphertext)")]
 ```
 
-### 2.1 Bounded Recipient Model (MVP)
-To maintain cryptographic integrity without the combinatorial complexity of multi-user key escrow:
-- Encrypted payloads are scoped strictly to **two parties**:
-  1. The **Reporting Security Researcher**.
-  2. The **Designated Organization Triage Lead** assigned to the report.
-- The platform does not attempt to enable all organization members to decrypt reports. If a different team member is assigned, key rotation protocols apply (Section 4).
+### 2.1 Bounded Program-Scoped Recipient Model ($N \le 10$)
+To prevent combinatorial key explosion while supporting collaborative team triage:
+1. **Program-Scoped Authorization**: Encryption recipients are strictly bounded to the **reporting researcher** plus the **active defenders explicitly assigned to the specific program** ($N \le 10$). Defenders in the same organization who are not assigned to the program are not included.
+2. **Pseudonymous Key Identifiers**: The client fetches public encryption subkeys identified strictly by their 16-character OpenPGP Key ID or 40-character fingerprint. Employee names, email addresses, and internal roles are not included in public keyrings to minimize internal organizational disclosure.
 
-### 2.2 Standard OpenPGP Multi-Recipient Encryption
-When a report, threaded reply, or attachment is submitted:
-1. The client browser creates an ephemeral symmetric session key $K_S$.
-2. The payload is encrypted with $K_S$ using AES-256.
-3. $K_S$ is encrypted independently with:
-   - The Designated Company Triage Lead's OpenPGP public key $\rightarrow$ Packet 1 (PKESK 1).
-   - The Researcher's OpenPGP public key $\rightarrow$ Packet 2 (PKESK 2).
-4. Both packets and the encrypted data are bundled into a standard OpenPGP message block.
-5. **Outcome**: Either party can decrypt the exact same stored ciphertext using their personal private key. The server sees only the armored block.
+### 2.2 Key Synchronization & Concurrency Protocol (`recipient_set_version`)
+To prevent race conditions when team members join or leave while reports are in transit:
+1. **Keyring Versioning**: Every program maintains an integer `recipient_set_version` counter in PostgreSQL.
+2. **Key Retrieval**: When opening a report form or reply box, the browser retrieves:
+   ```json
+   {
+     "program_id": "prog_123",
+     "recipient_set_version": 4,
+     "public_keys": [
+       { "key_id": "F7B2C109E45A12D8", "armored_public_key": "-----BEGIN PGP..." },
+       { "key_id": "3A81D92C4B7E55F1", "armored_public_key": "-----BEGIN PGP..." }
+     ]
+   }
+   ```
+3. **Submission Guard**: Submissions send the payload envelope alongside `recipient_set_version`.
+4. **Stale Keyring Rejection**: If the server detects that the program's `recipient_set_version` has incremented (e.g. Defender removed/added), the submission is rejected with `409 Conflict: STALE_RECIPIENT_SET`. The client fetches the updated keyring and prompts the user to re-encrypt before retrying.
+
+### 2.3 Dual-Lane Recipient Isolation
+The platform enforces strict cryptographic separation between collaborative researcher dialogue and internal security analysis:
+* **Lane 1: Collaborative Triage & Retest Thread**: Encrypted with symmetric key $K_S$, wrapped for the **Researcher + Program Defenders**.
+* **Lane 2: Internal Review Notes & Remediation Triage**: Encrypted with symmetric key $K_S$, wrapped **strictly for Program Defenders**. The researcher's public key is excluded from the envelope, preventing external submitters from decrypting internal comments even if database records are exposed.
+
+### 2.4 Historical-Access Isolation & Audited Session Key Re-Wrapping
+* **Historical-Access Isolation**: A newly onboarded defender receives access only to future submissions and replies. They do not possess past keys and cannot decrypt reports submitted prior to their assignment. (This is historical-access isolation, not forward secrecy; OpenPGP does not provide forward secrecy if long-term private keys are later compromised).
+* **Audited Session Key Re-Wrapping**: When a new defender requires access to a historical report:
+  1. An existing authorized defender opens the report in their browser and unlocks their private key.
+  2. The browser decrypts the symmetric session key ($K_S$) in local memory.
+  3. The browser re-wraps $K_S$ with the new defender's public key using standard OpenPGP PKESK packet generation (`openpgp.js`).
+  4. The client transmits the new PKESK packet to the server, which appends it to the stored message envelope.
+  5. The server records an immutable audit event: `HISTORICAL_ACCESS_GRANTED` (`grantor_id`, `recipient_id`, `report_id`, `timestamp`).
+* **Member Offboarding**: When a defender is removed, the program's `recipient_set_version` increments. All subsequent report submissions and **future replies in existing threads** exclude the offboarded member's public key. (Previously downloaded plaintext or retained private keys cannot be revoked).
+
+### 2.5 Envelope Size Considerations
+In OpenPGP, each recipient adds a Public-Key Encrypted Session Key (PKESK) packet:
+* For Curve25519 (X25519) keys, each PKESK packet adds approximately 80–120 bytes.
+* For RSA-4096 keys, each PKESK packet adds approximately 530–560 bytes.
+For $N = 10$ defenders using X25519, recipient envelope overhead is under 1.5 KB; for legacy RSA-4096, overhead reaches approximately 5.5 KB. The platform standardizes on modern Curve25519 subkeys while supporting RSA-4096 for compatibility.
 
 ---
 
-## 3. Data Boundary: Server-Readable vs. Client-Encrypted
+## 3. Data Boundary: Server-Visible Metadata vs. Client-Encrypted Fields
 
-| Field Category | Storage Location | Accessibility | Purpose |
+| Data Field | Storage Format | Visibility | System Purpose & Security Risk |
 | :--- | :--- | :--- | :--- |
-| **Report Identifiers** | PostgreSQL columns | Plaintext (Server-readable) | Routing, relational integrity (UUID, timestamps). |
-| **Lifecycle State** | PostgreSQL columns | Plaintext (Server-readable) | Enforcing state transitions (`NEW`, `TRIAGING`, etc.). |
-| **Target Asset & Category** | PostgreSQL columns | Plaintext (Server-readable) | Scope validation (e.g. `api.acme.com`, CWE category). |
-| **CVSS 3.1 Vector & Score** | PostgreSQL columns | Plaintext (Server-readable) | Metrics aggregation and priority sorting. |
-| **Remediation Metadata** | PostgreSQL columns | Plaintext (Server-readable) | Git commit SHA, PR URL, non-code fix category, timestamp. |
-| **Retest Audit Log** | PostgreSQL columns | Plaintext (Server-readable) | Verifier ID, organization relationship, implementer flag, timestamp, outcome. |
-| **Vulnerability Description & PoC** | PostgreSQL text (`pgp_armored`) | Client-Encrypted (Ciphertext) | Confidentiality of exploit mechanics. |
-| **Triage Thread Messages** | PostgreSQL text (`pgp_armored`) | Client-Encrypted (Ciphertext) | Private researcher-defender dialogue. |
-| **Sensitive Remediation Notes** | PostgreSQL text (`pgp_armored`) | Client-Encrypted (Ciphertext) | Internal patch details and reproduction bypass tests. |
-| **File Attachments** | Object Store / Local Filesystem | Client-Encrypted (Binary PGP) | Exploit scripts, PCAP traces, screenshots. |
+| **Report Reference ID** | Text (`#BBT-xxx`) | Server-Visible Plaintext | Ticket routing, audit trail correlation. Low risk. |
+| **Program & Target Asset** | UUID & Text (`api.example.com`) | Server-Visible Plaintext | Program scope validation. Reveals target surface. |
+| **Operational Category Enum**| Enum (`AUTHENTICATION_BYPASS`, etc.) | Server-Visible Plaintext | Queue filtering and SLA triage. Reveals vulnerability type. |
+| **CVSS 3.1 Vector & Score** | Text & Decimal (`9.8 Critical`) | Server-Visible Plaintext | SLA routing and dashboard prioritization. Reveals severity. |
+| **Lifecycle State** | Enum (`ACCEPTED`, `RETEST_PENDING`, etc.) | Server-Visible Plaintext | State machine enforcement. Reveals remediation status. |
+| **VCS Fix Reference** | SHA-1 / SHA-256 Commit Hash | Server-Visible Plaintext | Automated commit existence and branch verification. |
+| **Vulnerability Title & PoC**| Text (`pgp_armored`) | Client-Encrypted Ciphertext | Detailed exploit mechanics. Fully confidential. |
+| **Reproduction Steps** | Text (`pgp_armored`) | Client-Encrypted Ciphertext | Step-by-step exploit reproduction. Fully confidential. |
+| **Thread Messages & Replies**| Text (`pgp_armored`) | Client-Encrypted Ciphertext | Triage conversation and patch advice. Fully confidential. |
+| **Internal Review Notes** | Text (`pgp_armored`) | Client-Encrypted Ciphertext | Defender-only notes (excludes hunter key). Fully confidential. |
+| **Evidence Attachments** | Binary (`pgp_armored` in R2) | Client-Encrypted Ciphertext | PoC scripts, PCAP traces, HAR logs. Fully confidential. |
+
+### Minimal-Metadata Notification Policy
+To prevent notification emails from leaking exploit characteristics or vulnerable assets:
+* External email notifications sent via transactional email (Resend API) default strictly to:
+  * **Subject**: `[BugBountyTrack] Status Update on Report #BBT-104`
+  * **Body**: `A new message or state change occurred on report #BBT-104. Log in to your encrypted portal to view details: https://app.bugbountytrack.com/reports/104`
+* Exploit titles, CWE categories, target domain names, and reproduction snippets are strictly excluded from automated emails.
 
 ---
 
-## 4. Key Lifecycle, Rotation & Failure Modes
+## 4. Key Lifecycle & Failure Modes
 
-### 4.1 Key Registration and Fingerprint Tracking
-- When registering, each researcher and triage lead provides an ASCII-armored OpenPGP public key.
-- The platform extracts and stores the 40-character hexadecimal fingerprint (SHA-1 / SHA-256 fingerprint).
-- Every encrypted message stored in the database logs the recipient fingerprints:
-  `recipient_fingerprints: ["8F3B12C9...", "4A7E91D2..."]`
-  This enables the client UI to immediately determine which local private key must be unlocked to decrypt the payload.
-
-### 4.2 Key Rotation in Active Threads
-- If a researcher or company lead rotates their public key:
-  1. All **new report submissions** fetch the updated public key.
-  2. All **new replies in existing threads** encrypt to the updated public key.
-  3. Historical messages previously encrypted with the older key remain as-is. The recipient must use their older private key (from their local key archive) to decrypt historical messages.
-
-### 4.3 Key-Loss Behavior & Explicit MVP Limitations
-- **Individual Key Loss**: If one recipient loses their private key, that recipient permanently loses the ability to decrypt historical messages encrypted to that key. However, the other recipient (holding their own intact private key) can still decrypt and read the entire thread.
-- **No Automated Key Recovery**: The platform provides no server-side key escrow or password-based decryption backdoors. Automated historical recovery is explicitly out of scope.
-- **Key-Change Warnings**: If an organization or researcher changes their public key, the client UI displays a prominent warning dialog prompting the user to verify the new key fingerprint before encrypting sensitive data.
+1. **Passphrase Separation**:
+   * **Login Password**: Authenticates against the server (hashed using bcrypt, 12 rounds).
+   * **Encryption Passphrase**: Retained strictly on client devices, never transmitted to the server. Unlocks local WebCrypto PBKDF2/AES-GCM encrypted `IndexedDB` key storage.
+2. **Individual Key Loss**:
+   * If a defender loses their private key and has no backup, they permanently lose access to historical ciphertexts addressed to them.
+   * Other authorized defenders and the researcher retain their independent keys and can decrypt the thread.
+   * The platform provides no server-side key escrow or password-reset decryption backdoors.
+3. **Local Key Backup Workflow**:
+   * Users can export an ASCII-armored, passphrase-encrypted backup file (`bbt-keys-backup.asc`) containing their private decryption subkeys.
+   * Key backup is integrated directly into the onboarding workflow and accessible under User Profile Settings.
 
 ---
 
-## 5. Security Model & Foundational Assumptions
+## 5. Security Model & Explicit Trust Assumptions
 
-1. **Trusted Browser & Code Integrity**:
-   The security model assumes that the client’s web browser environment is untampered and executes the application JavaScript delivered over TLS 1.3 faithfully without malicious extensions or client-side compromise.
-2. **Client-Side Assistance vs. Server Validation**:
-   Client-side pre-submission checks (such as required reproduction step verification or CVSS string checks) are **advisory user assistance**, not trusted server-enforced validation. Because the server cannot inspect the encrypted payload, it cannot cryptographically guarantee that the encrypted body matches the unencrypted metadata.
-3. **Safe Rendering on Decryption**:
-   The platform never mutates or destructively sanitizes raw proof-of-concept text, as altering characters invalidates exploit code. Instead, decrypted text is parsed using an Abstract Syntax Tree (AST) renderer with strict character escaping, rendering exploit payloads inside inert code blocks where HTML injection or script execution is neutralized.
+1. **Delivered Code & Key Distribution Trust Assumption**:
+   Client-side cryptography isolates sensitive exploit payloads from backend database compromises, cloud snapshot theft, and untrusted database administrators. However, **the platform assumes that the delivered client web application (HTML/JS) and the server's public-key distribution endpoint are untampered**. Client-side cryptography cannot protect against a malicious platform operator who alters the delivered JavaScript or substitutes public keys during retrieval.
+2. **Platform Hardening**:
+   To minimize the risk of client-side code modification or XSS injection, the application enforces:
+   * Strict Content Security Policy (`script-src 'self'`) blocking third-party scripts.
+   * Subresource Integrity (SRI) on all bundled static chunks.
+   * AST-based Markdown sanitization neutralizing HTML tags and embedded scripts inside code blocks.
+3. **Client-Side Rendering Safety**:
+   Decrypted vulnerability payloads and proof-of-concept code are rendered exclusively inside inert syntax-highlighted code blocks using client-side AST tokenizers. The raw plaintext is never injected via `dangerouslySetInnerHTML`.

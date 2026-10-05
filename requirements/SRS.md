@@ -119,17 +119,18 @@ Rather than asserting unverifiable "100% zero-knowledge" claims, the platform de
 | **Client Keystore & Passphrase Secrets** | Primary signing key (Ed25519), active decryption subkey (X25519 / RSA-4096), master user encryption passphrase. | Public keys only (0 plaintext key bytes or passphrases ever transmitted to or stored on server). | Browser cache / IndexedDB clearing without prior armored key export causes unrecoverable loss of legacy decryption capability. |
 
 **Cryptographic Protocol & Architecture Rules**:
-* **Single Decryption Custodian**: Each tenant organization designates exactly one active **Decryption Custodian** whose public encryption subkey is registered for incoming submissions.
+* **Program-Scoped Multi-Defender Key Management**: Rather than relying on a single custodian, encryption targets are bounded to the submitting researcher and the active defenders assigned to that specific program (N ≤ 10). Each defender maintains their own independent keypair.
+
 * **Separation of Passphrase & Password**: User accounts distinguish strictly between the **Login Password** (used for server authentication, hashed with bcrypt at rounds = 12) and the **Local Encryption Passphrase** (retained strictly on client devices, used via WebCrypto PBKDF2/AES-GCM to unlock the local browser `IndexedDB` keystore, never transmitted to or stored on the server).
-* **Dual-Recipient Envelope**: When a report is submitted, sensitive fields (`title_ciphertext`, `description`, `reproduction_steps`, `impact`, attachments) are encrypted client-side targeted to both the organization's active public encryption subkey and the reporting researcher's public encryption key.
-* **Neutral Operational Labeling**: To allow server-side dashboard filtering, ticket queuing, and notification routing without decrypting payloads or leaking exploit titles in email subjects, submitters select a neutral server-readable category enum (`AUTHENTICATION_BYPASS`, `INJECTION_VULNERABILITY`, `INFORMATION_DISCLOSURE`, `CROSS_SITE_SCRIPTING`, `ACCESS_CONTROL_ISSUE`, `DENIAL_OF_SERVICE`, `OTHER`) coupled with the report reference (`#BBT-xxx`).
-* **Historic Key Retention & Custodian Succession Runbook**: Key rotation generates a new active encryption subkey for new submissions while retaining historic private decryption keys in the organization custodian's local keystore to enable decryption of legacy reports. When rotating the Decryption Custodian role, the organization executes a structured handover:
-  1. The outgoing custodian exports an armored, passphrase-encrypted backup of all historic private keys.
-  2. The incoming custodian imports the historic keys into their local `IndexedDB` keystore and generates a new active encryption subkey.
-  3. The incoming custodian publishes the new public subkey to the organization's public program profile.
-  4. Historic reports remain decryptable using retained historic keys; all new incoming submissions target the new custodian subkey.
-* **Browser Trust Boundary Limits**: Client-side cryptography isolates sensitive exploit payloads from backend database compromises, rogue database administrators, and cloud snapshot exposures. However, it operates within the security bounds of the client execution environment: it cannot defend against malicious browser extensions possessing DOM/storage access, compromised device operating systems, or memory extraction on an infected endpoint. This boundary is reinforced through strict Content Security Policy (CSP), Subresource Integrity (SRI), and AST-based HTML sanitization.
+* **Key Synchronization & Concurrency Guard (`recipient_set_version`)**: Every program maintains an integer `recipient_set_version` counter. Submissions and replies include the version targeted; if membership changes occur while drafting, the server rejects stale submissions with HTTP `409 Conflict: STALE_RECIPIENT_SET`, prompting the client to refresh public keys and re-encrypt.
+* **Dual-Lane Recipient Isolation**:
+  * *Conversation Thread & Retest Evidence*: Encrypted with symmetric key $K_S$, wrapped for Researcher + Program Defenders.
+  * *Internal Triage Notes*: Encrypted with symmetric key $K_S$, wrapped strictly for Program Defenders (researcher key excluded).
+* **Minimal-Metadata Notifications**: Automated emails (via Resend API) default to zero-leakage subject lines (`[BugBountyTrack] Status Update on Report #BBT-xxx`) and omit vulnerability titles, categories, and target assets.
+* **Historical-Access Isolation & Audited Session Key Re-Wrapping**: Newly onboarded defenders receive access only to future submissions. Historical access to past reports requires an existing authorized defender to locally decrypt the session key ($K_S$), re-wrap it with the new defender's public key, and append the PKESK packet to the envelope. This action is permanently recorded in the audit trail (`HISTORICAL_ACCESS_GRANTED`).
+* **Browser Trust Boundary**: Client-side cryptography isolates sensitive exploit payloads from backend database compromises, cloud snapshot exposures, and untrusted database administrators. However, the system operates within the standard web security model: **the delivered client web application (HTML/JS) and the server's public-key distribution endpoint must be trusted**. Client-side cryptography cannot protect against a malicious platform operator who modifies delivered JavaScript or substitutes public keys.
 * **Append-Only Audit Boundary**: Immutability of the audit ledger is enforced at the database level: PostgreSQL role privileges on `audit_events` grant `INSERT` and `SELECT` operations only, preventing `UPDATE` or `DELETE` actions by any application role.
+
 
 ### 2.3 User Classes & Provisional Personas
 * **Alex Vance (Ethical Researcher / Hunter - Provisional Persona)**: Independent security researcher discovering web flaws. Seeks confidential intake, explicit Safe Harbor terms, clear CVSS scoring, and verifiable closure credit.
@@ -411,17 +412,18 @@ sequenceDiagram
     participant DB as Neon PostgreSQL
 
     Hunter->>Browser: Enters Scope, Category Enum, Title, Description & PoC
-    Browser->>Server: GET /api/v1/programs/{slug}/key
-    Server-->>Browser: Returns Organization Public Encryption Subkey
+    Browser->>Server: GET /api/v1/programs/{slug}/encryption-targets
+    Server-->>Browser: Returns recipient_set_version + Program Defender Public Keys
     Browser->>KeyStore: Fetch Researcher Public Key
     KeyStore-->>Browser: Researcher Public Key
-    Browser->>Browser: openpgp.encrypt([title, description, poc], [OrgSubKey, HunterKey])
-    Browser->>Server: POST /api/v1/reports (Neutral Label + title_ciphertext + payload_ciphertext)
-    Server->>Server: Validate Tenant Scope, Quota Bounds & Rate Limits (Token-Bucket)
-    Server->>DB: INSERT INTO reports (title_ciphertext, payload, operational_label, state='NEW')
+    Browser->>Browser: openpgp.encrypt(payload, [HunterKey, DefKey1, ...DefKeyN])
+    Browser->>Server: POST /api/v1/reports (recipient_set_version, Neutral Label, title_ciphertext, payload_ciphertext)
+    Server->>Server: Validate recipient_set_version, Tenant Scope, Quota Bounds & Rate Limits
+    Server->>DB: INSERT INTO reports (recipient_set_version, title_ciphertext, payload, operational_label, state='NEW')
     DB-->>Server: Record Persisted (Append-Only Audit Event)
     Server-->>Browser: 201 Created (Report #BBT-102)
     Browser-->>Hunter: Display Report Confirmation & Encrypted Receipt
+
 ```
 
 ---
@@ -491,11 +493,10 @@ stateDiagram-v2
     RETEST_PENDING --> VERIFIED_RESEARCHER: Hunter Attests Fix Mitigated
     RETEST_PENDING --> VERIFIED_INTERNAL: Defender Attests Fix Mitigated
     RETEST_PENDING --> CLOSED_UNVERIFIED_TIMEOUT: Grace Period Expired + Reviewer Rationale
-    RETEST_PENDING --> RETEST_FAILED: Empirical Retest Shows Flaw Persists
-
-    RETEST_FAILED --> ACCEPTED: Re-opens for Fix Adjustment
+    RETEST_PENDING --> ACCEPTED: Retest Failed (Flaw Persists)
     
     VERIFIED_RESEARCHER --> TRIAGING: Regression Identified (Reopen)
+
     VERIFIED_INTERNAL --> TRIAGING: Regression Identified (Reopen)
     CLOSED_UNVERIFIED_TIMEOUT --> TRIAGING: Retest Requested (Reopen)
     REJECTED --> TRIAGING: Dispute Upheld (Reopen)
@@ -541,14 +542,26 @@ erDiagram
         datetime current_period_end
     }
 
+    PROGRAM {
+        string id PK
+        string organization_id FK
+        string name
+        string slug UK
+        string visibility "PUBLIC | INVITE_ONLY"
+        int recipient_set_version
+        string policy_markdown
+        datetime created_at
+    }
+
     PROGRAM_INVITATION {
         string id PK
         string program_id FK
-        string token UK
+        string token_hash UK
         string invitee_email
         datetime expires_at
         datetime accepted_at
     }
+
 
     USER {
         string id PK
@@ -689,53 +702,58 @@ The platform provides a clean, responsive web interface comprising 8 core screen
 ### 7.1 Bidirectional Traceability Matrix
 
 | Requirement ID | Functional Capability Description | Target Delivery Milestone | Automated Test Case ID | WBS Package Code |
-| :--- | :--- | :---: | :--- | :--- |
+| :--- | :--- | :--- | :--- | :--- |
 | **FR-1.1** | Multi-tenant schema isolation & monorepo | M1 (W1–W8) | `TC-SEC-01` (Tenant RLS isolation test) | `WP-1.1` / `WP-1.2` |
 | **FR-1.2** | Server-enforced 4-tier RBAC middleware | M1 (W1–W8) | `TC-AUTH-02` (Role boundary verification) | `WP-2.3` |
-| **FR-1.3** | Email/pass auth, signed JWT & TOTP MFA | M1 / M3 | `TC-AUTH-01` (Password hashing & JWT test) | `WP-2.2` / `WP-7.1` |
-| **FR-1.4** | Guided onboarding wizard & checklist | M3 (W13–W16) | `TC-ONBOARD-01` (Onboarding flow completion test) | `WP-7.2` |
-| **FR-1.5** | Tokenized private program invitations | M3 (W13–W16) | `TC-INVITE-01` (Tokenized invite redemption test) | `WP-7.3` |
+| **FR-1.3** | Auth, signed JWT, session revocation & TOTP MFA | M1 / M3 | `TC-AUTH-01` (Password hashing, JWT & session kill) | `WP-2.2` / `WP-7.1` |
+| **FR-1.4** | Guided onboarding wizard & checklist | M3 (W13–W15) | `TC-ONBOARD-01` (Onboarding flow completion test) | `WP-7.2` |
+| **FR-1.5** | Private program access (`token_hash` invite) | M3 (W13–W15) | `TC-INVITE-01` (Tokenized invite redemption test) | `WP-7.3` |
 | **FR-2.1** | RFC 9116 `security.txt` endpoint & download | M1 (W1–W8) | `TC-POL-01` (RFC 9116 syntax validator) | `WP-3.1` |
 | **FR-2.2** | Browser cleartext PGP signing of policy | M1 (W1–W8) | `TC-POL-02` (Cleartext signature verification) | `WP-3.2` |
 | **FR-2.5** | DNS TXT challenge domain verification | M1 (W1–W8) | `TC-POL-03` (DNS TXT record challenge mock) | `WP-3.3` |
 | **FR-3.1** | WebCrypto keypair generation (Ed25519+X25519)| M1 (W1–W8) | `TC-CRYPTO-01` (Keypair subkey capability check) | `WP-3.4` |
 | **FR-3.2** | Passphrase-encrypted IndexedDB keystore | M1 (W1–W8) | `TC-CRYPTO-02` (Local keystore decrypt assertion) | `WP-3.4` |
-| **FR-3.3** | Dual-recipient client payload encryption | M1 (W1–W8) | `TC-CRYPTO-03` (Dual-recipient decryption test) | `WP-4.1` |
+| **FR-3.3** | Multi-defender encryption (`recipient_set_version`)| M1 (W1–W8) | `TC-CRYPTO-03` (Multi-defender decryption test) | `WP-4.1` |
 | **FR-3.4** | Neutral operational category labeling | M1 (W1–W8) | `TC-CRYPTO-05` (Operational label categorization test) | `WP-4.1` |
 | **FR-3.5** | Encrypted attachment upload (Cloudflare R2) | M1 (W1–W8) | `TC-CRYPTO-04` (Encrypted attachment stream test)| `WP-4.2` |
-| **FR-3.6** | Armored key backup & custodian succession | M1 / M3 | `TC-CRYPTO-06` (Historic key import & decrypt test) | `WP-7.4` |
-| **FR-4.1** | Deterministic CVSS 3.1 Base scoring engine | M1 (W1–W8) | `TC-CVSS-01` (52 FIRST.org canonical vector tests) | `WP-4.3` |
+| **FR-3.6** | Key backup UI & audited session re-wrapping | M1 / M3 | `TC-CRYPTO-06` (Session key re-wrap audit assertion) | `WP-7.4` |
+| **FR-4.1** | Deterministic CVSS 3.1 Base scoring engine | M1 (W1–W8) | `TC-CVSS-01` (45 verified vectors in CVSS_TEST_FIXTURES.md) | `WP-4.3` |
 | **FR-5.1** | In-browser decryption & working prototype | M1 (W1–W8) | `TC-TRIAGE-01` (In-browser decrypt pipeline test) | `WP-4.4` |
 | **FR-5.2** | Dual-lane triage (Conversation vs. Internal) | M2 (W9–W12) | `TC-TRIAGE-02` (Internal notes key isolation test) | `WP-5.1` |
-| **FR-5.3** | Metadata notifications & duplicate linking | M2 (W9–W12) | `TC-NOTIF-01` (Metadata email dispatch mock) | `WP-5.2` |
-| **FR-5.4** | SLA countdown timers & automated reminders | M3 (W13–W16) | `TC-SLA-01` (SLA timer expiration & email mock) | `WP-7.5` |
+| **FR-5.3** | Minimal-metadata alerts & duplicate linking | M2 (W9–W12) | `TC-NOTIF-01` (Minimal-metadata email dispatch mock) | `WP-5.2` |
+| **FR-5.4** | SLA countdown timers & Outbox worker retry | M3 / M4 | `TC-SLA-01` (Outbox retry & idempotency test) | `WP-7.5` |
 | **FR-6.2** | GitHub REST API commit SHA validation | M2 (W9–W12) | `TC-VCS-01` (GitHub API commit & branch mock) | `WP-5.3` |
 | **FR-6.3** | Infrastructure config SHA-256 hash binder | M2 (W9–W12) | `TC-VCS-02` (Hash reproducibility test) | `WP-5.4` |
 | **FR-7.1** | Basic intake triage transitions (NEW->ACCEPTED)| M1 (W1–W8) | `TC-STATE-01` (Intake state transition test) | `WP-4.4` |
 | **FR-7.2** | Attested retest state machine (3 fan-outs) | M2 (W9–W12) | `TC-STATE-02` (Mandatory retest attestation check)| `WP-6.1` |
-| **FR-7.3** | Failed retest loopback to `ACCEPTED` | M2 (W9–W12) | `TC-STATE-03` (Failed retest transition & log test) | `WP-6.1` |
+| **FR-7.3** | Failed retest event loopback to `ACCEPTED` | M2 (W9–W12) | `TC-STATE-03` (Failed retest transition & log test) | `WP-6.1` |
 | **FR-7.4** | Ticket reopening audit logging | M2 (W9–W12) | `TC-STATE-04` (Reopen justification audit log test) | `WP-6.1` |
-| **FR-7.5** | Redacted closure evidence export (PDF/HTML)| M3 (W13–W16) | `TC-EXPORT-01` (Redacted export sanitization check) | `WP-7.6` |
+| **FR-7.5** | Redacted closure evidence export (PDF/JSON)| M4 (W16–W18) | `TC-EXPORT-01` (Redacted export sanitization check) | `WP-7.6` |
 | **FR-8.1** | AST Markdown HTML sanitization | M1 (W1–W8) | `TC-SEC-02` (OWASP XSS cheat sheet corpus test) | `WP-1.3` |
 | **FR-8.2** | PostgreSQL Row-Level Security isolation | M1 (W1–W8) | `TC-SEC-01` (Tenant RLS boundary test) | `WP-1.2` |
 | **FR-8.3** | Token-bucket rate limiting (5 req/hr/IP) | M1 (W1–W8) | `TC-SEC-03` (Token-bucket rate limit test) | `WP-2.4` |
-| **FR-8.4** | Storage quota monitor & enforcement | M2 (W9–W12) | `TC-SEC-04` (50MB tenant quota limit test) | `WP-6.2` |
+| **FR-8.4** | Storage quota monitor & enforcement | M2 (W9–W12) | `TC-SEC-04` (Tenant quota enforcement test) | `WP-6.2` |
 | **FR-8.5** | Append-only audit database grants | M1 (W1–W8) | `TC-SEC-05` (Audit table UPDATE/DELETE rejection) | `WP-1.2` |
+| **FR-8.6** | Production Cloud & Stripe Subscription Engine | M4 (W16–W18) | `TC-BILL-01` (Stripe webhook idempotency & downgrade) | `WP-7.7` |
+| **FR-8.7** | Disaster recovery restore & hard deletion | M4 (W16–W18) | `TC-OPS-01` (Automated DB & R2 restore sandbox drill) | `WP-7.8` |
 
 ### 7.2 Verification Test Pyramid & Acceptance Criteria
 * **Unit Tests (Jest / TypeScript)**:
-  * Deterministic CVSS 3.1 calculation accuracy across 52 canonical test vectors derived from FIRST.org CVSS v3.1 Specification Examples (Appendix A) and NIST NVD benchmarks documented in `CVSS_TEST_FIXTURES.md` (100% mathematical parity).
-  * In-browser OpenPGP encryption/decryption roundtrip verifying dual-recipient envelope and title ciphertext.
+  * Deterministic CVSS 3.1 calculation accuracy across 45 verified test vectors documented in `CVSS_TEST_FIXTURES.md` (100% mathematical parity against FIRST.org specification).
+  * In-browser OpenPGP encryption/decryption roundtrip verifying program-scoped multi-defender envelope and title ciphertext.
   * Markdown AST sanitizer asserting zero execution of embedded `<script>` or event-handler payloads.
 * **Integration Tests (Supertest / PostgreSQL)**:
   * Multi-tenant RLS tests verifying that query connections with `tenant_A` context receive zero records from `tenant_B`.
   * State transition test asserting that transitioning directly from `NEW` to `VERIFIED_RESEARCHER` throws HTTP `400 Bad Request`.
   * GitHub REST API mock verifying handling of valid commit SHAs, non-existent SHAs, and non-collaborator authors across public and private repositories.
+  * Outbox worker test asserting exponential retry on delivery failure and idempotency deduplication.
   * Append-only database assertion confirming that attempting `UPDATE` or `DELETE` on `audit_events` throws a database permission error.
 * **Acceptance Gates Across Delivery Milestones**:
-  * **Milestone Gate 1 (Week 7 Live Prototype)**: Successful demonstration of core intake, client encryption with neutral labels, local key unlocking, in-browser decryption, AST sanitization, pure TypeScript CVSS 3.1 scoring, basic state transitions (`NEW` → `TRIAGING` → `ACCEPTED`), and PostgreSQL RLS tenant isolation.
-  * **Milestone Gate 2 (Week 12 Academic Defense & Controlled Pilot)**: Successful execution of GitHub commit SHA verification, non-code SHA-256 config hashing, empirical retest workflow with 3 separate terminal branches (`VERIFIED_RESEARCHER`, `VERIFIED_INTERNAL`, `CLOSED_UNVERIFIED_TIMEOUT`), failed retest loopback to `ACCEPTED`, and controlled peer usability evaluation (3–5 peers).
-  * **Milestone Gate 3 (Week 16 Paid Commercial Launch)**: Successful completion of Guided Onboarding Wizard, TOTP MFA, private program invitations, SLA countdown timers, redacted PDF closure evidence export, and production cloud infrastructure deployment.
+  * **Milestone Gate 1 (Week 7 Live Prototype)**: Core intake, client encryption targeting program defenders, local key unlocking, in-browser decryption, AST sanitization, pure TypeScript CVSS 3.1 scoring, basic state transitions (`NEW` → `TRIAGING` → `ACCEPTED`), and PostgreSQL RLS tenant isolation.
+  * **Milestone Gate 2 (Week 12 Academic Defense Baseline)**: GitHub commit SHA verification, non-code SHA-256 config hashing, empirical retest workflow with 3 separate terminal branches (`VERIFIED_RESEARCHER`, `VERIFIED_INTERNAL`, `CLOSED_UNVERIFIED_TIMEOUT`), failed retest event loopback to `ACCEPTED`, and controlled peer usability evaluation (3–5 peers).
+  * **Milestone Gate 3 (Weeks 13–15 Commercial Pilot Milestone)**: Guided Onboarding Wizard, TOTP MFA, private program invitations (`token_hash`), and multi-defender key management with audited session re-wrapping.
+  * **Milestone Gate 4 (Weeks 16–18 Commercial Launch Gate - DoRG)**: Automated PostgreSQL + R2 backup restore drill in sandbox, customer hard-deletion workflow, Stripe subscription billing lifecycle (checkout, webhooks, failed card grace period, cancellation downgrade), notification outbox worker, and redacted PDF/JSON closure evidence export.
+
 
 ---
 

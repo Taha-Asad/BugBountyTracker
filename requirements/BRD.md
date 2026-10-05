@@ -135,7 +135,7 @@ The platform differentiates itself through four architectural and operational pi
 * **BR-8.1**: Decrypted Markdown content shall be sanitized prior to DOM rendering using an Abstract Syntax Tree (AST) parser (`unified` / `remark-parse` / `rehype-sanitize`) enforcing strict HTML element and attribute allowlists to neutralize Stored Cross-Site Scripting (XSS).
 * **BR-8.2**: The platform shall enforce database-level Row-Level Security (RLS) in PostgreSQL, dynamically scoping connection queries to the authenticated tenant context.
 * **BR-8.3**: Public report submission endpoints shall be protected by token-bucket rate limiting (5 submissions / hour / IP) to mitigate automated denial-of-service and scanner spam.
-* **BR-8.4**: The platform shall enforce storage quotas of 50 MB database volume on PostgreSQL and 2 GB encrypted object storage on Cloudflare R2 per tenant organization (bounding total multi-tenant demo volume across 5 tenants within 250 MB database and 10 GB object storage limits). The platform shall issue an administrative warning when organization storage usage reaches 90% of the configured quota, and strictly reject any new upload or report allocation that would cause total storage to exceed 100% (HTTP 413 Payload Too Large).
+* **BR-8.4**: The platform shall enforce storage quotas to protect shared infrastructure: in the academic demonstration baseline, quotas are configured at 50 MB database volume on PostgreSQL and 2 GB encrypted object storage on Cloudflare R2 per tenant organization (bounding total multi-tenant demo volume across 5 tenants within 250 MB database and 10 GB object storage limits). In commercial production, per-tenant quotas correspond to subscription tier entitlements (10 GB for Starter, 50 GB for Team/Pro). The platform shall issue an administrative warning when organization storage usage reaches 90% of the configured quota, and strictly reject any new upload or report allocation that would cause total storage to exceed 100% (HTTP 413 Payload Too Large).
 * **BR-8.5**: The audit ledger shall enforce strict append-only constraints: database permissions on `audit_events` shall permit `INSERT` and `SELECT` operations only, strictly preventing `UPDATE` and `DELETE` actions by any application role.
 
 ---
@@ -177,28 +177,28 @@ The academic prototype is engineered to operate entirely within verified zero-co
 | **CI/CD Build Automation** | GitHub Actions | 2,000 Free Build Minutes / Month (linting, Jest, test suite) | **$0.00** |
 | **TOTAL MONTHLY OPERATIONAL TCO** | — | **Academic Demonstration & FYP Evaluation Baseline** | **$0.00 / mo** |
 
-### 8.2 Commercial Production Cloud Budget (Early Commercial Cohort: 10 Tenants)
+### 8.2 Commercial Production Cloud Budget (Early Commercial Cohort: 10–25 Tenants)
 When transitioning to paid commercial operations serving early B2B customers, the infrastructure shifts to commercially supported tiers with dedicated SLAs and custom domain support:
 
 | Infrastructure Layer | Commercial Provider | Provisioned Commercial Tier | Purpose & Quota | Monthly Cost ($USD) |
 | :--- | :--- | :--- | :--- | :---: |
 | **Application & API Gateway** | Vercel Pro | Pro Team Tier ($20 / seat) | Commercial SLA, edge caching, zero cold starts, team collaboration | **$20.00** |
 | **Production Database** | Neon Serverless | Launch Tier Baseline | PostgreSQL 16 (10 GB storage, PITR branching, autoscaling compute) | **$19.00** |
-| **Encrypted Object Storage** | Cloudflare R2 | Pay-As-You-Go ($0.015/GB-mo) | Encrypted report attachments, 50 GB baseline, zero egress fees | **$1.00** |
-| **Transactional Email Delivery** | Resend / Postmark Pro | Essential Commercial Tier | High deliverability transactional metadata notifications (50,000/mo) | **$20.00** |
-| **Error & Performance Monitoring**| Sentry Cloud | Team Tier Baseline | Real-time frontend exception and performance tracing | **$0.00** *(Developer)* |
-| **DNS & Custom Domains** | Cloudflare DNS | Free Commercial Tier | Anycast DNS, SSL termination, DDoS defense | **$0.00** |
-| **TOTAL PRODUCTION OPERATING BASELINE** | — | — | **Commercial Production Cloud Budget (10 Tenants)** | **~$60.00 / mo** |
+| **Encrypted Object Storage** | Cloudflare R2 | Pay-As-You-Go ($0.015/GB-mo) | Encrypted report attachments, 50 GB pooled baseline, zero egress fees | **$0.75** |
+| **Transactional Email Delivery** | Resend / Postmark Pro | Essential Commercial Tier | High deliverability minimal-metadata notifications (50,000/mo) | **$20.00** |
+| **Domain & DNS Registration** | Cloudflare Registrar | `.com` / `.security` TLD | Amortized domain registrar fee ($15.00/year) | **$1.25** |
+| **Payment Gateway** | Stripe Billing | Automated invoicing & checkout | 2.9% + $0.30 per transaction | **Variable** |
+| **TOTAL PRODUCTION OPERATING BASELINE** | — | — | **Commercial Production Cloud Baseline (10–25 Tenants)** | **~$61.00 / mo** |
 
-### 8.3 Commercial SaaS Subscription Pricing Model
+### 8.3 Commercial SaaS Subscription Pricing Model (Validation Hypotheses)
 To ensure financial viability and recover cloud operational costs, BugBountyTrack adopts a transparent two-tier SaaS pricing model for small software companies:
 
-| Subscription Tier | Monthly Price | Target Customer Segment | Included Features & Quota Bounds |
+| Subscription Tier | Proposed Price | Target Customer Hypothesis | Included Features & Quota Bounds |
 | :--- | :---: | :--- | :--- |
-| **Starter Tier** | **$49 / mo** | Seed startups & small engineering teams (5–15 devs) | 1 active disclosure program, 3 defender seats, 10 GB encrypted storage, browser PGP crypto, RFC 9116 generator, GitHub commit verification, standard email alerts. |
-| **Team / Pro Tier** | **$149 / mo** | Growing SaaS companies (15–50 devs) | Up to 5 programs (public & private), 10 defender seats, 50 GB encrypted storage, GitHub App integration, SLA timers & automated reminders, Redacted PDF Closure exports, priority support. |
+| **Starter Tier** | **$49 / mo** | Seed startups & small engineering teams (5–15 devs) needing structured intake | 1 active disclosure program, 3 defender seats (all with independent program-scoped decryption capability), 10 GB encrypted storage, browser OpenPGP crypto, RFC 9116 generator, GitHub commit verification, minimal-metadata email alerts, basic Redacted PDF/JSON Closure Evidence exports. |
+| **Team / Pro Tier** | **$149 / mo** | Growing SaaS companies (15–50 devs) handling multi-product disclosure | Up to 5 programs (public & private), 10 defender seats, 50 GB encrypted storage, GitHub App integration, SLA timers & automated reminders, custom-branded closure exports, executive compliance summaries, priority support. |
 
-*With just 2 paying customers on the Starter Tier ($98/mo), the platform covers 100% of its commercial cloud operating expenses ($60/mo).*
+*With 2 paying customers on the Starter Tier ($94.56 net after Stripe 2.9% + $0.30 processing fees), the platform covers 100% of its base commercial cloud operating expenses ($61.00/mo). All pricing figures represent initial validation hypotheses subject to empirical testing during the commercial pilot.*
 
 ---
 

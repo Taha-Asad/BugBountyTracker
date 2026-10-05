@@ -4,7 +4,8 @@
 **Academic Level**: Fifth-Semester Project (Evaluated Prototype)  
 **Student**: Taha Asadullah (Software Engineering Technology)  
 **Sub-Field**: Application Security & Secure Software Engineering  
-**Last Updated**: September 2026  
+**Document Suite Version**: Version 3.1.0 (Commercial Baseline & Academic Defense Specification)  
+**Last Updated**: October 2026  
 
 ---
 
@@ -12,9 +13,9 @@
 
 ```mermaid
 flowchart LR
-    A["1. Finder Discovers Bug<br/>(Reads security.txt)"] --> B["2. Submits Encrypted Report<br/>(Locked with PGP)"]
+    A["1. Finder Discovers Bug<br/>(Reads security.txt)"] --> B["2. Submits Encrypted Report<br/>(Client OpenPGP Envelope)"]
     B --> C["3. Company Fixes Code<br/>(Links Git Commit)"]
-    C --> D["4. Verified Retest<br/>(Proves Bug is Dead)"]
+    C --> D["4. Verified Retest<br/>(Independent Proof)"]
 ```
 
 * **The Problem**: Small tech startups and open-source teams cannot afford expensive enterprise bug platforms like HackerOne ($\$15\text{k}-\$30\text{k}+/\text{year}$). When ethical hackers find dangerous vulnerabilities, they report them through unencrypted emails or social media DMs. This leaks sensitive zero-days and leads to bugs being forgotten or closed without anyone verifying the fix.
@@ -29,22 +30,23 @@ flowchart LR
 * Anyone can read the startup's disclosure policy, in-scope domains, and safe harbor terms.
 * To prevent automated spam and abuse, researchers must register a verified account before submitting findings.
 
-### Pillar 2: The Two-Way Lockbox (Client-Side OpenPGP)
+### Pillar 2: The Multi-Defender Lockbox (Client-Side OpenPGP)
 * When a researcher submits an exploit, their browser encrypts the report with **OpenPGP** before sending it to our server.
-* **The Two Keys**: The message is encrypted so that **only two people** can unlock and read it:
-  1. The **Reporting Researcher**.
-  2. The **Designated Company Triage Lead**.
-* **What the Server Sees**: The database only stores scrambled ciphertext. Even if an attacker dumps our database, they cannot read the secret vulnerability details or PoC code.
-* **Safe Display**: When the triage lead opens the report, their browser unlocks the text and renders the code safely without running any malicious scripts.
+* **Bounded Program-Scoped Multi-Defender Model ($N \le 10$)**:
+  1. **Dual-Lane Isolation**: Public vulnerability submissions are encrypted for the reporting researcher and all authorized program defenders ($N \le 10$). Internal triage notes are encrypted exclusively for authorized program defenders, strictly excluding the researcher's key.
+  2. **Historical-Access Isolation**: Newly joined defenders receive keys only for reports filed after their onboarding. Access to historical reports requires an explicit, audited client-side session key re-wrapping operation by an existing authorized defender.
+* **What the Server Sees**: The database only stores scrambled ciphertext, a neutral `operational_label` enum, and encrypted title ciphertext (`title_ciphertext`). Even if an attacker dumps our database, they cannot read the secret vulnerability details or PoC code.
+* **Safe Display**: When an authorized defender opens the report, their browser unlocks the text in memory and renders the code safely without running any malicious scripts.
 
 ### Pillar 3: The Honest Fix Loop (Our Main Differentiator)
-* Most issue trackers let developers click "Closed" with zero evidence. BugBountyTrack enforces proof.
+* Most issue tracks let developers click "Closed" with zero evidence. BugBountyTrack enforces proof.
 * **Step 1 (Declaration)**: The developer links the fix by entering a Git commit hash (our backend checks GitHub's API to confirm the commit exists) or a configuration note (like an AWS S3 or firewall setting).
 * **Step 2 (Retest)**: The report moves to `RETEST_PENDING`.
 * **Step 3 (Proof)**: The ticket can only close under one of three transparent outcomes:
   1. `VERIFIED_RESEARCHER`: The original hacker re-tests and confirms the bug is fixed.
   2. `VERIFIED_INTERNAL`: Another team member tests and confirms the fix (our audit log records who tested it and whether they wrote the code).
   3. `CLOSED_UNVERIFIED_TIMEOUT`: If the hacker disappears, an authorized manager must click an explicit button and record a written reason. A timeout **never** counts as a passed test.
+* **Retest Failure**: If a retest fails, it records an audit event (`RETEST_FAILED`) and returns the report to `ACCEPTED` triage.
 
 ---
 
@@ -54,25 +56,29 @@ flowchart LR
 | :--- | :--- | :--- | :--- |
 | **Bug Status, Timestamps, Severity (CVSS)** | The Server & Both Parties | Plaintext (PostgreSQL columns) | Enables dashboard sorting, filtering, and workflow transitions. |
 | **Commit Hashes & Retest Logs** | The Server & Both Parties | Plaintext (PostgreSQL columns) | Provides an unalterable audit trail of who verified the fix. |
-| **Exploit Steps, PoC Code, & Screenshots** | **Only the Hunter & Triage Lead** | Scrambled PGP Ciphertext | Protects confidential zero-day details from leaks. |
+| **Operational Label Enum** | The Server & Both Parties | Plaintext (`INJECTION`, `AUTH_BYPASS`, etc.) | Enables triage routing without leaking exploit specifics. |
+| **Exploit Steps, PoC Code, & Title Ciphertext** | **Only Hunter & Authorized Defenders** | Scrambled OpenPGP Ciphertext | Protects confidential zero-day details from leaks. |
 
 ### Edge Case Handling
 * **What if someone loses their private key?**  
-  If the researcher loses their key, they can no longer read past messages, but the company triage lead still can. There is no server-side "reset password" backdoor for private keys, preserving the cryptographic guarantee.
+  If the researcher loses their key, they can no longer read past messages, but authorized defenders still can. There is no server-side "reset password" backdoor for private keys, preserving the cryptographic guarantee.
 * **What if the hacker ghosts us?**  
   The company isn't stuck forever. After a configurable grace period, a manager can close the ticket, but it is explicitly stamped as *"Closed without verification because researcher was unresponsive."*
 
 ---
 
-## 4. The 16-Week Implementation Roadmap
+## 4. The 16-Week Implementation Roadmap (352 Total Engineering Hours)
 
 ```
-Weeks 1–3:   Design the blueprints, database tables, and user flows (SRS & Architecture).
-Weeks 4–6:   Build the Next.js app, login system, and OpenPGP key setup.
-Weeks 7–9:   Build the report forms, CVSS 3.1 calculator, and encrypted triage chat.
-Weeks 10–12: Connect GitHub commit checking and the retest state machine.
-Weeks 13–14: Run an exploratory study with 3–5 classmates using OWASP Juice Shop.
-Weeks 15–16: Security checks, write the final report, and prep demo slides.
+PART A — Academic Evaluation Baseline (Weeks 1–12, 264h):
+  Weeks 1–3:   Design blueprints, database schemas, and user flows (SRS, Architecture, CVSS Engine).
+  Weeks 4–6:   Build Next.js app, login system, rate limiting, and OpenPGP key setup.
+  Weeks 7–9:   Build report forms, CVSS 3.1 calculator, and encrypted triage communication.
+  Weeks 10–12: GitHub commit checking, retest state machine, and OWASP evaluation study.
+
+PART B — Commercial Launch Extension (Weeks 13–16, 88h):
+  Weeks 13–14: Stripe subscription billing ($49 Starter, $149 Team), seat management, and key re-wrapping.
+  Weeks 15–16: Redacted PDF/JSON closure evidence export, Sentry observability, and production launch gates.
 ```
 
 ---

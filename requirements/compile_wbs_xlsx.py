@@ -19,12 +19,13 @@ wbs_md_path = os.path.join(SCRIPT_DIR, 'WBS.md')
 with open(wbs_md_path, 'r', encoding='utf-8') as f:
     wbs_md = f.read()
 
-# Work Packages (Part A Core Academic Baseline: 25 items, rows 2 to 26)
+# Work Packages (Part A Academic 264h + Part B Commercial 88h: 34 items)
 wp_rows = []
 for line in wbs_md.splitlines():
     s = line.strip()
-    if (s.startswith('| **WP-') or s.startswith('| **ACAD-')) and not s.startswith('| **WP-7'):
+    if s.startswith('| **WP-') or s.startswith('| **ACAD-'):
         parts = [p.strip() for p in s.split('|')[1:-1]]
+
         code = parts[0].replace('*', '')
         req_id = parts[1]
         mod = parts[2]
@@ -86,7 +87,7 @@ print(f"Parsed {len(sprint_rows)} Sprints, total sprint hours: {sum(s[5] for s i
 finance_rows = []
 in_finance = False
 for line in wbs_md.splitlines():
-    if '## Sheet 5: Zero-Cost' in line:
+    if 'Part A: Zero-Cost' in line or '## Sheet 5: Zero-Cost' in line:
         in_finance = True
         continue
     if in_finance and line.strip().startswith('## '):
@@ -118,8 +119,8 @@ s1_rows = [
     (14, [('B14', 4, 'Project Supervisor'), ('C14', 5, 'Sir Umar Hayat')]),
     (15, [('B15', 6, 'Client Platform'), ('C15', 7, 'Modern Web (Next.js 14+ App Router, React 18+, TypeScript 5.x, Tailwind CSS, OpenPGP.js)')]),
     (16, [('B16', 4, 'Backend & Persistence'), ('C16', 5, 'Unified Next.js Serverless on Vercel + PostgreSQL 16 on Neon via Prisma ORM (RLS)')]),
-    (17, [('B17', 6, 'Planned Workload'), ('C17', 7, '264 Total Hours (236h Core + 28h Buffer / 12 Weeks = 22.0 h/wk)')]),
-    (18, [('B18', 4, 'Release State'), ('C18', 5, 'Commercial Baseline & Academic Evaluation Specification (Version 3.0.0)')]),
+    (17, [('B17', 6, 'Planned Workload'), ('C17', 7, '352 Total Hours (264h Academic Baseline + 88h Commercial Extension)')]),
+    (18, [('B18', 4, 'Release State'), ('C18', 5, 'Commercial Baseline & Academic Evaluation Specification (Version 3.1.0)')]),
 ]
 
 s1_xml_parts = [

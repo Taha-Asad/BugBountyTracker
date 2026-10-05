@@ -30,10 +30,11 @@
 - **DEC-010**: **Document Governance**: Proposal is a working draft until approved by the university department.
 - **DEC-011**: **Tenancy Architecture**: Multi-tenant SaaS architecture where multiple organizations host isolated programs on one shared platform instance.
 - **DEC-012**: **Mandatory PGP Constraint & Library**: PGP encryption is a strict project requirement implemented using the maintained `openpgp.js` library.
-- **DEC-013**: **MVP User & Submission Access**:
-  - Program directory and policy pages are public.
+- **DEC-013**: **Program-Scoped Multi-Defender Key Management & Recipient Boundary**:
+  - Program directory and public policy pages are discoverable.
   - Submissions require a verified researcher account before filing.
-  - Report decryption access is scoped strictly to the submitting researcher and one designated company triage lead per report.
+  - Report decryption access is bounded to the submitting researcher and active defenders assigned to that specific program ($N \le 10$).
+  - Key concurrency is governed by an integer `recipient_set_version`; submissions and replies targeting stale versions are rejected with `409 Conflict`.
 - **DEC-014**: **Evidence Preservation & Safe Rendering**: Original vulnerability descriptions, PoC text, and sensitive remediation notes are preserved unmodified. Safe rendering (AST-level HTML escaping, strict markdown parsing, code-block containment) is enforced on the client after decryption.
 - **DEC-015**: **Remediation & Retest Verification Rules**:
   - Fix declaration is strictly decoupled from retest verification.
@@ -49,6 +50,13 @@
   - Key rotation applies to new replies in existing threads as well as new reports. Messages record recipient key fingerprints.
   - Attachments use standard multi-recipient OpenPGP encryption.
   - Trust assumption: The client browser and platform-delivered JavaScript code are assumed trusted.
+- **DEC-018 (ADR-007)**: **Private Programs & Tokenized Invitation Lifecycle**:
+  - Organizations can set program visibility to `PUBLIC` or `INVITE_ONLY`.
+  - Invitations are stored exclusively as SHA-256 `token_hash` values, expire after 72 hours, are single-use, and validate against target recipient email addresses.
+  - Supersedes `DEF-006`.
+- **DEC-019 (ADR-008)**: **Audited Historical Session Key Re-Wrapping**:
+  - Newly assigned program defenders do not possess historical keys and cannot decrypt reports filed prior to their assignment.
+  - Historical access is granted via client-side re-wrapping of the symmetric session key ($K_S$) by an existing authorized defender using standard OpenPGP PKESK packets. Every re-wrap emits an immutable audit event (`HISTORICAL_ACCESS_GRANTED`).
 
 ---
 
@@ -61,6 +69,7 @@
 - **ASM-001**: Academic evaluators value clear software engineering discipline, verifiable controls, and documented limitations over inflated commercial claims or unverified security absolutes.
 - **ASM-002**: Development and evaluation will run in a local Dockerized Linux environment before any staging deployment.
 - **ASM-003**: OpenPGP multi-recipient encryption functions reliably in client browser JavaScript via `openpgp.js`.
+- **ASM-004**: Production pricing ($49 Starter, $149 Team) represents initial validation hypotheses for commercial pilot testing, subject to adjustment based on customer acquisition cost and operational margins.
 
 ---
 
@@ -75,5 +84,6 @@
 - **DEF-003**: Integration with external bug trackers (Jira, Linear, GitLab Issue Sync) beyond direct VCS commit referencing.
 - **DEF-004**: Gamification features: Researcher reputation points, levels, and badges.
 - **DEF-005**: Anonymous (unauthenticated) vulnerability reporting.
-- **DEF-006**: Invitation-only / private disclosure programs.
-- **DEF-007**: Multi-member key escrow / automated historical key recovery.
+- **DEF-006**: *[SUPERSEDED by DEC-018 / ADR-007]*: Private programs now included in Commercial Launch extension.
+- **DEF-007**: Multi-member centralized key escrow / automated historical key recovery backdoors (rejected; replaced by DEC-019 client-side session key re-wrapping).
+
