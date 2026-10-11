@@ -335,7 +335,7 @@ with zipfile.ZipFile(files['WEEK_1_PART_B_CHARTER_AND_MVP.docx'], 'r') as w1b_zi
 check('24-ST-013' in w1b_xml and 'title_ciphertext' in w1b_xml and '8.22' in w1b_xml,
       "WEEK_1_PART_B_CHARTER_AND_MVP.docx OpenXML verified (24-ST-013, title_ciphertext, 8.22 CVSS)")
 
-# 15c. Week 2 SRS & Task Deliverable Integrity: UC-01..UC-07 Parity, NFR-09 Uptime, Signature Block, Zero file:// Paths
+# 15c. Week 2 SRS & Task Deliverable Integrity: UC-01..UC-07 Parity, NFR-09 Uptime, Signature Block, Zero file:// Paths & Revision 2.2 Invariants
 with open(files['week-02-software-requirements-specification.md'], 'r', encoding='utf-8') as f:
     w2_task = f.read()
 check('file://' not in srs and '/run/media/' not in srs,
@@ -350,10 +350,20 @@ check('UC-08' not in srs and 'UC-08' not in w2_task,
       "Both SRS.md and week-02 task spec exclude commercial Lemon Squeezy billing use case UC-08")
 check('NFR-09' in srs and '99.5%' in srs and 'NFR-09' in w2_task and '99.5%' in w2_task,
       "Both SRS.md and week-02 task spec define quantifiable NFR-09 Uptime SLO (>= 99.5%)")
-check('Document Endorsement & Milestone Sign-Off' in srs and 'Document Endorsement & Milestone Sign-Off' in w2_task,
-      "Both SRS.md and week-02 task spec include formal Document Endorsement & Milestone Sign-Off signature block")
-check('Document Endorsement &amp; Milestone Sign-Off' in srs_xml,
-      "SRS.docx includes formal Document Endorsement & Milestone Sign-Off signature block")
+check('Document Submission & Milestone Sign-Off' in srs and 'Document Submission & Milestone Sign-Off' in w2_task,
+      "Both SRS.md and week-02 task spec include formal Document Submission & Milestone Sign-Off signature block")
+check('Document Submission &amp; Milestone Sign-Off' in srs_xml,
+      "SRS.docx includes formal Document Submission & Milestone Sign-Off signature block")
+check('REPORT_RECIPIENT' in srs and 'state_version' in srs and 'remediation_attempt_no' in srs,
+      "SRS.md specifies REPORT_RECIPIENT, state_version optimistic concurrency, and remediation_attempt_no")
+check('Class A' in srs and 'Class B' in srs and 'Class C' in srs,
+      "SRS.md specifies 3-tier Field-Level Classification Matrix (Class A, Class B, Class C)")
+check('FORCE ROW LEVEL SECURITY' in srs and 'NOBYPASSRLS' in srs and '2,592' in srs,
+      "SRS.md specifies FORCE ROW LEVEL SECURITY, NOBYPASSRLS, and 2,592 CVSS Base combinations")
+check('Lead Defender' not in srs and '13-state' not in srs and '13-State' not in srs,
+      "SRS.md has zero legacy 'Lead Defender' or '13-state' contradictions")
+check('7 developers' in srs, "SRS.md aligns Sarah Chen persona with Week 1 7-developer team size")
+
 
 # 16. Academic & Professional Attribution Hygiene (Zero AI Agent Bleed into Specifications)
 forbidden_personas = [
