@@ -1,358 +1,552 @@
-import zipfile, os, re, xml.sax.saxutils as saxutils
+#!/usr/bin/env python3
+"""
+Compiles projects/BugBountyTrack/requirements/SRS.md into a university-standard
+Word document (SRS.docx) with:
+- Font: Times New Roman across all headings, body text, tables, code blocks, headers, and footers
+- Color: Pure black (#000000) across all text, borders, headers, and footers (zero colored accents)
+- Margins: 1-inch (1440 dxa) on all sides
+- Tables: Full printable width (9360 dxa), solid black 1/2-pt borders, unshaded cells
+- Diagrams: All 6 high-DPI monochrome PNG diagrams embedded with exact native aspect ratio (cx/cy)
+"""
+import os
+import re
+import shutil
+import struct
+import zipfile
 
-def escape(txt):
-    return saxutils.escape(str(txt))
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
+FONT_NAME = "Times New Roman"
+TEXT_COLOR = "000000"
+BORDER_COLOR = "000000"
 
-def clean_text(txt):
-    if not txt:
-        return ""
-    t = txt
-    t = t.replace(r'\ge', '≥')
-    t = t.replace(r'\le', '≤')
-    t = t.replace(r'\times', '×')
-    t = t.replace(r'\text{', '').replace(r'}', '')
-    t = t.replace(r'\$', '$')
-    t = re.sub(r'\$([^$]+)\$', r'\1', t)
-    t = t.replace('$$', '')
-    return t
+with open(os.path.join(SCRIPT_DIR, "SRS.md"), "r", encoding="utf-8") as f:
+    md_text = f.read()
 
-def parse_runs(text):
-    text = clean_text(text)
-    tokens = re.split(r'(\*\*.*?\*\*|`.*?`|\*.*?\*)', text)
+
+def xml_escape(s):
+    return (
+        s.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+    )
+
+
+def strip_md_links(text):
+    """Converts [label](url) to label (or label (url) for external https links)."""
+    def repl(m):
+        label, url = m.group(1), m.group(2)
+        if url.startswith("http://") or url.startswith("https://"):
+            if label == url:
+                return label
+            return f"{label} ({url})"
+        return label
+
+    return re.sub(r"\[([^\]]+)\]\(([^)]+)\)", repl, text)
+
+
+def make_rPr(bold=False, italic=False, sz=22, underline=False):
+    b_xml = '<w:b/><w:bCs/>' if bold else '<w:b w:val="0"/><w:bCs w:val="0"/>'
+    i_xml = '<w:i/><w:iCs/>' if italic else '<w:i w:val="0"/><w:iCs w:val="0"/>'
+    u_xml = '<w:u w:val="single"/>' if underline else '<w:u w:val="none"/>'
+    return (
+        f"<w:rPr>"
+        f'<w:rFonts w:ascii="{FONT_NAME}" w:cs="{FONT_NAME}" w:eastAsia="{FONT_NAME}" w:hAnsi="{FONT_NAME}"/>'
+        f"{b_xml}{i_xml}{u_xml}"
+        f'<w:color w:val="{TEXT_COLOR}"/>'
+        f'<w:sz w:val="{sz}"/><w:szCs w:val="{sz}"/>'
+        f"</w:rPr>"
+    )
+
+
+def parse_inline_runs(text, base_bold=False, base_italic=False, sz=22):
+    """Parses **bold**, `code`, and *italic* into Times New Roman #000000 runs."""
+    text = strip_md_links(text)
+    tokens = re.split(r"(\*\*.*?\*\*|`.*?`|\*[^\*]+?\*)", text)
     runs = []
     for tok in tokens:
         if not tok:
             continue
-        if tok.startswith('**') and tok.endswith('**') and len(tok) >= 4:
-            runs.append((tok[2:-2], True, False, False))
-        elif tok.startswith('`') and tok.endswith('`') and len(tok) >= 2:
-            runs.append((tok[1:-1], False, False, True))
-        elif tok.startswith('*') and tok.endswith('*') and len(tok) >= 2:
-            runs.append((tok[1:-1], False, True, False))
+        if tok.startswith("**") and tok.endswith("**") and len(tok) > 4:
+            content = xml_escape(tok[2:-2])
+            rPr = make_rPr(bold=True, italic=base_italic, sz=sz)
+            runs.append(f'<w:r>{rPr}<w:t xml:space="preserve">{content}</w:t></w:r>')
+        elif tok.startswith("`") and tok.endswith("`") and len(tok) > 2:
+            content = xml_escape(tok[1:-1])
+            rPr = make_rPr(bold=base_bold, italic=base_italic, sz=sz)
+            runs.append(f'<w:r>{rPr}<w:t xml:space="preserve">{content}</w:t></w:r>')
+        elif tok.startswith("*") and tok.endswith("*") and len(tok) > 2:
+            content = xml_escape(tok[1:-1])
+            rPr = make_rPr(bold=base_bold, italic=True, sz=sz)
+            runs.append(f'<w:r>{rPr}<w:t xml:space="preserve">{content}</w:t></w:r>')
         else:
-            runs.append((tok, False, False, False))
-    return runs
+            content = xml_escape(tok)
+            rPr = make_rPr(bold=base_bold, italic=base_italic, sz=sz)
+            runs.append(f'<w:r>{rPr}<w:t xml:space="preserve">{content}</w:t></w:r>')
+    return "".join(runs)
 
-def make_p_with_runs(runs, style='Normal', color='222222', sz=20, space_before=60, space_after=60, jc='left', is_heading=False, left_indent=0):
-    h_style = f'<w:pStyle w:val="{style}"/>' if is_heading else ''
-    ind_xml = f'<w:ind w:left="{left_indent}"/>' if left_indent > 0 else ''
-    r_xmls = []
-    for r_text, bold, italic, code in runs:
-        r_text_escaped = escape(r_text)
-        b_tag = '<w:b/>' if bold else ''
-        i_tag = '<w:i/>' if italic else ''
-        f_tag = '<w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/>' if code else '<w:rFonts w:ascii="Lexend" w:hAnsi="Lexend"/>'
-        c_tag = '<w:color w:val="9C4146"/>' if code else f'<w:color w:val="{color}"/>'
-        r_xmls.append(
-            f'<w:r>'
-            f'<w:rPr>{f_tag}{b_tag}{i_tag}{c_tag}<w:sz w:val="{sz}"/></w:rPr>'
-            f'<w:t xml:space="preserve">{r_text_escaped}</w:t>'
-            f'</w:r>'
+
+def make_p(
+    text,
+    bold=False,
+    italic=False,
+    sz=22,
+    space_before=60,
+    space_after=80,
+    jc="left",
+    keep_next=False,
+    bottom_border=False,
+    left_border=False,
+    left_indent=0,
+    line_spacing=276,
+):
+    kn = "<w:keepNext/>" if keep_next else ""
+    bdr_parts = []
+    if bottom_border:
+        bdr_parts.append(
+            f'<w:bottom w:val="single" w:sz="6" w:space="4" w:color="{BORDER_COLOR}"/>'
         )
+    if left_border:
+        bdr_parts.append(
+            f'<w:left w:val="single" w:sz="12" w:space="8" w:color="{BORDER_COLOR}"/>'
+        )
+    bdr = f'<w:pBdr>{"".join(bdr_parts)}</w:pBdr>' if bdr_parts else ""
+    ind = f'<w:ind w:left="{left_indent}"/>' if left_indent else ""
+    pPr = (
+        f"<w:pPr>{kn}{bdr}"
+        f'<w:spacing w:before="{space_before}" w:after="{space_after}" w:line="{line_spacing}" w:lineRule="auto"/>'
+        f"{ind}"
+        f'<w:jc w:val="{jc}"/>'
+        f"</w:pPr>"
+    )
+    runs = parse_inline_runs(text, base_bold=bold, base_italic=italic, sz=sz)
+    return f"<w:p>{pPr}{runs}</w:p>"
+
+
+def make_hr_p():
     return (
-        f'<w:p xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
-        f'<w:pPr>{h_style}{ind_xml}<w:spacing w:before="{space_before}" w:after="{space_after}"/><w:jc w:val="{jc}"/></w:pPr>'
-        f'{"".join(r_xmls)}'
-        f'</w:p>'
+        "<w:p><w:pPr>"
+        f'<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="{BORDER_COLOR}"/></w:pBdr>'
+        '<w:spacing w:before="80" w:after="80"/>'
+        "</w:pPr></w:p>"
     )
 
-def make_simple_p(text, style='Normal', bold=False, italic=False, color='222222', sz=20, space_before=60, space_after=60, jc='left', is_heading=False, left_indent=0):
-    runs = parse_runs(text)
-    if bold:
-        runs = [(t, True, i, c) for t, b, i, c in runs]
-    if italic:
-        runs = [(t, b, True, c) for t, b, i, c in runs]
-    return make_p_with_runs(runs, style=style, color=color, sz=sz, space_before=space_before, space_after=space_after, jc=jc, is_heading=is_heading, left_indent=left_indent)
 
-def make_drawing(rId, docPr_id, name, cx=5500000, cy=2800000):
-    return (
-        f'<w:p xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
-        f'<w:pPr><w:jc w:val="center"/><w:spacing w:before="160" w:after="80"/></w:pPr>'
-        f'<w:r>'
-        f'<w:drawing>'
-        f'<wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" distT="0" distB="0" distL="0" distR="0">'
-        f'<wp:extent cx="{cx}" cy="{cy}"/>'
-        f'<wp:docPr id="{docPr_id}" name="{escape(name)}"/>'
-        f'<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'
-        f'<a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'
-        f'<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">'
-        f'<pic:nvPicPr>'
-        f'<pic:cNvPr id="0" name="{escape(name)}"/>'
-        f'<pic:cNvPicPr/>'
-        f'</pic:nvPicPr>'
-        f'<pic:blipFill>'
-        f'<a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="{rId}"/>'
-        f'<a:stretch><a:fillRect/></a:stretch>'
-        f'</pic:blipFill>'
-        f'<pic:spPr>'
-        f'<a:xfrm><a:off x="0" y="0"/><a:ext cx="{cx}" cy="{cy}"/></a:xfrm>'
-        f'<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>'
-        f'</pic:spPr>'
-        f'</pic:pic>'
-        f'</a:graphicData>'
-        f'</a:graphic>'
-        f'</wp:inline>'
-        f'</w:drawing>'
-        f'</w:r>'
-        f'</w:p>'
-    )
+def make_table(rows):
+    if not rows:
+        return ""
+    num_cols = max(len(r) for r in rows)
+    total_width = 9360  # 6.5 inches in dxa (twips)
 
-def make_table(headers, rows, total_width=9500, hdr_bg="E3EFCB", border_col="D1E3A5"):
-    num_cols = len(headers) if headers else (len(rows[0]) if rows else 1)
-    col_lens = [len(h) for h in headers] if headers else [1]*num_cols
-    for row in rows:
-        for idx, cell in enumerate(row):
-            if idx < len(col_lens):
-                col_lens[idx] = max(col_lens[idx], len(cell))
-            else:
-                col_lens.append(len(cell))
-    
-    total_len = sum(col_lens) if sum(col_lens) > 0 else 1
-    
-    col_widths = []
     if num_cols == 2:
-        col_widths = [3000, total_width - 3000]
+        col_widths = [2600, 6760]
     elif num_cols == 3:
-        col_widths = [2500, 3500, total_width - 6000]
+        col_widths = [2200, 2600, 4560]
     elif num_cols == 4:
-        col_widths = [1500, 2600, 3000, total_width - 7100]
+        col_widths = [1400, 2200, 3960, 1800]
     elif num_cols == 5:
-        col_widths = [1200, 2200, 1400, 2500, total_width - 7300]
+        col_widths = [1100, 1800, 2960, 2100, 1400]
     elif num_cols == 6:
-        # For State Transition Table
-        col_widths = [1300, 1600, 1100, 2100, 1500, total_width - 7600]
+        col_widths = [950, 1550, 1800, 1750, 1750, 1560]
+    elif num_cols == 7:
+        col_widths = [900, 1250, 1500, 1550, 1550, 1550, 1060]
     else:
-        assigned = 0
-        for l in col_lens[:-1]:
-            w = int(total_width * (l / total_len))
-            w = max(w, 1000)
-            col_widths.append(w)
-            assigned += w
-        col_widths.append(max(total_width - assigned, 1000))
+        w = total_width // num_cols
+        col_widths = [w] * num_cols
 
-    tbl_xml = []
-    tbl_xml.append(f'<w:tbl xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">')
-    tbl_xml.append(f'<w:tblPr><w:tblW w:w="{total_width}" w:type="dxa"/><w:jc w:val="center"/>')
-    tbl_xml.append(f'<w:tblBorders>'
-                   f'<w:top w:val="single" w:sz="4" w:space="0" w:color="{border_col}"/>'
-                   f'<w:left w:val="single" w:sz="4" w:space="0" w:color="{border_col}"/>'
-                   f'<w:bottom w:val="single" w:sz="4" w:space="0" w:color="{border_col}"/>'
-                   f'<w:right w:val="single" w:sz="4" w:space="0" w:color="{border_col}"/>'
-                   f'<w:insideH w:val="single" w:sz="4" w:space="0" w:color="{border_col}"/>'
-                   f'<w:insideV w:val="single" w:sz="4" w:space="0" w:color="{border_col}"/>'
-                   f'</w:tblBorders></w:tblPr>')
-    
-    tbl_xml.append('<w:tblGrid>')
-    for w in col_widths:
-        tbl_xml.append(f'<w:gridCol w:w="{w}"/>')
-    tbl_xml.append('</w:tblGrid>')
+    grid_cols = "".join(f'<w:gridCol w:w="{w}"/>' for w in col_widths)
+    tblPr = (
+        "<w:tblPr>"
+        f'<w:tblW w:w="{total_width}" w:type="dxa"/>'
+        '<w:jc w:val="left"/>'
+        "<w:tblBorders>"
+        f'<w:top w:val="single" w:sz="6" w:space="0" w:color="{BORDER_COLOR}"/>'
+        f'<w:left w:val="single" w:sz="6" w:space="0" w:color="{BORDER_COLOR}"/>'
+        f'<w:bottom w:val="single" w:sz="6" w:space="0" w:color="{BORDER_COLOR}"/>'
+        f'<w:right w:val="single" w:sz="6" w:space="0" w:color="{BORDER_COLOR}"/>'
+        f'<w:insideH w:val="single" w:sz="4" w:space="0" w:color="{BORDER_COLOR}"/>'
+        f'<w:insideV w:val="single" w:sz="4" w:space="0" w:color="{BORDER_COLOR}"/>'
+        "</w:tblBorders>"
+        "<w:tblCellMar>"
+        '<w:top w:w="80" w:type="dxa"/>'
+        '<w:left w:w="100" w:type="dxa"/>'
+        '<w:bottom w:w="80" w:type="dxa"/>'
+        '<w:right w:w="100" w:type="dxa"/>'
+        "</w:tblCellMar>"
+        "</w:tblPr>"
+    )
 
-    if headers:
-        h_cells = []
-        for idx, h in enumerate(headers):
-            runs = parse_runs(h)
-            p_xml = make_p_with_runs([(r[0], True, r[2], r[3]) for r in runs], color="1B2A1E", sz=18, space_before=40, space_after=40)
-            w = col_widths[idx]
-            h_cells.append(
-                f'<w:tc><w:tcPr><w:tcW w:w="{w}" w:type="dxa"/>'
-                f'<w:shd w:val="clear" w:fill="{hdr_bg}"/>'
-                f'<w:tcMar><w:top w:w="80" w:type="dxa"/><w:bottom w:w="80" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tcMar>'
-                f'</w:tcPr>{p_xml}</w:tc>'
+    tr_list = []
+    for r_idx, row in enumerate(rows):
+        is_header = r_idx == 0
+        trPr = "<w:trPr><w:tblHeader/></w:trPr>" if is_header else "<w:trPr/>"
+        tc_list = []
+        for c_idx in range(num_cols):
+            cell_text = row[c_idx].strip() if c_idx < len(row) else ""
+            w = col_widths[c_idx]
+            tcPr = (
+                f"<w:tcPr>"
+                f'<w:tcW w:w="{w}" w:type="dxa"/>'
+                f'<w:shd w:val="clear" w:color="auto" w:fill="FFFFFF"/>'
+                f'<w:vAlign w:val="top"/>'
+                f"</w:tcPr>"
             )
-        tbl_xml.append(f'<w:tr><w:trPr><w:tblHeader/></w:trPr>{"".join(h_cells)}</w:tr>')
-
-    for row_idx, row in enumerate(rows):
-        b_cells = []
-        row_bg = "F9FBF6" if row_idx % 2 == 1 else "FFFFFF"
-        for idx, cell in enumerate(row):
-            w = col_widths[idx] if idx < len(col_widths) else 1200
-            runs = parse_runs(cell)
-            is_first_col = (idx == 0 and not headers)
-            if is_first_col:
-                runs = [(r[0], True, r[2], r[3]) for r in runs]
-            p_xml = make_p_with_runs(runs, color="222222", sz=17, space_before=30, space_after=30)
-            shd_xml = f'<w:shd w:val="clear" w:fill="{row_bg}"/>' if row_bg != "FFFFFF" else ''
-            b_cells.append(
-                f'<w:tc><w:tcPr><w:tcW w:w="{w}" w:type="dxa"/>{shd_xml}'
-                f'<w:tcMar><w:top w:w="60" w:type="dxa"/><w:bottom w:w="60" w:type="dxa"/><w:left w:w="100" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tcMar>'
-                f'</w:tcPr>{p_xml}</w:tc>'
+            pPr = '<w:pPr><w:spacing w:before="30" w:after="30" w:line="240" w:lineRule="auto"/><w:jc w:val="left"/></w:pPr>'
+            runs = parse_inline_runs(
+                cell_text, base_bold=is_header, sz=19 if num_cols >= 5 else 20
             )
-        tbl_xml.append(f'<w:tr>{"".join(b_cells)}</w:tr>')
-    tbl_xml.append('</w:tbl>')
-    return ''.join(tbl_xml)
+            tc_list.append(f"<w:tc>{tcPr}<w:p>{pPr}{runs}</w:p></w:tc>")
+        tr_list.append(f'<w:tr>{trPr}{"".join(tc_list)}</w:tr>')
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '..'))
+    return (
+        f"<w:tbl>{tblPr}<w:tblGrid>{grid_cols}</w:tblGrid>{''.join(tr_list)}</w:tbl>"
+        + '<w:p><w:pPr><w:spacing w:before="40" w:after="40"/></w:pPr></w:p>'
+    )
 
-srs_md_path = os.path.join(SCRIPT_DIR, 'SRS.md')
-with open(srs_md_path, 'r', encoding='utf-8') as f:
-    lines = f.readlines()
 
-body_parts = []
+def get_png_dimensions(png_path):
+    """Reads exact (width, height) in pixels from a PNG file's IHDR chunk."""
+    with open(png_path, "rb") as f:
+        header = f.read(24)
+    if len(header) < 24 or header[:8] != b"\x89PNG\r\n\x1a\n":
+        raise ValueError(f"Invalid PNG file: {png_path}")
+    width, height = struct.unpack(">II", header[16:24])
+    return width, height
 
-# Title & Subtitles - Added ONCE here, avoiding duplicate title headers
-body_parts.append(make_simple_p("Punjab Tianjin University of Technology", bold=False, color="555555", sz=22, space_before=200, space_after=40, jc="center"))
-body_parts.append(make_simple_p("Department of Software Engineering Technology", bold=False, color="555555", sz=20, space_before=20, space_after=40, jc="center"))
-body_parts.append(make_simple_p("FINAL YEAR PROJECT (FYP) ENGINEERING SPECIFICATION", bold=True, color="5A6652", sz=24, space_before=20, space_after=60, jc="center"))
-body_parts.append(make_simple_p("SOFTWARE REQUIREMENTS SPECIFICATION (SRS)", bold=True, color="386B24", sz=40, space_before=60, space_after=80, jc="center"))
-body_parts.append(make_simple_p("Project: BugBountyTrack", bold=True, color="2B4C1A", sz=26, space_before=40, space_after=40, jc="center"))
-body_parts.append(make_simple_p("A Multi-Tenant Vulnerability Disclosure Platform with Cryptographic Payload Isolation and Evidence-Based Remediation Traceability", bold=False, color="555555", sz=20, space_before=20, space_after=160, jc="center"))
 
-i = 0
-in_mermaid = False
-in_toc = False
+def make_image_p(rel_id, doc_pr_id, name, png_path):
+    """
+    Computes exact aspect-ratio-locked EMU dimensions (cx, cy) from the PNG pixel dimensions
+    bounded by MAX_CX = 5,852,160 EMU (6.40 inches) and MAX_CY = 6,583,680 EMU (7.20 inches).
+    """
+    width_px, height_px = get_png_dimensions(png_path)
+    max_cx = 5852160  # 6.40 inches in EMUs
+    max_cy = 6583680  # 7.20 inches in EMUs
 
-# Skip lines 1 to 7 from SRS.md (which are duplicate titles) so we start directly at the metadata table
-while i < len(lines):
-    if lines[i].strip().startswith('| Academic & Engineering Parameter'):
-        break
-    i += 1
+    # Start by fitting to full printable width
+    cx = max_cx
+    cy = int(round(max_cx * (height_px / float(width_px))))
 
-diagram_map = {
-    "Figure 4.1": ("rId201", 201, "Figure 4.1: BugBountyTrack 3-Tier Decoupled Component Architecture", 5500000, 2811111),
-    "Figure 4.2": ("rId202", 202, "Figure 4.2: BugBountyTrack Use Case Model & Actor Roles", 5500000, 2933333),
-    "Figure 4.3": ("rId203", 203, "Figure 4.3: Sequence: Browser-Side OpenPGP Encrypted Submission", 5500000, 2494186),
-    "Figure 4.4": ("rId204", 204, "Figure 4.4: Sequence: In-Browser Decryption & Confidential Conversation", 5500000, 2625000),
-    "Figure 4.5": ("rId205", 205, "Figure 4.5: Remediation & Attested Retest Lifecycle State Machine", 5500000, 2811111),
-    "Figure 4.6": ("rId206", 206, "Figure 4.6: Relational Prisma ERD & Multi-Tenant Model", 5500000, 3108695),
+    # If height exceeds max_cy (e.g., portrait diagram), scale down proportionally
+    if cy > max_cy:
+        cy = max_cy
+        cx = int(round(max_cy * (width_px / float(height_px))))
+
+    return (
+        '<w:p><w:pPr><w:spacing w:before="120" w:after="120"/><w:jc w:val="center"/></w:pPr>'
+        "<w:r><w:rPr><w:noProof/></w:rPr>"
+        '<w:drawing xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" '
+        'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '
+        'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture" '
+        'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        '<wp:inline distT="0" distB="0" distL="0" distR="0">'
+        f'<wp:extent cx="{cx}" cy="{cy}"/>'
+        '<wp:effectExtent l="0" t="0" r="0" b="0"/>'
+        f'<wp:docPr id="{doc_pr_id}" name="{xml_escape(name)}" descr="{xml_escape(name)}"/>'
+        "<wp:cNvGraphicFramePr>"
+        '<a:graphicFrameLocks noChangeAspect="1"/>'
+        "</wp:cNvGraphicFramePr>"
+        "<a:graphic>"
+        '<a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'
+        "<pic:pic>"
+        "<pic:nvPicPr>"
+        f'<pic:cNvPr id="{doc_pr_id}" name="{xml_escape(name)}"/>'
+        '<pic:cNvPicPr><a:picLocks noChangeAspect="1" noChangeArrowheads="1"/></pic:cNvPicPr>'
+        "</pic:nvPicPr>"
+        "<pic:blipFill>"
+        f'<a:blip r:embed="{rel_id}"/>'
+        "<a:stretch><a:fillRect/></a:stretch>"
+        "</pic:blipFill>"
+        "<pic:spPr>"
+        f'<a:xfrm><a:off x="0" y="0"/><a:ext cx="{cx}" cy="{cy}"/></a:xfrm>'
+        '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>'
+        "</pic:spPr>"
+        "</pic:pic>"
+        "</a:graphicData>"
+        "</a:graphic>"
+        "</wp:inline>"
+        "</w:drawing>"
+        "</w:r></w:p>"
+    )
+
+
+diagram_files = {
+    "rId201": (
+        "word/media/fig4_1_component.png",
+        os.path.join(SCRIPT_DIR, "diagrams", "fig4_1_component.png"),
+        201,
+        "Figure 4.1 Component Architecture",
+    ),
+    "rId202": (
+        "word/media/fig4_2_usecase.png",
+        os.path.join(SCRIPT_DIR, "diagrams", "fig4_2_usecase.png"),
+        202,
+        "Figure 4.2 System Use Case Diagram",
+    ),
+    "rId203": (
+        "word/media/fig4_3_seq_submission.png",
+        os.path.join(SCRIPT_DIR, "diagrams", "fig4_3_seq_submission.png"),
+        203,
+        "Figure 4.3 Sequence Diagram Submission",
+    ),
+    "rId204": (
+        "word/media/fig4_4_seq_decryption.png",
+        os.path.join(SCRIPT_DIR, "diagrams", "fig4_4_seq_decryption.png"),
+        204,
+        "Figure 4.4 Sequence Diagram Decryption",
+    ),
+    "rId205": (
+        "word/media/fig4_5_statemachine.png",
+        os.path.join(SCRIPT_DIR, "diagrams", "fig4_5_statemachine.png"),
+        205,
+        "Figure 4.5 Report Lifecycle State Machine",
+    ),
+    "rId206": (
+        "word/media/fig4_6_erd.png",
+        os.path.join(SCRIPT_DIR, "diagrams", "fig4_6_erd.png"),
+        206,
+        "Figure 4.6 Entity Relationship Diagram",
+    ),
 }
 
+section_diagram_map = {
+    "4.2 ": "rId201",
+    "4.3 ": "rId202",
+    "4.4 ": "rId203",
+    "4.5 ": "rId204",
+    "4.6 ": "rId205",
+    "4.7 ": "rId206",
+}
+
+lines = md_text.splitlines()
+body_parts = []
+i = 0
+in_code_block = False
+code_block_lang = ""
+code_block_lines = []
+current_section_prefix = None
 inserted_diagrams = set()
 
 while i < len(lines):
-    line = lines[i].rstrip('\r\n')
+    line = lines[i]
     sline = line.strip()
+
+    # Handle fenced code blocks
+    if sline.startswith("```"):
+        if not in_code_block:
+            in_code_block = True
+            code_block_lang = sline[3:].strip().lower()
+            code_block_lines = []
+        else:
+            in_code_block = False
+            if code_block_lang == "mermaid":
+                # Replace mermaid block with its corresponding rendered PNG diagram
+                if (
+                    current_section_prefix
+                    and current_section_prefix in section_diagram_map
+                ):
+                    rid = section_diagram_map[current_section_prefix]
+                    if rid not in inserted_diagrams:
+                        _, png_path, doc_id, d_name = diagram_files[rid]
+                        body_parts.append(make_image_p(rid, doc_id, d_name, png_path))
+                        inserted_diagrams.add(rid)
+            else:
+                # Render non-mermaid code block (e.g., FR-7.1 state transition grammar)
+                for cline in code_block_lines:
+                    if cline.strip():
+                        body_parts.append(
+                            make_p(
+                                cline.strip(),
+                                sz=20,
+                                space_before=20,
+                                space_after=20,
+                                left_border=True,
+                                left_indent=360,
+                                line_spacing=240,
+                            )
+                        )
+        i += 1
+        continue
+
+    if in_code_block:
+        code_block_lines.append(line)
+        i += 1
+        continue
+
+    # Skip markdown image links since we embed the PNG directly via section_diagram_map
+    if sline.startswith("!["):
+        if current_section_prefix and current_section_prefix in section_diagram_map:
+            rid = section_diagram_map[current_section_prefix]
+            if rid not in inserted_diagrams:
+                _, png_path, doc_id, d_name = diagram_files[rid]
+                body_parts.append(make_image_p(rid, doc_id, d_name, png_path))
+                inserted_diagrams.add(rid)
+        i += 1
+        continue
+
     if not sline:
         i += 1
         continue
-    
-    # Check if we are in Mermaid block
-    if sline.startswith('```mermaid'):
-        in_mermaid = True
-        i += 1
-        continue
-    if in_mermaid:
-        if sline.startswith('```'):
-            in_mermaid = False
-        i += 1
-        continue
-    
-    # Check for TOC
-    if sline == '## Table of Contents':
-        in_toc = True
-        body_parts.append(make_simple_p("Table of Contents", style="Heading1", bold=True, color="386B24", sz=26, space_before=240, space_after=80, is_heading=True))
-        i += 1
-        continue
-    if in_toc and sline.startswith('## 1.'):
-        in_toc = False
 
-    # Diagram insertion check (ONLY in Section 4 and outside TOC)
-    if not in_toc and sline.startswith('### 4.'):
-        inserted_diagram = False
-        for fig_key, (rId, dId, dName, cx, cy) in diagram_map.items():
-            if fig_key in sline and fig_key not in inserted_diagrams:
-                inserted_diagrams.add(fig_key)
-                body_parts.append(make_simple_p(sline.replace('#', '').strip(), style="Heading2", bold=True, color="2B4C1A", sz=22, space_before=180, space_after=60, is_heading=True))
-                body_parts.append(make_drawing(rId, dId, dName, cx, cy))
-                body_parts.append(make_simple_p(f"[{dName}]", italic=True, color="555555", sz=17, space_before=40, space_after=120, jc="center"))
-                inserted_diagram = True
-                break
-        if inserted_diagram:
+    if sline == "---":
+        body_parts.append(make_hr_p())
+        i += 1
+        continue
+
+    # Blockquotes
+    if sline.startswith(">"):
+        q_text = sline.lstrip(">").strip()
+        if q_text:
+            body_parts.append(
+                make_p(
+                    q_text,
+                    italic=True,
+                    sz=21,
+                    space_before=40,
+                    space_after=40,
+                    left_border=True,
+                    left_indent=360,
+                )
+            )
+        i += 1
+        continue
+
+    # Markdown Tables
+    if sline.startswith("|") and sline.endswith("|"):
+        table_lines = []
+        while (
+            i < len(lines)
+            and lines[i].strip().startswith("|")
+            and lines[i].strip().endswith("|")
+        ):
+            table_lines.append(lines[i].strip())
             i += 1
-            continue
-
-    if sline == '---':
-        i += 1
-        continue
-    
-    # Heading 1
-    if sline.startswith('## '):
-        h1_text = sline[3:].strip()
-        body_parts.append(make_simple_p(h1_text, style="Heading1", bold=True, color="386B24", sz=26, space_before=240, space_after=80, is_heading=True))
-        i += 1
-        continue
-
-    # Heading 2
-    if sline.startswith('### '):
-        h2_text = sline[4:].strip()
-        body_parts.append(make_simple_p(h2_text, style="Heading2", bold=True, color="2B4C1A", sz=22, space_before=180, space_after=60, is_heading=True))
-        i += 1
-        continue
-
-    # Heading 3 / 4
-    if sline.startswith('#### '):
-        h3_text = sline[5:].strip()
-        body_parts.append(make_simple_p(h3_text, style="Heading3", bold=True, color="1B2A1E", sz=20, space_before=140, space_after=40, is_heading=True))
-        i += 1
-        continue
-
-    # Table parsing
-    if sline.startswith('|') and sline.endswith('|'):
-        tbl_lines = []
-        while i < len(lines) and lines[i].strip().startswith('|') and lines[i].strip().endswith('|'):
-            tbl_lines.append(lines[i].strip())
-            i += 1
-        
-        headers = []
-        rows = []
-        for t_idx, tl in enumerate(tbl_lines):
-            cells = [c.strip() for c in tl.split('|')[1:-1]]
-            if t_idx == 0:
-                headers = cells
-            elif t_idx == 1 and all(set(c).issubset({'-', ':', ' '}) for c in cells):
+        parsed_rows = []
+        for tl in table_lines:
+            cells = [c.strip() for c in tl.strip("|").split("|")]
+            if all(re.match(r"^[:\-]+$", c) for c in cells if c):
                 continue
-            else:
-                rows.append(cells)
-        
-        body_parts.append(make_table(headers, rows))
-        body_parts.append(make_simple_p("", space_before=40, space_after=40))
+            parsed_rows.append(cells)
+        if parsed_rows:
+            body_parts.append(make_table(parsed_rows))
         continue
 
-    # Bullet points / TOC items
-    if in_toc:
-        if re.match(r'^\d+\.\s+', sline):
-            body_parts.append(make_simple_p(sline, bold=True, color="2B4C1A", sz=20, space_before=60, space_after=20))
-            i += 1
-            continue
-        elif sline.startswith('- ') or sline.startswith('• '):
-            b_text = sline[2:].strip()
-            body_parts.append(make_simple_p(b_text, color="444444", sz=19, space_before=15, space_after=15, left_indent=360))
-            i += 1
-            continue
-
-    if sline.startswith('* ') or sline.startswith('- '):
-        b_text = sline[2:].strip()
-        body_parts.append(make_simple_p(f"•  {b_text}", color="222222", sz=20, space_before=40, space_after=40))
+    # Headings
+    if sline.startswith("# "):
+        h_text = sline[2:].strip()
+        body_parts.append(
+            make_p(
+                h_text,
+                bold=True,
+                sz=32,
+                space_before=120,
+                space_after=120,
+                jc="center",
+                keep_next=True,
+                bottom_border=True,
+            )
+        )
         i += 1
         continue
 
-    if re.match(r'^\d+\.\s+', sline):
-        body_parts.append(make_simple_p(sline, color="222222", sz=20, space_before=40, space_after=40))
+    if sline.startswith("## "):
+        h_text = sline[3:].strip()
+        body_parts.append(
+            make_p(
+                h_text,
+                bold=True,
+                sz=28,
+                space_before=240,
+                space_after=100,
+                keep_next=True,
+                bottom_border=True,
+            )
+        )
+        i += 1
+        continue
+
+    if sline.startswith("### "):
+        h_text = sline[4:].strip()
+        current_section_prefix = None
+        for prefix in section_diagram_map:
+            if h_text.startswith(prefix):
+                current_section_prefix = prefix
+                break
+        body_parts.append(
+            make_p(
+                h_text,
+                bold=True,
+                sz=24,
+                space_before=180,
+                space_after=80,
+                keep_next=True,
+            )
+        )
+        i += 1
+        continue
+
+    if sline.startswith("#### "):
+        h_text = sline[5:].strip()
+        body_parts.append(
+            make_p(
+                h_text,
+                bold=True,
+                sz=22,
+                space_before=140,
+                space_after=60,
+                keep_next=True,
+            )
+        )
+        i += 1
+        continue
+
+    # Bullet points
+    if sline.startswith("* ") or sline.startswith("- ") or sline.startswith("• "):
+        b_text = sline[2:].strip()
+        indent = 720 if line.startswith("  ") or line.startswith("\t") else 360
+        bullet_char = "◦  " if indent > 360 else "•  "
+        body_parts.append(
+            make_p(
+                f"{bullet_char}{b_text}",
+                sz=22,
+                space_before=30,
+                space_after=30,
+                left_indent=indent,
+            )
+        )
+        i += 1
+        continue
+
+    # Numbered lists
+    if re.match(r"^\d+\.\s+", sline):
+        indent = 720 if line.startswith("  ") or line.startswith("\t") else 360
+        body_parts.append(
+            make_p(
+                sline,
+                sz=22,
+                space_before=30,
+                space_after=30,
+                left_indent=indent,
+            )
+        )
         i += 1
         continue
 
     # Standard Paragraph
-    body_parts.append(make_simple_p(sline, color="222222", sz=20, space_before=60, space_after=60))
+    body_parts.append(make_p(sline, sz=22, space_before=60, space_after=80))
     i += 1
 
 print(f"Parsed {len(lines)} lines into {len(body_parts)} body elements.")
 print(f"Inserted diagrams: {sorted(list(inserted_diagrams))}")
 
-# Preserve sectPr from original SRS.docx
-template_path = os.path.join(PROJECT_DIR, 'Resources', 'SRS.docx')
-with zipfile.ZipFile(template_path, 'r') as zin:
-    # Filter out template media files so word/media/ only contains our exact 6 diagrams
-    file_map = {name: zin.read(name) for name in zin.namelist() if not name.startswith('word/media/')}
-
-orig_doc = file_map['word/document.xml'].decode('utf-8')
-sectPr_match = re.search(r'<w:sectPr.*?</w:sectPr>', orig_doc)
-sectPr_xml = sectPr_match.group(0) if sectPr_match else (
-    '<w:sectPr>'
+sectPr_xml = (
+    "<w:sectPr>"
     '<w:headerReference w:type="default" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="rId1"/>'
     '<w:footerReference w:type="default" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="rId2"/>'
-    '<w:pgSz w:w="11906" w:h="16838"/>'
-    '<w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720"/>'
-    '</w:sectPr>'
+    '<w:pgSz w:w="12240" w:h="15840"/>'
+    '<w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/>'
+    "</w:sectPr>"
 )
 
 doc_xml = (
@@ -360,47 +554,170 @@ doc_xml = (
     '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '
     'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">\n'
     f'<w:body>{"".join(body_parts)}{sectPr_xml}</w:body>\n'
-    '</w:document>'
+    "</w:document>"
 )
 
-# Build updated document.xml.rels with rId201..rId206
-rels_xml = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+header_xml = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:hdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:p>
+    <w:pPr>
+      <w:pBdr><w:bottom w:val="single" w:sz="4" w:space="4" w:color="{BORDER_COLOR}"/></w:pBdr>
+      <w:spacing w:before="0" w:after="60"/>
+      <w:jc w:val="right"/>
+    </w:pPr>
+    <w:r>
+      <w:rPr>
+        <w:rFonts w:ascii="{FONT_NAME}" w:cs="{FONT_NAME}" w:eastAsia="{FONT_NAME}" w:hAnsi="{FONT_NAME}"/>
+        <w:i/>
+        <w:color w:val="{TEXT_COLOR}"/>
+        <w:sz w:val="18"/><w:szCs w:val="18"/>
+      </w:rPr>
+      <w:t>BugBountyTrack — IEEE 830 Software Requirements Specification (SRS v2.1.0)</w:t>
+    </w:r>
+  </w:p>
+</w:hdr>"""
+
+footer_xml = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:p>
+    <w:pPr>
+      <w:pBdr><w:top w:val="single" w:sz="4" w:space="4" w:color="{BORDER_COLOR}"/></w:pBdr>
+      <w:tabs><w:tab w:val="right" w:pos="9360"/></w:tabs>
+      <w:spacing w:before="60" w:after="0"/>
+      <w:jc w:val="left"/>
+    </w:pPr>
+    <w:r>
+      <w:rPr>
+        <w:rFonts w:ascii="{FONT_NAME}" w:cs="{FONT_NAME}" w:eastAsia="{FONT_NAME}" w:hAnsi="{FONT_NAME}"/>
+        <w:i/>
+        <w:color w:val="{TEXT_COLOR}"/>
+        <w:sz w:val="18"/><w:szCs w:val="18"/>
+      </w:rPr>
+      <w:t xml:space="preserve">Prepared for Academic &amp; Technical Review — Taha Asadullah</w:t>
+    </w:r>
+    <w:r>
+      <w:rPr>
+        <w:rFonts w:ascii="{FONT_NAME}" w:cs="{FONT_NAME}" w:eastAsia="{FONT_NAME}" w:hAnsi="{FONT_NAME}"/>
+        <w:color w:val="{TEXT_COLOR}"/>
+        <w:sz w:val="18"/><w:szCs w:val="18"/>
+      </w:rPr>
+      <w:tab/>
+      <w:t xml:space="preserve">Page </w:t>
+    </w:r>
+    <w:r>
+      <w:rPr>
+        <w:rFonts w:ascii="{FONT_NAME}" w:cs="{FONT_NAME}" w:eastAsia="{FONT_NAME}" w:hAnsi="{FONT_NAME}"/>
+        <w:color w:val="{TEXT_COLOR}"/>
+        <w:sz w:val="18"/><w:szCs w:val="18"/>
+      </w:rPr>
+      <w:fldChar w:fldCharType="begin"/>
+      <w:instrText xml:space="preserve">PAGE</w:instrText>
+      <w:fldChar w:fldCharType="separate"/>
+      <w:fldChar w:fldCharType="end"/>
+    </w:r>
+    <w:r>
+      <w:rPr>
+        <w:rFonts w:ascii="{FONT_NAME}" w:cs="{FONT_NAME}" w:eastAsia="{FONT_NAME}" w:hAnsi="{FONT_NAME}"/>
+        <w:color w:val="{TEXT_COLOR}"/>
+        <w:sz w:val="18"/><w:szCs w:val="18"/>
+      </w:rPr>
+      <w:t xml:space="preserve"> of </w:t>
+    </w:r>
+    <w:r>
+      <w:rPr>
+        <w:rFonts w:ascii="{FONT_NAME}" w:cs="{FONT_NAME}" w:eastAsia="{FONT_NAME}" w:hAnsi="{FONT_NAME}"/>
+        <w:color w:val="{TEXT_COLOR}"/>
+        <w:sz w:val="18"/><w:szCs w:val="18"/>
+      </w:rPr>
+      <w:fldChar w:fldCharType="begin"/>
+      <w:instrText xml:space="preserve">NUMPAGES</w:instrText>
+      <w:fldChar w:fldCharType="separate"/>
+      <w:fldChar w:fldCharType="end"/>
+    </w:r>
+  </w:p>
+</w:ftr>"""
+
+styles_xml = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:docDefaults>
+    <w:rPrDefault>
+      <w:rPr>
+        <w:rFonts w:ascii="{FONT_NAME}" w:cs="{FONT_NAME}" w:eastAsia="{FONT_NAME}" w:hAnsi="{FONT_NAME}"/>
+        <w:color w:val="{TEXT_COLOR}"/>
+        <w:sz w:val="22"/>
+        <w:szCs w:val="22"/>
+        <w:lang w:val="en-US" w:eastAsia="en-US" w:bidi="ar-SA"/>
+      </w:rPr>
+    </w:rPrDefault>
+    <w:pPrDefault>
+      <w:pPr>
+        <w:spacing w:after="80" w:line="276" w:lineRule="auto"/>
+      </w:pPr>
+    </w:pPrDefault>
+  </w:docDefaults>
+</w:styles>"""
+
+settings_xml = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:zoom w:percent="100"/>
+  <w:defaultTabStop w:val="720"/>
+  <w:characterSpacingControl w:val="doNotCompress"/>
+  <w:compat>
+    <w:compatSetting w:name="compatibilityMode" w:uri="http://schemas.microsoft.com/office/word" w:val="15"/>
+  </w:compat>
+</w:settings>"""
+
+content_types_xml = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Default Extension="png" ContentType="image/png"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+  <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+  <Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>
+  <Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/>
+  <Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>
+</Types>"""
+
+root_rels_xml = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>"""
+
+doc_rels_xml = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/>
   <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>
   <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
   <Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/>
-  <Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="theme/theme1.xml"/>
   <Relationship Id="rId201" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig4_1_component.png"/>
   <Relationship Id="rId202" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig4_2_usecase.png"/>
   <Relationship Id="rId203" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig4_3_seq_submission.png"/>
   <Relationship Id="rId204" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig4_4_seq_decryption.png"/>
   <Relationship Id="rId205" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig4_5_statemachine.png"/>
   <Relationship Id="rId206" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig4_6_erd.png"/>
-</Relationships>'''
+</Relationships>"""
 
-diagram_files = {
-    'word/media/fig4_1_component.png': os.path.join(SCRIPT_DIR, 'diagrams', 'fig4_1_component.png'),
-    'word/media/fig4_2_usecase.png': os.path.join(SCRIPT_DIR, 'diagrams', 'fig4_2_usecase.png'),
-    'word/media/fig4_3_seq_submission.png': os.path.join(SCRIPT_DIR, 'diagrams', 'fig4_3_seq_submission.png'),
-    'word/media/fig4_4_seq_decryption.png': os.path.join(SCRIPT_DIR, 'diagrams', 'fig4_4_seq_decryption.png'),
-    'word/media/fig4_5_statemachine.png': os.path.join(SCRIPT_DIR, 'diagrams', 'fig4_5_statemachine.png'),
-    'word/media/fig4_6_erd.png': os.path.join(SCRIPT_DIR, 'diagrams', 'fig4_6_erd.png'),
-}
+target_docx = os.path.join(SCRIPT_DIR, "SRS.docx")
+with zipfile.ZipFile(target_docx, "w", compression=zipfile.ZIP_DEFLATED) as zout:
+    zout.writestr("[Content_Types].xml", content_types_xml.encode("utf-8"))
+    zout.writestr("_rels/.rels", root_rels_xml.encode("utf-8"))
+    zout.writestr("word/document.xml", doc_xml.encode("utf-8"))
+    zout.writestr("word/_rels/document.xml.rels", doc_rels_xml.encode("utf-8"))
+    zout.writestr("word/styles.xml", styles_xml.encode("utf-8"))
+    zout.writestr("word/settings.xml", settings_xml.encode("utf-8"))
+    zout.writestr("word/header1.xml", header_xml.encode("utf-8"))
+    zout.writestr("word/footer1.xml", footer_xml.encode("utf-8"))
+    for rid, (zip_path, local_path, _, _) in diagram_files.items():
+        if os.path.exists(local_path):
+            with open(local_path, "rb") as img_f:
+                zout.writestr(zip_path, img_f.read())
+        else:
+            raise FileNotFoundError(f"Missing diagram image: {local_path}")
 
-file_map['word/document.xml'] = doc_xml.encode('utf-8')
-file_map['word/_rels/document.xml.rels'] = rels_xml.encode('utf-8')
+resources_docx = os.path.join(PROJECT_DIR, "Resources", "SRS.docx")
+shutil.copy2(target_docx, resources_docx)
 
-for zip_path, local_path in diagram_files.items():
-    if os.path.exists(local_path):
-        with open(local_path, 'rb') as img_f:
-            file_map[zip_path] = img_f.read()
-    else:
-        print(f"WARNING: Image {local_path} not found!")
-
-target_docx = os.path.join(SCRIPT_DIR, 'SRS.docx')
-with zipfile.ZipFile(target_docx, 'w', compression=zipfile.ZIP_DEFLATED) as zout:
-    for name, content in file_map.items():
-        zout.writestr(name, content)
-
-print(f"Successfully generated {target_docx} ({os.path.getsize(target_docx)} bytes)")
+print(
+    f"Successfully generated {target_docx} ({os.path.getsize(target_docx)} bytes) and synchronized {resources_docx}"
+)

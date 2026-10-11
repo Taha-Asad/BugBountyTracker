@@ -33,6 +33,7 @@ files = {
     'WEEK_1_PART_B_CHARTER_AND_MVP.docx': os.path.join(SCRIPT_DIR, 'WEEK_1_PART_B_CHARTER_AND_MVP.docx'),
     'HOD_PROPOSAL.md': os.path.join(SCRIPT_DIR, 'HOD_PROPOSAL.md'),
     'week-01-problem-discovery-personas.md': os.path.join(PROJECT_DIR, 'tasks', 'week-01-problem-discovery-personas.md'),
+    'week-02-software-requirements-specification.md': os.path.join(PROJECT_DIR, 'tasks', 'week-02-software-requirements-specification.md'),
     'KEY_MANAGEMENT.md': os.path.join(PROJECT_DIR, 'architecture', 'KEY_MANAGEMENT.md'),
     'DECISION_LOG.md': os.path.join(PROJECT_DIR, 'decisions', 'DECISION_LOG.md'),
     'project.json': os.path.join(PROJECT_DIR, 'project.json'),
@@ -46,7 +47,7 @@ for fname, fpath in files.items():
     check(sz >= min_sz, f"File size valid: {fname} ({sz} bytes)")
 
 # 2. Check metadata in Markdown specifications
-for mdf in ['BRD.md', 'SRS.md', 'WBS.md', 'WEEK_1_DISCOVERY_REPORT.md', 'WEEK_1_PART_A_USER_PERSONAS.md', 'WEEK_1_PART_B_CHARTER_AND_MVP.md', 'HOD_PROPOSAL.md', 'week-01-problem-discovery-personas.md']:
+for mdf in ['BRD.md', 'SRS.md', 'WBS.md', 'WEEK_1_DISCOVERY_REPORT.md', 'WEEK_1_PART_A_USER_PERSONAS.md', 'WEEK_1_PART_B_CHARTER_AND_MVP.md', 'HOD_PROPOSAL.md', 'week-01-problem-discovery-personas.md', 'week-02-software-requirements-specification.md']:
     p = files[mdf]
     with open(p, 'r', encoding='utf-8') as f:
         content = f.read()
@@ -56,7 +57,7 @@ for mdf in ['BRD.md', 'SRS.md', 'WBS.md', 'WEEK_1_DISCOVERY_REPORT.md', 'WEEK_1_
     check('PTUT - PRJ - 089' in content, f"{mdf} contains Project ID PTUT - PRJ - 089")
     check('SET-B' in content, f"{mdf} contains Section SET-B")
     check('SET-A' not in content, f"{mdf} has zero legacy SET-A references")
-    if mdf in ['BRD.md', 'SRS.md', 'WBS.md', 'WEEK_1_DISCOVERY_REPORT.md', 'WEEK_1_PART_A_USER_PERSONAS.md', 'WEEK_1_PART_B_CHARTER_AND_MVP.md', 'week-01-problem-discovery-personas.md']:
+    if mdf in ['BRD.md', 'SRS.md', 'WBS.md', 'WEEK_1_DISCOVERY_REPORT.md', 'WEEK_1_PART_A_USER_PERSONAS.md', 'WEEK_1_PART_B_CHARTER_AND_MVP.md', 'week-01-problem-discovery-personas.md', 'week-02-software-requirements-specification.md']:
         # Verify no raw unescaped LaTeX formatting artifacts in Word-source or portal-paste docs
         check(r'\text{' not in content, f"{mdf} has no \\text{{}} artifacts")
         check(r'\longrightarrow' not in content, f"{mdf} has no \\longrightarrow artifacts")
@@ -146,17 +147,62 @@ for stem in diagram_stems:
     check(os.path.exists(png_path) and os.path.getsize(png_path) > 10000, f"Diagram PNG exists & >10KB: {stem}.png")
     check(os.path.exists(svg_path) and os.path.getsize(svg_path) > 10000, f"Diagram SVG exists & >10KB: {stem}.svg")
 
-# 9. Check SRS.docx OpenXML integrity and embedded drawings
+# 9. Check SRS.docx OpenXML integrity, university formatting, and embedded drawing aspect ratios
+import struct
 with zipfile.ZipFile(files['SRS.docx'], 'r') as srs_zip:
     srs_xml = srs_zip.read('word/document.xml').decode('utf-8')
+    srs_styles_xml = srs_zip.read('word/styles.xml').decode('utf-8')
+    srs_header_xml = srs_zip.read('word/header1.xml').decode('utf-8')
+    srs_footer_xml = srs_zip.read('word/footer1.xml').decode('utf-8')
     media_files = [f for f in srs_zip.namelist() if f.startswith('word/media/')]
+    font_files = [f for f in srs_zip.namelist() if f.startswith('word/fonts/')]
+    png_dims_in_zip = {}
+    for mf in media_files:
+        raw_png = srs_zip.read(mf)
+        w_px, h_px = struct.unpack('>II', raw_png[16:24])
+        png_dims_in_zip[os.path.basename(mf)] = (w_px, h_px)
 
 check(len(media_files) == 6, f"SRS.docx contains exactly 6 images (found {len(media_files)})")
-drawings_in_doc = srs_xml.count('<w:drawing>')
+check(len(font_files) == 0, f"SRS.docx has zero embedded non-standard font binaries (found {len(font_files)})")
+drawings_in_doc = srs_xml.count('<w:drawing')
 check(drawings_in_doc == 6, f"SRS.docx has exactly 6 <w:drawing> elements (found {drawings_in_doc})")
 check('24-ST-013' in srs_xml, "SRS.docx contains Roll No 24-ST-013")
 check('Taha Asadullah' in srs_xml, "SRS.docx contains Taha Asadullah")
 check(r'\text{' not in srs_xml, "SRS.docx has no \\text{} artifacts")
+check('Times New Roman' in srs_xml and 'Times New Roman' in srs_styles_xml and 'Times New Roman' in srs_header_xml and 'Times New Roman' in srs_footer_xml,
+      "SRS.docx enforces Times New Roman across document, styles, header, and footer")
+for xml_part_name, xml_part in [('document.xml', srs_xml), ('styles.xml', srs_styles_xml), ('header1.xml', srs_header_xml), ('footer1.xml', srs_footer_xml)]:
+    check('Lexend' not in xml_part and 'Consolas' not in xml_part and 'Cambria' not in xml_part,
+          f"SRS.docx {xml_part_name} has zero legacy Lexend/Consolas/Cambria fonts")
+    colors_found = set(re.findall(r'w:color w:val="([^"]+)"', xml_part))
+    non_black_colors = {c for c in colors_found if c not in ('000000', 'auto')}
+    check(len(non_black_colors) == 0, f"SRS.docx {xml_part_name} uses pure black #000000 only (non-black: {non_black_colors})")
+
+# Verify every embedded diagram in SRS.docx preserves its exact native PNG aspect ratio
+drawing_blocks = re.findall(r'<wp:inline[^>]*>.*?</wp:inline>', srs_xml)
+check(len(drawing_blocks) == 6, f"SRS.docx contains 6 inline drawing blocks (found {len(drawing_blocks)})")
+rel_to_png = {
+    'rId201': 'fig4_1_component.png',
+    'rId202': 'fig4_2_usecase.png',
+    'rId203': 'fig4_3_seq_submission.png',
+    'rId204': 'fig4_4_seq_decryption.png',
+    'rId205': 'fig4_5_statemachine.png',
+    'rId206': 'fig4_6_erd.png',
+}
+for dblock in drawing_blocks:
+    ext_m = re.search(r'<wp:extent cx="(\d+)" cy="(\d+)"/>', dblock)
+    rid_m = re.search(r'r:embed="(rId\d+)"', dblock)
+    if ext_m and rid_m:
+        cx_val, cy_val = int(ext_m.group(1)), int(ext_m.group(2))
+        rid_val = rid_m.group(1)
+        png_name = rel_to_png.get(rid_val)
+        w_px, h_px = png_dims_in_zip.get(png_name, (1, 1))
+        emu_ratio = cx_val / float(cy_val)
+        px_ratio = w_px / float(h_px)
+        check(abs(emu_ratio - px_ratio) < 0.005,
+              f"SRS.docx {png_name} ({rid_val}) preserves exact aspect ratio (EMU {emu_ratio:.3f} vs PNG {px_ratio:.3f})")
+        check('noChangeAspect="1"' in dblock, f"SRS.docx {png_name} ({rid_val}) locks aspect ratio (noChangeAspect=1)")
+
 
 # 10. Check BRD.docx OpenXML integrity
 with zipfile.ZipFile(files['BRD.docx'], 'r') as brd_zip:
@@ -290,6 +336,24 @@ with zipfile.ZipFile(files['WEEK_1_PART_B_CHARTER_AND_MVP.docx'], 'r') as w1b_zi
 check('24-ST-013' in w1b_xml and 'title_ciphertext' in w1b_xml and '8.22' in w1b_xml,
       "WEEK_1_PART_B_CHARTER_AND_MVP.docx OpenXML verified (24-ST-013, title_ciphertext, 8.22 CVSS)")
 
+# 15c. Week 2 SRS & Task Deliverable Integrity: UC-01..UC-08 Parity, NFR-09 Uptime, Signature Block, Zero file:// Paths
+with open(files['week-02-software-requirements-specification.md'], 'r', encoding='utf-8') as f:
+    w2_task = f.read()
+check('file://' not in srs and '/run/media/' not in srs,
+      "SRS.md has zero local file:// or /run/media/ paths")
+check('file://' not in w2_task and '/run/media/' not in w2_task,
+      "week-02-software-requirements-specification.md has zero local file:// or /run/media/ paths")
+for uc_num in range(1, 9):
+    uc_tag = f"UC-0{uc_num}"
+    check(f"Use Case {uc_tag}:" in srs and f"Use Case `{uc_tag}`:" in w2_task,
+          f"Both SRS.md and week-02 task spec define {uc_tag}")
+check('NFR-09' in srs and '99.5%' in srs and 'NFR-09' in w2_task and '99.5%' in w2_task,
+      "Both SRS.md and week-02 task spec define quantifiable NFR-09 Uptime SLO (>= 99.5%)")
+check('Document Endorsement & Milestone Sign-Off' in srs and 'Document Endorsement & Milestone Sign-Off' in w2_task,
+      "Both SRS.md and week-02 task spec include formal Document Endorsement & Milestone Sign-Off signature block")
+check('Document Endorsement &amp; Milestone Sign-Off' in srs_xml,
+      "SRS.docx includes formal Document Endorsement & Milestone Sign-Off signature block")
+
 # 16. Academic & Professional Attribution Hygiene (Zero AI Agent Bleed into Specifications)
 forbidden_personas = [
     'Alexander', 'Victoria', 'Arthur', 'Julian', 'Marcus', 'Elena',
@@ -307,6 +371,7 @@ hygiene_files = [
     ('WEEK_1_PART_B_CHARTER_AND_MVP.md', w1_part_b),
     ('HOD_PROPOSAL.md', hod_prop),
     ('week-01-problem-discovery-personas.md', w1_task),
+    ('week-02-software-requirements-specification.md', w2_task),
 ]
 for doc_name, doc_content in hygiene_files:
     for persona in forbidden_personas:

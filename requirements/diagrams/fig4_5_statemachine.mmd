@@ -1,28 +1,31 @@
 stateDiagram-v2
-    [*] --> NEW: Report Submitted (Encrypted)
-    NEW --> REJECTED_SPAM: Filter Scanner Spam
-    NEW --> TRIAGING: Defender Opens Ticket
-    TRIAGING --> REJECTED_INVALID: Out-of-Scope / Invalid
-    TRIAGING --> DUPLICATE: Reviewer Links Duplicate
-    TRIAGING --> NEED_MORE_INFO: Clarification Requested
-    NEED_MORE_INFO --> TRIAGING: Researcher Responds
-    NEED_MORE_INFO --> CLOSED_INCOMPLETE: Inactive >= 14 Days (Intake Abandoned)
-    TRIAGING --> RISK_ACCEPTED: Risk Formally Accepted (Documented)
-    TRIAGING --> WITHDRAWN: Submitter Retracts
-    TRIAGING --> ACCEPTED: Valid Flaw Confirmed
+    [*] --> NEW : Report Submitted (Encrypted)
+    NEW --> REJECTED_SPAM : Filter Scanner Spam (Non-Reopenable)
+    NEW --> TRIAGING : Defender Opens Ticket
 
-    ACCEPTED --> FIX_PROPOSED: Commit SHA / Config Hash Provided
-    FIX_PROPOSED --> RETEST_PENDING: Fix Deployed to Staging/Prod
+    TRIAGING --> NEED_MORE_INFO : Clarification Requested
+    NEED_MORE_INFO --> TRIAGING : Researcher Responds
+    NEED_MORE_INFO --> CLOSED_INCOMPLETE : Inactive >= 14 Days
 
-    RETEST_PENDING --> VERIFIED_RESEARCHER: Hunter Attests Fix Mitigated
-    RETEST_PENDING --> VERIFIED_INTERNAL: Defender Attests Fix Mitigated
-    RETEST_PENDING --> CLOSED_UNVERIFIED_TIMEOUT: Grace Period Expired + Reviewer Rationale
-    RETEST_PENDING --> ACCEPTED: Retest Failed (Flaw Persists)
-    
-    VERIFIED_RESEARCHER --> TRIAGING: Regression Identified (Reopen)
-    VERIFIED_INTERNAL --> TRIAGING: Regression Identified (Reopen)
-    CLOSED_UNVERIFIED_TIMEOUT --> TRIAGING: Retest Requested (Reopen)
-    CLOSED_INCOMPLETE --> TRIAGING: Reporter Clarifies (Reopen)
-    REJECTED_INVALID --> TRIAGING: Dispute Upheld (Reopen)
-    DUPLICATE --> TRIAGING: Distinct Root Cause (Reopen)
-    RISK_ACCEPTED --> TRIAGING: Annual Review / Risk Re-evaluated (Reopen)
+    TRIAGING --> REJECTED_INVALID : Out of Scope / Invalid
+    TRIAGING --> DUPLICATE : Linked to Primary Report
+    TRIAGING --> RISK_ACCEPTED : Risk Formally Accepted
+    TRIAGING --> WITHDRAWN : Submitter Retracts (Non-Reopenable)
+    TRIAGING --> ACCEPTED : Valid Flaw Confirmed + CVSS Scored
+
+    ACCEPTED --> FIX_PROPOSED : GitHub Commit SHA / Config Hash Verified
+    FIX_PROPOSED --> RETEST_PENDING : Fix Deployed to Target Environment
+
+    RETEST_PENDING --> ACCEPTED : RETEST_FAILED (Flaw Persists)
+    RETEST_PENDING --> VERIFIED_RESEARCHER : Hunter Attests Fix Mitigated
+    RETEST_PENDING --> VERIFIED_INTERNAL : Defender Attests Fix Mitigated
+    RETEST_PENDING --> CLOSED_UNVERIFIED_TIMEOUT : >= 14d Grace Period + Rationale
+
+    note right of TRIAGING
+        Audited Reopen Policy:
+        VERIFIED_RESEARCHER, VERIFIED_INTERNAL,
+        CLOSED_UNVERIFIED_TIMEOUT, CLOSED_INCOMPLETE,
+        RISK_ACCEPTED, REJECTED_INVALID, and DUPLICATE
+        may transition back to TRIAGING with mandatory
+        audit justification.
+    end note

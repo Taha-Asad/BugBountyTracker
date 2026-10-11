@@ -10,13 +10,13 @@ sequenceDiagram
     Browser->>Server: GET /api/v1/programs/{slug}/encryption-targets
     Server-->>Browser: Returns recipient_set_version, Defender Public Keys, Recovery Key
     Browser->>Browser: Autonomous Curve25519 Ephemeral Key Generation (<50ms)
-    Browser->>Browser: openpgp.encrypt(payload, [ReportKey, DefKeys..., RecoveryKey])
+    Browser->>Browser: openpgp.encrypt(payload, [ReportKey, DefKeys, RecoveryKey])
     Browser->>Server: POST /api/v1/reports (recipient_set_version, Neutral Label, title_ciphertext, payload_ciphertext)
     Server->>Server: Validate recipient_set_version, Turnstile CAPTCHA, Tenant Scope & Quota
     Server->>DB: INSERT INTO reports (recipient_set_version, title_ciphertext, payload, operational_label, state='NEW')
     DB-->>Server: Record Persisted (Hash-Chained Audit Event)
-    Server-->>Browser: 201 Created (Report #BBT-102 + Guest Access Token + guest_actor_id)
+    Server-->>Browser: 201 Created (Report ID BBT-102 + Guest Access Token + guest_actor_id)
     Browser->>KeyStore: Store Tracking Secret & Ephemeral Private Key in IndexedDB
     Browser->>Browser: Assemble Versioned JSON Recovery Package (.bbt-recovery.json v1)
-    Browser->>Browser: history.replaceState (Scrub #token from Address Bar)
-    Browser-->>Hunter: Display Secret Tracking URL (#token=...) & Download .bbt-recovery.json
+    Browser->>Browser: history.replaceState (Scrub URI Fragment Token from Address Bar)
+    Browser-->>Hunter: Display Secret Tracking URL (URI Fragment Token) & Download .bbt-recovery.json

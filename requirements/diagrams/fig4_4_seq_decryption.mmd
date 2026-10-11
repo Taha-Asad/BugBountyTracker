@@ -9,7 +9,7 @@ sequenceDiagram
     Defender->>Browser: Navigates to /reports/BBT-102
     Browser->>Server: GET /api/v1/reports/BBT-102 (Session Cookie)
     Server->>Server: Validate DB Session & Program Authorization (PROGRAM_DEFENDER check)
-    Server->>DB: SELECT r.* FROM reports r JOIN program_defenders pd ON pd.program_id = r.program_id WHERE r.id = :id AND pd.user_id = :uid AND pd.is_active = TRUE
+    Server->>DB: Query Report & Verify Active PROGRAM_DEFENDER (r.id, pd.user_id, pd.is_active=TRUE)
     DB-->>Server: Return Ciphertext Record
     Server-->>Browser: 200 OK (Ciphertext Payload)
     Browser-->>Defender: Prompt for Local Encryption Passphrase

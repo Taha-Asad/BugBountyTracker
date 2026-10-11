@@ -1,53 +1,40 @@
 flowchart TD
-    subgraph ClientTier["Client Browser Runtime"]
-        UI["React 18 / Next.js UI
-(Guided Onboarding & Redacted Export)"]
-        CryptoEngine["OpenPGP.js & WebCrypto
-(Curve25519 + Neutral Labels)"]
-        ASTSanitizer["rehype-sanitize AST Parser"]
-        LocalKeyStore["IndexedDB Encrypted KeyStore
-(Argon2 S2K Key Protection)"]
+    subgraph ClientTier["Client Browser Tier (Zero-Trust Cryptographic Runtime)"]
+        UI["Next.js 14 / React 18 UI (Onboarding, Triage & Redacted Export)"]
+        CryptoEngine["OpenPGP.js v6 & WebCrypto (Curve25519 + Neutral Labels)"]
+        ASTSanitizer["rehype-sanitize AST Parser (XSS Neutralization)"]
+        LocalKeyStore["IndexedDB Encrypted Keystore (Argon2id S2K Protected)"]
         UI <--> CryptoEngine
         CryptoEngine <--> LocalKeyStore
         CryptoEngine --> ASTSanitizer --> UI
     end
 
-    subgraph AppTier["Application Serverless Tier (Vercel Node 22 LTS)"]
-        APIRoute["Next.js Route Handlers"]
-        AuthMiddleware["DB Sessions, TOTP MFA & Server RBAC"]
-        RateLimiter["Shared Rate Limiter & Turnstile"]
-        SLAEngine["SLA Countdown Engine (Hourly Cron)"]
-        QuotaGuard["Storage Quota Guard (90% / 100%)"]
-        GitHubClient["GitHub REST API Client (Commits & Compare)"]
+    subgraph AppTier["Serverless Application Tier (Vercel Node.js 22 LTS)"]
+        APIRoute["Next.js App Router API Gateway"]
+        subgraph SecLayer["Access, Rate & Quota Governance"]
+            AuthMiddleware["DB Sessions, TOTP MFA & PROGRAM_DEFENDER RBAC"]
+            RateLimiter["Shared Rate Limiter & Cloudflare Turnstile"]
+            QuotaGuard["Storage & Intake Quota Guard (QUOTA_HELD / 90% / 100%)"]
+        end
+        subgraph WorkLayer["Lifecycle, Verification & Billing Services"]
+            SLAEngine["Hourly SLA Cron & Abandonment Timeout Engine"]
+            GitHubClient["GitHub REST API v3 Client (Commit SHA & Branch Compare)"]
+        end
         APIRoute --> AuthMiddleware
         APIRoute --> RateLimiter
-        APIRoute --> SLAEngine
         APIRoute --> QuotaGuard
+        APIRoute --> SLAEngine
         APIRoute --> GitHubClient
     end
 
-    subgraph PersistenceTier["Persistence Tier (Cloud)"]
-        PostgresDB[("Neon PostgreSQL 16
-(Row-Level Security & Hash-Chained Audit)")]
-        R2Storage[("Cloudflare R2
-(Encrypted Direct Uploads)")]
+    subgraph PersistenceTier["Cloud Persistence & External Services Tier"]
+        PostgresDB[("Neon PostgreSQL 16 (Tenant RLS & Append-Only Audit Chain)")]
+        R2Storage[("Cloudflare R2 (Presigned Encrypted Blob Storage)")]
+        ExtServices["External APIs: GitHub v3, Resend/Postmark, DNS TXT, Lemon Squeezy MoR"]
     end
 
-    subgraph ExternalServices["External 3rd-Party Services"]
-        GitHubAPI["GitHub API v3"]
-        ResendEmail["Resend / Postmark API
-(Metadata Alerts)"]
-        DNSResolver["DNS Authority
-(TXT Challenge)"]
-        BillingLemonSqueezy["Lemon Squeezy MoR
-(Global Tax & Payouts)"]
-    end
-
-    CryptoEngine -- "Encrypted Ciphertext (HTTPS)" --> APIRoute
+    CryptoEngine -- "OpenPGP Ciphertext + Neutral Label (HTTPS)" --> APIRoute
+    CryptoEngine -- "Direct Presigned Upload (<= 25 MB Ciphertext)" --> R2Storage
     APIRoute -- "Prisma ORM (SET LOCAL app.current_tenant_id)" --> PostgresDB
-    CryptoEngine -- "Direct Presigned Upload (≤25MB)" --> R2Storage
-    APIRoute -- "Presign URL & Enforce Quota" --> R2Storage
-    GitHubClient -- "Verify Commit SHA & Branch" --> GitHubAPI
-    APIRoute -- "Send Metadata-Only Notification" --> ResendEmail
-    APIRoute -- "Resolve TXT Record" --> DNSResolver
-    APIRoute -- "Webhooks & Subscriptions" --> BillingLemonSqueezy
+    QuotaGuard -- "Presign URL & Enforce Storage Cap" --> R2Storage
+    WorkLayer -- "Commit Check, Metadata Alerts, DNS & MoR Webhooks" --> ExtServices
