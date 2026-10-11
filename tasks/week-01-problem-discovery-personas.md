@@ -15,8 +15,8 @@
 
 | Deliverable Document | Scope Covered | Google Drive Link |
 | :--- | :--- | :--- |
-| **Document 1: User Personas & Discovery Interviews** | Executive Context, 4 Operational Frictions, and 2 Detailed User Personas (Hunter & Defender) with Empathy Maps | `[PASTE_GOOGLE_DRIVE_LINK_1_PERSONAS_HERE]` |
-| **Document 2: Project Charter, Problem Statement & 5 Core MVP Features** | Project Charter, Scope Boundaries, Finalized 1-Paragraph Problem Statement, and 5 Core MVP Features | `[PASTE_GOOGLE_DRIVE_LINK_2_CHARTER_MVP_HERE]` |
+| **Document 1: User Personas & Discovery Interviews** | Executive Context, 4 Operational Frictions, and 2 Detailed User Personas (Hunter & Defender) with Empathy Maps | [View User Personas & Discovery Doc (Google Drive)](https://docs.google.com/document/d/1drXMfAk4pIKc_9aMKZav62KfVZQ04--zT6VyuhDZKFA/edit?usp=drive_link) |
+| **Document 2: Project Charter, Problem Statement & 5 Core MVP Features** | Project Charter, Scope Boundaries, Finalized 1-Paragraph Problem Statement, and 5 Core MVP Features | [View Project Charter & MVP Features Doc (Google Drive)](https://docs.google.com/document/d/1-N7Pv-3CO95XNWcvjSga6vf0vDKOvFKdPQ5l6uGpQJY/edit?usp=drive_link) |
 
 ---
 

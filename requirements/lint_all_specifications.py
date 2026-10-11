@@ -276,6 +276,9 @@ check('title_ciphertext' in w1_part_b and 'operational_label' in w1_part_b and '
 for w1_name, w1_txt in [('WEEK_1_DISCOVERY_REPORT.md', w1_report), ('week-01-problem-discovery-personas.md', w1_task), ('WEEK_1_PART_A_USER_PERSONAS.md', w1_part_a), ('WEEK_1_PART_B_CHARTER_AND_MVP.md', w1_part_b)]:
     check('16-Week' not in w1_txt and '16-week' not in w1_txt and 'Week 7' not in w1_txt,
           f"{w1_name} stays strictly focused on Week 1 scope (zero 16-Week or Week 7 roadmap bloat)")
+for w1_main_name, w1_main_txt in [('WEEK_1_DISCOVERY_REPORT.md', w1_report), ('week-01-problem-discovery-personas.md', w1_task)]:
+    check('1drXMfAk4pIKc_9aMKZav62KfVZQ04--zT6VyuhDZKFA' in w1_main_txt and '1-N7Pv-3CO95XNWcvjSga6vf0vDKOvFKdPQ5l6uGpQJY' in w1_main_txt and 'PASTE_GOOGLE_DRIVE_LINK' not in w1_main_txt,
+          f"{w1_main_name} contains verified Google Drive links for Personas and Charter/MVP docs")
 
 with zipfile.ZipFile(files['WEEK_1_PART_A_USER_PERSONAS.docx'], 'r') as w1a_zip:
     w1a_xml = w1a_zip.read('word/document.xml').decode('utf-8')
