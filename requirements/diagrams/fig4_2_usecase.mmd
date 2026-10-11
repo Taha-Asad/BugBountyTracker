@@ -1,22 +1,33 @@
 flowchart LR
-    subgraph Actors["Platform Actors"]
-        Hunter(["Ethical Researcher (Hunter / Guest)"])
-        Defender(["Triage Lead (Defender)"])
-        Owner(["Tenant Owner (ORG_OWNER)"])
-        ReadOnly(["Auditor / Management (ORG_READONLY)"])
+    subgraph PrimaryActors["Primary Human Actors"]
+        direction TB
+        Hunter(["Actor: Ethical Researcher (Hunter / Guest)"])
+        Defender(["Actor: Triage Lead (ORG_DEFENDER)"])
+        Owner(["Actor: Tenant Owner (ORG_OWNER)"])
+        ReadOnly(["Actor: Auditor (ORG_READONLY)"])
     end
 
-    subgraph CoreCases["Core Vulnerability Disclosure, Triage & Remediation (MVP)"]
-        UC1["UC-01: Submit Encrypted Report & Recovery Package (.bbt-recovery.json)"]
-        UC2["UC-02: Decrypt, Triage & Score Report (CVSS 3.1 + Dual-Lane E2EE)"]
-        UC3["UC-03: Propose Remediation Evidence (GitHub Commit SHA / Config Hash)"]
-        UC4["UC-04: Execute Attested Retest & Export Redacted Closure Evidence"]
+    subgraph SystemBoundary["BugBountyTrack System Boundary (UML Use Cases)"]
+        direction TB
+        UC1(["UC-01: Submit Encrypted Report & Recovery Package"])
+        UC1_Sub(["Presign & Upload Encrypted PoC to R2"])
+        UC2(["UC-02: Decrypt, Claim Triage & Score CVSS v3.1"])
+        UC3(["UC-03: Propose Fix, Confirm Deployment & Request Retest"])
+        UC4(["UC-04: Execute Attested Retest & Export Closure Proof"])
+        UC4_Ext(["Loopback to ACCEPTED on RETEST_FAILED"])
+        UC5(["UC-05: Restore Keys Locally & Rotate Guest Token"])
+        UC6(["UC-06: Onboard Tenant, Verify DNS & Sign security.txt"])
+        UC7(["UC-07: Evaluate SLA Timers & Verify Audit Hash Chain"])
+
+        UC1 -. "«include» (if PoC attached)" .-> UC1_Sub
+        UC4_Ext -. "«extend» (if patch bypassed)" .-> UC4
     end
 
-    subgraph GovCases["Session Recovery, Policy Onboarding & Audit Governance"]
-        UC5["UC-05: Restore Guest Session via .bbt-recovery.json Package"]
-        UC6["UC-06: Onboard Tenant, Verify DNS & Sign RFC 9116 security.txt"]
-        UC7["UC-07: Enforce SLA Timers & Verify Hash-Chained Audit Ledger"]
+    subgraph SecondaryActors["Secondary External Systems"]
+        direction TB
+        R2Cloud["Actor: Cloudflare R2 Storage"]
+        GitHubAPI["Actor: GitHub REST API v3"]
+        NotifyGW["Actor: Email / Webhook Gateway"]
     end
 
     Hunter --> UC1
@@ -26,10 +37,19 @@ flowchart LR
     Defender --> UC2
     Defender --> UC3
     Defender --> UC4
+    Defender --> UC5
     Defender --> UC7
 
     Owner --> UC4
+    Owner --> UC5
     Owner --> UC6
     Owner --> UC7
 
     ReadOnly --> UC7
+
+    UC1_Sub --> R2Cloud
+    UC1 --> NotifyGW
+    UC3 --> GitHubAPI
+    UC3 --> NotifyGW
+    UC4 --> NotifyGW
+    UC7 --> NotifyGW

@@ -1,31 +1,36 @@
 stateDiagram-v2
-    [*] --> NEW : Report Submitted (Encrypted)
-    NEW --> REJECTED_SPAM : Filter Scanner Spam (Non-Reopenable)
-    NEW --> TRIAGING : Defender Opens Ticket
+    [*] --> NEW : 1. Report Submitted (state_version=1)
+    NEW --> WITHDRAWN : Hunter/Guest Retracts (Terminal)
+    NEW --> REJECTED_SPAM : Defender Filters Spam
+    NEW --> TRIAGING : Defender Claims for Triage
 
+    TRIAGING --> WITHDRAWN : Hunter/Guest Retracts (Terminal)
+    TRIAGING --> REJECTED_SPAM : Defender Filters Spam
     TRIAGING --> NEED_MORE_INFO : Clarification Requested
     NEED_MORE_INFO --> TRIAGING : Researcher Responds
-    NEED_MORE_INFO --> CLOSED_INCOMPLETE : Inactive >= 14 Days
+    NEED_MORE_INFO --> CLOSED_INCOMPLETE : Inactive >= 14d (Cron)
 
     TRIAGING --> REJECTED_INVALID : Out of Scope / Invalid
     TRIAGING --> DUPLICATE : Linked to Primary Report
-    TRIAGING --> RISK_ACCEPTED : Risk Formally Accepted
-    TRIAGING --> WITHDRAWN : Submitter Retracts (Non-Reopenable)
-    TRIAGING --> ACCEPTED : Valid Flaw Confirmed + CVSS Scored
+    TRIAGING --> RISK_ACCEPTED : ORG_OWNER Accepts Risk
+    TRIAGING --> ACCEPTED : Flaw Confirmed + CVSS 3.1 Scored
 
-    ACCEPTED --> FIX_PROPOSED : GitHub Commit SHA / Config Hash Verified
-    FIX_PROPOSED --> RETEST_PENDING : Fix Deployed to Target Environment
+    ACCEPTED --> RISK_ACCEPTED : ORG_OWNER Accepts Risk
+    ACCEPTED --> FIX_PROPOSED : Step 1: Fix Proposed (Attempt N: Commit SHA / Config Hash)
+    FIX_PROPOSED --> RETEST_PENDING : Step 2 & 3: Deployment Recorded + Retest Requested
 
-    RETEST_PENDING --> ACCEPTED : RETEST_FAILED (Flaw Persists)
-    RETEST_PENDING --> VERIFIED_RESEARCHER : Hunter Attests Fix Mitigated
-    RETEST_PENDING --> VERIFIED_INTERNAL : Defender Attests Fix Mitigated
-    RETEST_PENDING --> CLOSED_UNVERIFIED_TIMEOUT : >= 14d Grace Period + Rationale
+    RETEST_PENDING --> ACCEPTED : RETEST_FAILED on Attempt N (Requires Attempt N+1)
+    RETEST_PENDING --> VERIFIED_RESEARCHER : Hunter Attests Attempt N Fixed
+    RETEST_PENDING --> VERIFIED_INTERNAL : Defender Attests Attempt N Fixed
+    RETEST_PENDING --> CLOSED_UNVERIFIED_TIMEOUT : >= 14d Grace Period + Class C Rationale
 
-    note right of TRIAGING
-        Audited Reopen Policy:
-        VERIFIED_RESEARCHER, VERIFIED_INTERNAL,
-        CLOSED_UNVERIFIED_TIMEOUT, CLOSED_INCOMPLETE,
-        RISK_ACCEPTED, REJECTED_INVALID, and DUPLICATE
-        may transition back to TRIAGING with mandatory
-        audit justification.
-    end note
+    state ReopenHub <<choice>>
+    VERIFIED_RESEARCHER --> ReopenHub : REOPEN_REGRESSION
+    VERIFIED_INTERNAL --> ReopenHub : REOPEN_REGRESSION
+    CLOSED_UNVERIFIED_TIMEOUT --> ReopenHub : REOPEN_REGRESSION
+    CLOSED_INCOMPLETE --> ReopenHub : REOPEN_REGRESSION
+    RISK_ACCEPTED --> ReopenHub : REOPEN_REGRESSION
+    REJECTED_INVALID --> ReopenHub : REOPEN_REGRESSION
+    DUPLICATE --> ReopenHub : REOPEN_REGRESSION
+    REJECTED_SPAM --> ReopenHub : ORG_OWNER False-Positive Recovery
+    ReopenHub --> TRIAGING : Class C Justification Logged (state_version+1)

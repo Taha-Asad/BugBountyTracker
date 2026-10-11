@@ -1,22 +1,25 @@
 sequenceDiagram
     autonumber
     actor Hunter as Ethical Researcher (Guest)
-    participant Browser as Browser Client
-    participant KeyStore as IndexedDB Keystore
+    participant Browser as Browser Client (OpenPGP v6)
     participant Server as Next.js API Gateway
-    participant DB as Neon PostgreSQL
+    participant R2 as Cloudflare R2
+    participant DB as Neon PostgreSQL (RLS)
 
-    Hunter->>Browser: Enters Scope, Category Enum, Title, Description & PoC
+    Hunter->>Browser: Selects Scope, Class A Label, Title, PoC & Recovery Passphrase
     Browser->>Server: GET /api/v1/programs/{slug}/encryption-targets
-    Server-->>Browser: Returns recipient_set_version, Defender Public Keys, Recovery Key
-    Browser->>Browser: Autonomous Curve25519 Ephemeral Key Generation (<50ms)
-    Browser->>Browser: openpgp.encrypt(payload, [ReportKey, DefKeys, RecoveryKey])
-    Browser->>Server: POST /api/v1/reports (recipient_set_version, Neutral Label, title_ciphertext, payload_ciphertext)
-    Server->>Server: Validate recipient_set_version, Turnstile CAPTCHA, Tenant Scope & Quota
-    Server->>DB: INSERT INTO reports (recipient_set_version, title_ciphertext, payload, operational_label, state='NEW')
-    DB-->>Server: Record Persisted (Hash-Chained Audit Event)
-    Server-->>Browser: 201 Created (Report ID &#35;BBT-102 + Guest Access Token + guest_actor_id)
-    Browser->>KeyStore: Store Tracking Secret & Ephemeral Private Key in IndexedDB
-    Browser->>Browser: Assemble Versioned JSON Recovery Package (.bbt-recovery.json v1)
-    Browser->>Browser: history.replaceState (Scrub &#35;token Fragment from Address Bar)
-    Browser-->>Hunter: Display Secret Tracking URL (&#35;token=...) & Download .bbt-recovery.json
+    Server-->>Browser: recipient_set_version, PROGRAM_DEFENDER Keys, recovery_public_key
+    Browser->>Browser: Generate RFC 9580 v6 Curve25519 Ephemeral Keypair (<50ms target)
+    Browser->>Server: POST /api/uploads/presign (Turnstile Token + Encrypted Size <= 25 MB)
+    Server->>DB: Verify CAPTCHA, Rate Limit & Reserve 30m PENDING_UPLOAD Quota
+    Server-->>Browser: Presigned R2 PUT URL
+    Browser->>R2: PUT Encrypted PoC Blob (Symmetric File Key K_file)
+    Browser->>Browser: openpgp.encrypt(Class B Payload + K_file, [ReportKey, DefKeys, RecoveryKey])
+    Browser->>Server: POST /api/v1/reports (recipient_set_version, Class A Metadata, Class B Ciphertext)
+    Server->>R2: HeadObjectCommand (Verify Uploaded Size & Ownership)
+    Server->>DB: Atomic Tx: Snapshot REPORT_RECIPIENT + INSERT report (state='NEW', v=1) + AUDIT_EVENT
+    DB-->>Server: Persisted (seq_no, row_hash)
+    Server-->>Browser: 201 Created (BBT-102, guest_actor_id, access_token)
+    Browser->>Browser: Argon2id + AES-256-GCM Encrypt (access_token + PrivateKey) -> .bbt-recovery.json
+    Browser->>Browser: Store Private Key in IndexedDB & history.replaceState(Scrub URI Fragment Token)
+    Browser-->>Hunter: Render Tracking View & Download Authenticated .bbt-recovery.json

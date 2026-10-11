@@ -1,22 +1,26 @@
 sequenceDiagram
     autonumber
-    actor Defender as Organization Reviewer
+    actor Defender as Triage Lead (ORG_DEFENDER)
     participant Browser as Defender Browser
     participant KeyStore as IndexedDB Keystore
     participant Server as Next.js API Gateway
-    participant DB as Neon PostgreSQL
+    participant DB as Neon PostgreSQL (RLS)
 
-    Defender->>Browser: Navigates to /reports/BBT-102
-    Browser->>Server: GET /api/v1/reports/BBT-102 (Session Cookie)
-    Server->>Server: Validate DB Session & Program Authorization (PROGRAM_DEFENDER check)
-    Server->>DB: Query Report & Verify Active PROGRAM_DEFENDER (r.id, pd.user_id, pd.is_active=TRUE)
-    DB-->>Server: Return Ciphertext Record
-    Server-->>Browser: 200 OK (Ciphertext Payload)
-    Browser-->>Defender: Prompt for Local Encryption Passphrase
-    Defender->>Browser: Enters Passphrase
-    Browser->>KeyStore: Retrieve Encrypted Private Key
+    Defender->>Browser: Opens /dashboard/reports/BBT-102
+    Browser->>Server: GET /api/v1/reports/BBT-102 (HttpOnly Session Cookie)
+    Server->>DB: SET LOCAL app.current_tenant_id + Verify REPORT_RECIPIENT Membership
+    DB-->>Server: Return Class A Metadata + Class B/C Ciphertext (state='NEW', state_version=1)
+    Server-->>Browser: 200 OK (Ciphertext Record)
+    Defender->>Browser: Enters Local Encryption Passphrase
+    Browser->>KeyStore: Fetch Argon2id-Protected Private Subkey
     KeyStore-->>Browser: Encrypted Key Material
-    Browser->>Browser: Unlock Private Key via OpenPGP Argon2id S2K (~200-400ms)
-    Browser->>Browser: openpgp.decrypt(title_ciphertext, payload, privateKey)
-    Browser->>Browser: rehype-sanitize AST Cleansing (Neutralize Stored XSS)
-    Browser-->>Defender: Renders Plaintext Report in Confidential Triage View
+    Browser->>Browser: Unlock Private Key via Argon2id S2K (passes=3, p=4, mem=64MiB)
+    Browser->>Browser: openpgp.decrypt(title_ciphertext, encrypted_payload)
+    Browser->>Browser: rehype-sanitize AST Cleansing (Neutralize OWASP XSS Vectors)
+    Browser-->>Defender: Renders Sanitized Report in Triage Desk
+    Defender->>Browser: Clicks "Begin Triage" (Claim Report)
+    Browser->>Server: PATCH /api/v1/reports/BBT-102/state (from='NEW', to='TRIAGING', state_version=1)
+    Server->>DB: Atomic Tx: UPDATE state='TRIAGING', state_version=2 + INSERT audit_events
+    Defender->>Browser: Scores 8 CVSS v3.1 Metrics + Encrypts Class C Justification -> "Accept"
+    Browser->>Server: PATCH /api/v1/reports/BBT-102/state (from='TRIAGING', to='ACCEPTED', state_version=2)
+    Server->>DB: Atomic Tx: Save CVSS 3.1 Score + UPDATE state='ACCEPTED', v=3 + INSERT audit_events
