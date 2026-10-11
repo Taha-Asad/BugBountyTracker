@@ -273,40 +273,28 @@ def make_image_p(rel_id, doc_pr_id, name, png_path):
 
 diagram_files = {
     "rId201": (
-        "word/media/fig4_1_component.png",
-        os.path.join(SCRIPT_DIR, "diagrams", "fig4_1_component.png"),
-        201,
-        "Figure 4.1 Component Architecture",
-    ),
-    "rId202": (
         "word/media/fig4_2_usecase.png",
         os.path.join(SCRIPT_DIR, "diagrams", "fig4_2_usecase.png"),
-        202,
-        "Figure 4.2 System Use Case Diagram",
+        201,
+        "Figure 4.1 System Use Case Diagram",
     ),
-    "rId203": (
+    "rId202": (
         "word/media/fig4_3_seq_submission.png",
         os.path.join(SCRIPT_DIR, "diagrams", "fig4_3_seq_submission.png"),
-        203,
-        "Figure 4.3 Sequence Diagram Submission",
+        202,
+        "Figure 4.2 Sequence Diagram Submission",
     ),
-    "rId204": (
+    "rId203": (
         "word/media/fig4_4_seq_decryption.png",
         os.path.join(SCRIPT_DIR, "diagrams", "fig4_4_seq_decryption.png"),
-        204,
-        "Figure 4.4 Sequence Diagram Decryption",
+        203,
+        "Figure 4.3 Sequence Diagram Decryption",
     ),
-    "rId205": (
+    "rId204": (
         "word/media/fig4_5_statemachine.png",
         os.path.join(SCRIPT_DIR, "diagrams", "fig4_5_statemachine.png"),
-        205,
-        "Figure 4.5 Report Lifecycle State Machine",
-    ),
-    "rId206": (
-        "word/media/fig4_6_erd.png",
-        os.path.join(SCRIPT_DIR, "diagrams", "fig4_6_erd.png"),
-        206,
-        "Figure 4.6 Entity Relationship Diagram",
+        204,
+        "Figure 4.4 Report Lifecycle State Machine",
     ),
 }
 
@@ -315,8 +303,6 @@ section_diagram_map = {
     "4.3 ": "rId202",
     "4.4 ": "rId203",
     "4.5 ": "rId204",
-    "4.6 ": "rId205",
-    "4.7 ": "rId206",
 }
 
 lines = md_text.splitlines()
@@ -690,12 +676,10 @@ doc_rels_xml = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>
   <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
   <Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/>
-  <Relationship Id="rId201" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig4_1_component.png"/>
-  <Relationship Id="rId202" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig4_2_usecase.png"/>
-  <Relationship Id="rId203" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig4_3_seq_submission.png"/>
-  <Relationship Id="rId204" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig4_4_seq_decryption.png"/>
-  <Relationship Id="rId205" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig4_5_statemachine.png"/>
-  <Relationship Id="rId206" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig4_6_erd.png"/>
+  <Relationship Id="rId201" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig4_2_usecase.png"/>
+  <Relationship Id="rId202" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig4_3_seq_submission.png"/>
+  <Relationship Id="rId203" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig4_4_seq_decryption.png"/>
+  <Relationship Id="rId204" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig4_5_statemachine.png"/>
 </Relationships>"""
 
 target_docx = os.path.join(SCRIPT_DIR, "SRS.docx")

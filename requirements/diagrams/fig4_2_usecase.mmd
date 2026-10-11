@@ -3,35 +3,33 @@ flowchart LR
         Hunter(["Ethical Researcher (Hunter / Guest)"])
         Defender(["Triage Lead (Defender)"])
         Owner(["Tenant Owner (ORG_OWNER)"])
-        ReadOnly(["Management (ORG_READONLY)"])
+        ReadOnly(["Auditor / Management (ORG_READONLY)"])
     end
 
-    subgraph CoreCases["Disclosure, Triage & Remediation"]
+    subgraph CoreCases["Core Vulnerability Disclosure, Triage & Remediation (MVP)"]
         UC1["UC-01: Submit Encrypted Report & Recovery Package (.bbt-recovery.json)"]
-        UC2["UC-02: Decrypt & Triage Report (Dual-Lane E2EE)"]
-        UC3["UC-03: Propose Remediation (GitHub SHA / Config Hash)"]
-        UC4["UC-04: Attested Retest & Accountable Closure"]
+        UC2["UC-02: Decrypt, Triage & Score Report (CVSS 3.1 + Dual-Lane E2EE)"]
+        UC3["UC-03: Propose Remediation Evidence (GitHub Commit SHA / Config Hash)"]
+        UC4["UC-04: Execute Attested Retest & Export Redacted Closure Evidence"]
     end
 
-    subgraph GovCases["Governance, Audit & Operations"]
-        UC5["UC-05: Export Redacted Closure Evidence (PDF/JSON)"]
-        UC6["UC-06: Configure Program, Master Recovery Key & security.txt"]
+    subgraph GovCases["Session Recovery, Policy Onboarding & Audit Governance"]
+        UC5["UC-05: Restore Guest Session via .bbt-recovery.json Package"]
+        UC6["UC-06: Onboard Tenant, Verify DNS & Sign RFC 9116 security.txt"]
         UC7["UC-07: Enforce SLA Timers & Verify Hash-Chained Audit Ledger"]
-        UC8["UC-08: Manage Lemon Squeezy Billing & Storage Quotas"]
     end
 
     Hunter --> UC1
     Hunter --> UC4
+    Hunter --> UC5
 
     Defender --> UC2
     Defender --> UC3
     Defender --> UC4
-    Defender --> UC5
     Defender --> UC7
 
-    Owner --> UC5
+    Owner --> UC4
     Owner --> UC6
     Owner --> UC7
-    Owner --> UC8
 
     ReadOnly --> UC7

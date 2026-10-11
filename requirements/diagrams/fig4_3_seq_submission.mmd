@@ -15,8 +15,8 @@ sequenceDiagram
     Server->>Server: Validate recipient_set_version, Turnstile CAPTCHA, Tenant Scope & Quota
     Server->>DB: INSERT INTO reports (recipient_set_version, title_ciphertext, payload, operational_label, state='NEW')
     DB-->>Server: Record Persisted (Hash-Chained Audit Event)
-    Server-->>Browser: 201 Created (Report ID BBT-102 + Guest Access Token + guest_actor_id)
+    Server-->>Browser: 201 Created (Report ID &#35;BBT-102 + Guest Access Token + guest_actor_id)
     Browser->>KeyStore: Store Tracking Secret & Ephemeral Private Key in IndexedDB
     Browser->>Browser: Assemble Versioned JSON Recovery Package (.bbt-recovery.json v1)
-    Browser->>Browser: history.replaceState (Scrub URI Fragment Token from Address Bar)
-    Browser-->>Hunter: Display Secret Tracking URL (URI Fragment Token) & Download .bbt-recovery.json
+    Browser->>Browser: history.replaceState (Scrub &#35;token Fragment from Address Bar)
+    Browser-->>Hunter: Display Secret Tracking URL (&#35;token=...) & Download .bbt-recovery.json

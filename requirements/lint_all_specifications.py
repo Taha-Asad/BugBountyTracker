@@ -89,7 +89,8 @@ check('INSERT' in srs and 'SELECT' in srs, "SRS.md specifies append-only audit b
 check('Redacted closure evidence export' in srs or 'Redacted Closure Evidence' in srs, "SRS.md specifies Redacted Closure Evidence Export")
 check('prev_hash' in srs, "SRS.md specifies tamper-evident prev_hash audit chain")
 check('guest_token_hash' in srs or 'Account-Less (Guest)' in srs, "SRS.md specifies account-less guest vulnerability intake")
-check('Lemon Squeezy' in srs, "SRS.md specifies Lemon Squeezy Merchant of Record")
+check('Lemon Squeezy' not in srs and 'SuperAdmin' not in srs and '$49' not in srs,
+      "SRS.md stays strictly focused on Academic MVP scope (zero Lemon Squeezy, SuperAdmin, or $49/mo commercial bloat)")
 check('recovery_public_key' in srs or 'Organization Master Recovery Key' in srs, "SRS.md specifies Offline Organization Master Recovery Key")
 check('wasm-unsafe-eval' in srs, "SRS.md specifies wasm-unsafe-eval for OpenPGP.js Argon2 S2K CSP")
 check('CLOSED_INCOMPLETE' in srs, "SRS.md specifies CLOSED_INCOMPLETE for intake clarification timeout")
@@ -162,10 +163,10 @@ with zipfile.ZipFile(files['SRS.docx'], 'r') as srs_zip:
         w_px, h_px = struct.unpack('>II', raw_png[16:24])
         png_dims_in_zip[os.path.basename(mf)] = (w_px, h_px)
 
-check(len(media_files) == 6, f"SRS.docx contains exactly 6 images (found {len(media_files)})")
+check(len(media_files) == 4, f"SRS.docx contains the 4 core UML behavioral diagrams (found {len(media_files)})")
 check(len(font_files) == 0, f"SRS.docx has zero embedded non-standard font binaries (found {len(font_files)})")
 drawings_in_doc = srs_xml.count('<w:drawing')
-check(drawings_in_doc == 6, f"SRS.docx has exactly 6 <w:drawing> elements (found {drawings_in_doc})")
+check(drawings_in_doc == 4, f"SRS.docx has 4 <w:drawing> elements (found {drawings_in_doc})")
 check('24-ST-013' in srs_xml, "SRS.docx contains Roll No 24-ST-013")
 check('Taha Asadullah' in srs_xml, "SRS.docx contains Taha Asadullah")
 check(r'\text{' not in srs_xml, "SRS.docx has no \\text{} artifacts")
@@ -180,14 +181,12 @@ for xml_part_name, xml_part in [('document.xml', srs_xml), ('styles.xml', srs_st
 
 # Verify every embedded diagram in SRS.docx preserves its exact native PNG aspect ratio
 drawing_blocks = re.findall(r'<wp:inline[^>]*>.*?</wp:inline>', srs_xml)
-check(len(drawing_blocks) == 6, f"SRS.docx contains 6 inline drawing blocks (found {len(drawing_blocks)})")
+check(len(drawing_blocks) == 4, f"SRS.docx contains 4 inline drawing blocks (found {len(drawing_blocks)})")
 rel_to_png = {
-    'rId201': 'fig4_1_component.png',
-    'rId202': 'fig4_2_usecase.png',
-    'rId203': 'fig4_3_seq_submission.png',
-    'rId204': 'fig4_4_seq_decryption.png',
-    'rId205': 'fig4_5_statemachine.png',
-    'rId206': 'fig4_6_erd.png',
+    'rId201': 'fig4_2_usecase.png',
+    'rId202': 'fig4_3_seq_submission.png',
+    'rId203': 'fig4_4_seq_decryption.png',
+    'rId204': 'fig4_5_statemachine.png',
 }
 for dblock in drawing_blocks:
     ext_m = re.search(r'<wp:extent cx="(\d+)" cy="(\d+)"/>', dblock)
@@ -271,7 +270,7 @@ check('Atomic Assignment & Keyring Synchronization' in km, "KEY_MANAGEMENT.md en
 check('Program-Level Authorization Boundary' in km, "KEY_MANAGEMENT.md enforces PROGRAM_DEFENDER Rule 4: Program-Level Authorization Boundary")
 
 # 15. Bounded Quotas, Reopening Policy & Financial Boundaries
-check('QUOTA_HELD' in brd_full and 'QUOTA_HELD' in srs, "BRD.md and SRS.md specify QUOTA_HELD queue state for Community tier")
+check('QUOTA_HELD' in brd_full and 'QUOTA_HELD' not in srs, "BRD.md specifies QUOTA_HELD while SRS.md stays focused on Academic MVP lifecycle")
 check('500 MB' in brd_full and '10 submissions/hr' in brd_full, "BRD.md specifies bounded Community tier limits (500 MB storage, 10 submissions/hr)")
 check('security@tenant.com' in brd_full, "BRD.md specifies fallback security@tenant.com contact")
 check('CLOSED_INCOMPLETE' in srs, "SRS.md explicitly includes CLOSED_INCOMPLETE in state transition matrix")
@@ -336,17 +335,19 @@ with zipfile.ZipFile(files['WEEK_1_PART_B_CHARTER_AND_MVP.docx'], 'r') as w1b_zi
 check('24-ST-013' in w1b_xml and 'title_ciphertext' in w1b_xml and '8.22' in w1b_xml,
       "WEEK_1_PART_B_CHARTER_AND_MVP.docx OpenXML verified (24-ST-013, title_ciphertext, 8.22 CVSS)")
 
-# 15c. Week 2 SRS & Task Deliverable Integrity: UC-01..UC-08 Parity, NFR-09 Uptime, Signature Block, Zero file:// Paths
+# 15c. Week 2 SRS & Task Deliverable Integrity: UC-01..UC-07 Parity, NFR-09 Uptime, Signature Block, Zero file:// Paths
 with open(files['week-02-software-requirements-specification.md'], 'r', encoding='utf-8') as f:
     w2_task = f.read()
 check('file://' not in srs and '/run/media/' not in srs,
       "SRS.md has zero local file:// or /run/media/ paths")
 check('file://' not in w2_task and '/run/media/' not in w2_task,
       "week-02-software-requirements-specification.md has zero local file:// or /run/media/ paths")
-for uc_num in range(1, 9):
+for uc_num in range(1, 8):
     uc_tag = f"UC-0{uc_num}"
     check(f"Use Case {uc_tag}:" in srs and f"Use Case `{uc_tag}`:" in w2_task,
           f"Both SRS.md and week-02 task spec define {uc_tag}")
+check('UC-08' not in srs and 'UC-08' not in w2_task,
+      "Both SRS.md and week-02 task spec exclude commercial Lemon Squeezy billing use case UC-08")
 check('NFR-09' in srs and '99.5%' in srs and 'NFR-09' in w2_task and '99.5%' in w2_task,
       "Both SRS.md and week-02 task spec define quantifiable NFR-09 Uptime SLO (>= 99.5%)")
 check('Document Endorsement & Milestone Sign-Off' in srs and 'Document Endorsement & Milestone Sign-Off' in w2_task,

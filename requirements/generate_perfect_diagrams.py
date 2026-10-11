@@ -79,12 +79,10 @@ with open(MERMAID_CONFIG, "w", encoding="utf-8") as f:
 ''')
 
 SECTIONS = [
-    ("Figure 4.1)", "fig4_1_component"),
-    ("Figure 4.2)", "fig4_2_usecase"),
-    ("Figure 4.3)", "fig4_3_seq_submission"),
-    ("Figure 4.4)", "fig4_4_seq_decryption"),
-    ("Figure 4.5)", "fig4_5_statemachine"),
-    ("Figure 4.6)", "fig4_6_erd"),
+    ("Figure 4.1)", "fig4_2_usecase"),
+    ("Figure 4.2)", "fig4_3_seq_submission"),
+    ("Figure 4.3)", "fig4_4_seq_decryption"),
+    ("Figure 4.4)", "fig4_5_statemachine"),
 ]
 
 def main():
