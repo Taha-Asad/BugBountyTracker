@@ -16,9 +16,9 @@ flowchart LR
         UC4(["UC-04: Execute Attested Retest (Attempt-Bound)"])
         UC4_Ext1(["Loopback to ACCEPTED on RETEST_FAILED"])
         UC4_Ext2(["P2: Export Redacted Closure Certificate"])
-        UC5(["UC-05: Restore Guest/User Keys & Rotate Guest Token"])
+        UC5(["UC-05: Restore/Re-Wrap Keys & Rotate Guest Token"])
         UC6(["UC-06: Onboard Tenant, Enroll MFA, Verify DNS & Sign Policy"])
-        UC7(["UC-07: Run Hourly SLA/Cleanup Cron & Verify Audit Chain"])
+        UC7(["UC-07: Run Hourly HMAC Cron & Verify Audit Chain"])
 
         UC1_Ext -. "«extend» (if PoC attached)" .-> UC1
         UC4_Ext1 -. "«extend» (if patch bypassed)" .-> UC4

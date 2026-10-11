@@ -4,7 +4,7 @@ sequenceDiagram
     participant Browser as Defender Browser
     participant KeyStore as IndexedDB Keystore
     participant Server as Next.js API Gateway
-    participant DB as Neon PostgreSQL (Forced RLS)
+    participant DB as Neon PostgreSQL (bbt_core Forced RLS)
 
     Defender->>Browser: Opens /dashboard/reports/BBT-102
     Browser->>Server: GET /api/v1/reports/BBT-102 (HttpOnly Session Cookie)
@@ -19,7 +19,7 @@ sequenceDiagram
     Browser-->>Defender: Renders Sanitized Report in Triage Desk
     Defender->>Browser: Clicks "Begin Triage" (Claim Report)
     Browser->>Server: PATCH /api/v1/reports/BBT-102/state (NEW -> TRIAGING, state_version=1)
-    Server->>DB: Lock org -> report -> organization_audit_heads: state_version=2 + Audit Event
+    Server->>DB: Lock org -> report -> organization_audit_heads: state_version=2 + Audit Head Update
     Defender->>Browser: Scores 8 CVSS Metrics (Any Order) + Encrypts Class B Explanation & Class C Notes
     Browser->>Server: PATCH /api/v1/reports/BBT-102/state (TRIAGING -> ACCEPTED, state_version=2, rep_ver=1)
     Server->>DB: Canonicalize Vector + Recalc Score + Save History + state_version=3 + Audit + Outbox

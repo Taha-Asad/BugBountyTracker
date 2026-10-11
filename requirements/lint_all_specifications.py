@@ -82,7 +82,7 @@ check('recipient_set_version' in srs, "SRS.md specifies recipient_set_version co
 check('token_hash' in srs, "SRS.md specifies token_hash for invitations")
 check('operational_label' in srs, "SRS.md specifies operational_label neutral enum")
 check('title_ciphertext' in srs, "SRS.md specifies title_ciphertext")
-check('25 MB' in srs and '50 MB' in srs and '2 GB' in srs, "SRS.md specifies 25 MB DB intake (+2 MB audit reserve), <= 50 MB report cap, and 2 GB R2 demo quotas")
+check('20 MiB' in srs and '6 MiB' in srs and '50 MiB' in srs and '9.5 GiB' in srs, "SRS.md specifies 20 MiB DB intake (+6 MiB security/audit reserve), <= 50 MiB report cap, and 9.5 GiB R2 cluster cap")
 check('CLOSED_UNVERIFIED_TIMEOUT' in srs, "SRS.md specifies CLOSED_UNVERIFIED_TIMEOUT")
 check('RETEST_FAILED' in srs, "SRS.md specifies RETEST_FAILED event returning to ACCEPTED")
 check('INSERT' in srs and 'SELECT' in srs, "SRS.md specifies append-only audit boundary")
@@ -371,6 +371,12 @@ check('report_chain_hash' in srs and 'config_artifact_ciphertext' in srs and 'Ta
       "SRS.md Revision 2.3 specifies report_chain_hash, config_artifact_ciphertext, Table 2.2 Permission Matrix, and Section 7.3 Scenario Walkthrough")
 check('FR-3.9' not in srs and 'FR-6.5' not in srs,
       "SRS.md Revision 2.3 has zero dangling FR-3.9 or FR-6.5 phantom references")
+check('bbt-closure-export-v1' in srs and 'COMMITMENT_VERIFIED_VALUE_REDACTED' in srs and 'event_digest' in srs,
+      "SRS.md Revision 2.4 specifies bbt-closure-export-v1, COMMITMENT_VERIFIED_VALUE_REDACTED, and universal event_digest")
+check('rewrap-researcher-key' in srs and 'grant-defender-access' in srs and 'seipdv2_body_sha256' in srs,
+      "SRS.md Revision 2.4 separates rewrap-researcher-key (CLASS_B_ONLY) from grant-defender-access (CLASS_B_AND_C) and binds seipdv2_body_sha256")
+check('pg_temp' in srs and 'cluster_storage_state' in srs and 'X-Cron-Signature' in srs and 'fn_guest_rotate_token_by_sig' in srs,
+      "SRS.md Revision 2.4 specifies pg_temp search_path hardening, cluster_storage_state R2 cap, X-Cron-Signature, and fn_guest_rotate_token_by_sig")
 
 
 # 16. Academic & Professional Attribution Hygiene (Zero AI Agent Bleed into Specifications)

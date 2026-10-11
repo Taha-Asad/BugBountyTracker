@@ -4,22 +4,22 @@ sequenceDiagram
     participant Browser as Browser Client (OpenPGP v6)
     participant Server as Next.js API Gateway
     participant R2 as Cloudflare R2
-    participant DB as Neon PostgreSQL (Forced RLS)
+    participant DB as Neon PostgreSQL (bbt_core Forced RLS)
 
     Hunter->>Browser: Selects Scope, Class A Label, Title, PoC & Passphrase
     Browser->>Server: POST /api/v1/submission-sessions (Single Turnstile Token)
-    Server-->>Browser: 30m submission_session_token + recipient_set_version + Public Keys
+    Server-->>Browser: 30m OPEN submission_session_token + recipient_set_version + Public Keys
     Browser->>Browser: Unlock HUNTER Key OR Generate Guest v6 Keypair (s2kType=argon2)
     Browser->>Browser: Encrypt PoC Binary via OpenPGP SEIPDv2 (K_file) + Compute ciphertext_sha256
-    Browser->>Server: POST /api/uploads/presign (submission_session_token, bytes <= 25MB, sha256)
-    Server->>DB: Reserve 15m upload_reservations Row (Check 25MB DB / 2GB R2 Quota)
+    Browser->>Server: POST /api/uploads/presign (submission_session_token, bytes <= 25MiB, sha256)
+    Server->>DB: Reserve 15m upload_reservations Row (Check 1GiB Tenant & 9.5GiB Cluster R2 Cap)
     Server-->>Browser: Presigned R2 PUT URL (Locked Content-Length & If-None-Match: *)
     Browser->>R2: PUT OpenPGP Binary Ciphertext Blob
     Browser->>Browser: openpgp.encrypt(Class B Payload + K_file, [SubmitterKey, DefKeys, RecoveryKey])
     Browser->>Server: POST /api/v1/reports (submission_session_token, recipient_set_version, Class A+B)
     Server->>R2: HeadObjectCommand Outside DB Tx (Verify Uploaded Size & ETag)
-    Server->>DB: Short Tx (Lock Order: org -> prog -> report -> organization_audit_heads)
-    DB-->>Server: Bind Reservation + Snapshot REPORT_RECIPIENT + Insert Report & Audit Seq + Outbox
+    Server->>DB: Short Tx (Lock: org -> prog -> submission_sessions -> report -> organization_audit_heads)
+    DB-->>Server: Consume Session + Bind Reservation + Snapshot REPORT_RECIPIENT + Insert Report & Audit
     Server-->>Browser: 201 Created (BBT-102, guest_actor_id, access_token)
     Browser->>Browser: If Guest: OpenPGP SYMENC+SEIPDv2 Encrypt (token+key) -> .bbt-recovery.json
     Browser-->>Hunter: Scrub URI Fragment Token & Render Tracking View
