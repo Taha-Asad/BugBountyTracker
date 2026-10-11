@@ -377,6 +377,10 @@ check('rewrap-researcher-key' in srs and 'grant-defender-access' in srs and 'sei
       "SRS.md Revision 2.4 separates rewrap-researcher-key (CLASS_B_ONLY) from grant-defender-access (CLASS_B_AND_C) and binds seipdv2_body_sha256")
 check('pg_temp' in srs and 'cluster_storage_state' in srs and 'X-Cron-Signature' in srs and 'fn_guest_rotate_token_by_sig' in srs,
       "SRS.md Revision 2.4 specifies pg_temp search_path hardening, cluster_storage_state R2 cap, X-Cron-Signature, and fn_guest_rotate_token_by_sig")
+check('commitment_salts_json' in srs and 'bbt-commit-v1' in srs and 'fn_guest_fetch_pubkey_and_rotate_token' not in srs,
+      "SRS.md Revision 2.4 defines explicit bbt-commit-v1 formula, commitment_salts_json persistence, and zero stale fn_guest_fetch_pubkey_and_rotate_token references")
+check('1. cluster_storage_state' in srs and 'openpgp-symenc-seipdv2' in km and 'rewrap-researcher-key' in km,
+      "SRS.md enforces universal 6-table lock order and KEY_MANAGEMENT.md is synchronized with Revision 2.4")
 
 
 # 16. Academic & Professional Attribution Hygiene (Zero AI Agent Bleed into Specifications)
