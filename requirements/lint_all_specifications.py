@@ -26,6 +26,13 @@ files = {
     'WBS.md': os.path.join(SCRIPT_DIR, 'WBS.md'),
     'WBS.xlsx': os.path.join(SCRIPT_DIR, 'WBS.xlsx'),
     'CVSS_TEST_FIXTURES.md': os.path.join(SCRIPT_DIR, 'CVSS_TEST_FIXTURES.md'),
+    'WEEK_1_DISCOVERY_REPORT.md': os.path.join(SCRIPT_DIR, 'WEEK_1_DISCOVERY_REPORT.md'),
+    'WEEK_1_PART_A_USER_PERSONAS.md': os.path.join(SCRIPT_DIR, 'WEEK_1_PART_A_USER_PERSONAS.md'),
+    'WEEK_1_PART_A_USER_PERSONAS.docx': os.path.join(SCRIPT_DIR, 'WEEK_1_PART_A_USER_PERSONAS.docx'),
+    'WEEK_1_PART_B_CHARTER_AND_MVP.md': os.path.join(SCRIPT_DIR, 'WEEK_1_PART_B_CHARTER_AND_MVP.md'),
+    'WEEK_1_PART_B_CHARTER_AND_MVP.docx': os.path.join(SCRIPT_DIR, 'WEEK_1_PART_B_CHARTER_AND_MVP.docx'),
+    'HOD_PROPOSAL.md': os.path.join(SCRIPT_DIR, 'HOD_PROPOSAL.md'),
+    'week-01-problem-discovery-personas.md': os.path.join(PROJECT_DIR, 'tasks', 'week-01-problem-discovery-personas.md'),
     'KEY_MANAGEMENT.md': os.path.join(PROJECT_DIR, 'architecture', 'KEY_MANAGEMENT.md'),
     'DECISION_LOG.md': os.path.join(PROJECT_DIR, 'decisions', 'DECISION_LOG.md'),
     'project.json': os.path.join(PROJECT_DIR, 'project.json'),
@@ -39,7 +46,7 @@ for fname, fpath in files.items():
     check(sz >= min_sz, f"File size valid: {fname} ({sz} bytes)")
 
 # 2. Check metadata in Markdown specifications
-for mdf in ['BRD.md', 'SRS.md', 'WBS.md']:
+for mdf in ['BRD.md', 'SRS.md', 'WBS.md', 'WEEK_1_DISCOVERY_REPORT.md', 'WEEK_1_PART_A_USER_PERSONAS.md', 'WEEK_1_PART_B_CHARTER_AND_MVP.md', 'HOD_PROPOSAL.md', 'week-01-problem-discovery-personas.md']:
     p = files[mdf]
     with open(p, 'r', encoding='utf-8') as f:
         content = f.read()
@@ -48,10 +55,14 @@ for mdf in ['BRD.md', 'SRS.md', 'WBS.md']:
     check('Sir Umar Hayat' in content, f"{mdf} contains Sir Umar Hayat")
     check('PTUT - PRJ - 089' in content, f"{mdf} contains Project ID PTUT - PRJ - 089")
     check('SET-B' in content, f"{mdf} contains Section SET-B")
-    # Verify no raw unescaped LaTeX formatting artifacts
-    check(r'\text{' not in content, f"{mdf} has no \\text{{}} artifacts")
-    check(r'\ge' not in content, f"{mdf} has no \\ge artifacts")
-    check(r'\le' not in content, f"{mdf} has no \\le artifacts")
+    check('SET-A' not in content, f"{mdf} has zero legacy SET-A references")
+    if mdf in ['BRD.md', 'SRS.md', 'WBS.md', 'WEEK_1_DISCOVERY_REPORT.md', 'WEEK_1_PART_A_USER_PERSONAS.md', 'WEEK_1_PART_B_CHARTER_AND_MVP.md', 'week-01-problem-discovery-personas.md']:
+        # Verify no raw unescaped LaTeX formatting artifacts in Word-source or portal-paste docs
+        check(r'\text{' not in content, f"{mdf} has no \\text{{}} artifacts")
+        check(r'\longrightarrow' not in content, f"{mdf} has no \\longrightarrow artifacts")
+        check(r'\ge' not in content, f"{mdf} has no \\ge artifacts")
+        check(r'\le' not in content, f"{mdf} has no \\le artifacts")
+
 
 # 3. Check project.json metadata & schema consistency
 with open(files['project.json'], 'r', encoding='utf-8') as f:
@@ -221,6 +232,61 @@ check('CLOSED_INCOMPLETE' in srs, "SRS.md explicitly includes CLOSED_INCOMPLETE 
 check('REJECTED_SPAM' in srs and 'WITHDRAWN' in srs, "SRS.md explicitly marks REJECTED_SPAM and WITHDRAWN as non-reopenable")
 check('89.24' in brd_full and '61.00' in brd_full, "BRD.md accurately distinguishes infrastructure break-even from commercial profitability")
 
+with open(files['WEEK_1_DISCOVERY_REPORT.md'], 'r', encoding='utf-8') as f:
+    w1_report = f.read()
+with open(files['WEEK_1_PART_A_USER_PERSONAS.md'], 'r', encoding='utf-8') as f:
+    w1_part_a = f.read()
+with open(files['WEEK_1_PART_B_CHARTER_AND_MVP.md'], 'r', encoding='utf-8') as f:
+    w1_part_b = f.read()
+with open(files['HOD_PROPOSAL.md'], 'r', encoding='utf-8') as f:
+    hod_prop = f.read()
+with open(files['week-01-problem-discovery-personas.md'], 'r', encoding='utf-8') as f:
+    w1_task = f.read()
+
+check('4096-bit RSA' not in w1_report and 'localStorage' not in w1_report and 'Stripe Sandbox' not in w1_report,
+      "WEEK_1_DISCOVERY_REPORT.md has zero legacy RSA-4096, localStorage, or Stripe Sandbox references")
+check('15,000' not in w1_report and '30,000' not in w1_report and 'economically excluded' not in w1_report and 'free entry tiers' in w1_report,
+      "WEEK_1_DISCOVERY_REPORT.md acknowledges free entry tiers and has zero false $15k/$30k cost-exclusion claims")
+check('15,000' not in w1_task and '30,000' not in w1_task and 'economically excluded' not in w1_task and 'free entry tiers' in w1_task,
+      "week-01-problem-discovery-personas.md acknowledges free entry tiers and has zero false $15k/$30k cost-exclusion claims")
+check('15,000' not in srs and '30,000' not in srs and '15,000' not in brd_full and '30,000' not in brd_full,
+      "SRS.md and BRD.md have zero $15k/$30k cost-exclusion claims")
+check('two recipients' not in hod_prop and 'Version**            | `3.2.0`' in hod_prop,
+      "HOD_PROPOSAL.md is synchronized to Version 3.2.0 and multi-defender PKESK")
+
+# 15b. Week 1 Rewrite Integrity: Zero Copy Blocks, Zero Uncited 30% Stat, Full Crypto Parity & Split Docs
+check('Part 5' not in w1_task and 'Ready-to-Paste' not in w1_task,
+      "week-01-problem-discovery-personas.md has removed Part 5 duplicate copy block")
+check('Quick-Submit Portal Excerpt' not in w1_report and 'PTUT PROJECT MANAGER — WEEK 1 SUBMISSION' not in w1_report,
+      "WEEK_1_DISCOVERY_REPORT.md has removed duplicate Quick-Submit Portal Excerpt block")
+check('file://' not in w1_task and '/run/media/' not in w1_task and 'Deliverable File Path' not in w1_task and 'Full Reference Report' not in w1_task,
+      "week-01-problem-discovery-personas.md has zero local file paths")
+check('file://' not in w1_report and '/run/media/' not in w1_report and 'Deliverable File Path' not in w1_report,
+      "WEEK_1_DISCOVERY_REPORT.md has zero local file paths")
+check('file://' not in w1_part_a and 'file://' not in w1_part_b,
+      "WEEK_1_PART_A and WEEK_1_PART_B have zero local file:// paths")
+check('30%' not in w1_report and '30%' not in w1_task and '30%' not in w1_part_a and '30%' not in w1_part_b,
+      "Zero uncited '30%' patch failure claims across all Week 1 documents")
+check('title_ciphertext' in w1_report and 'operational_label' in w1_report and 'cleartext-signed' in w1_report,
+      "WEEK_1_DISCOVERY_REPORT.md specifies title_ciphertext, operational_label, and browser cleartext-signed security.txt")
+check('title_ciphertext' in w1_task and 'operational_label' in w1_task and 'cleartext-signed' in w1_task,
+      "week-01-problem-discovery-personas.md specifies title_ciphertext, operational_label, and browser cleartext-signed security.txt")
+check('title_ciphertext' in w1_part_b and 'operational_label' in w1_part_b and 'cleartext-signed' in w1_part_b,
+      "WEEK_1_PART_B_CHARTER_AND_MVP.md specifies title_ciphertext, operational_label, and browser cleartext-signed security.txt")
+for w1_name, w1_txt in [('WEEK_1_DISCOVERY_REPORT.md', w1_report), ('week-01-problem-discovery-personas.md', w1_task), ('WEEK_1_PART_A_USER_PERSONAS.md', w1_part_a), ('WEEK_1_PART_B_CHARTER_AND_MVP.md', w1_part_b)]:
+    check('16-Week' not in w1_txt and '16-week' not in w1_txt and 'Week 7' not in w1_txt,
+          f"{w1_name} stays strictly focused on Week 1 scope (zero 16-Week or Week 7 roadmap bloat)")
+
+with zipfile.ZipFile(files['WEEK_1_PART_A_USER_PERSONAS.docx'], 'r') as w1a_zip:
+    w1a_xml = w1a_zip.read('word/document.xml').decode('utf-8')
+check('24-ST-013' in w1a_xml and 'Alex Rivera' in w1a_xml and 'Sarah Chen' in w1a_xml,
+      "WEEK_1_PART_A_USER_PERSONAS.docx OpenXML verified (24-ST-013, Alex Rivera, Sarah Chen)")
+
+with zipfile.ZipFile(files['WEEK_1_PART_B_CHARTER_AND_MVP.docx'], 'r') as w1b_zip:
+    w1b_xml = w1b_zip.read('word/document.xml').decode('utf-8')
+check('24-ST-013' in w1b_xml and 'title_ciphertext' in w1b_xml and '8.22' in w1b_xml,
+      "WEEK_1_PART_B_CHARTER_AND_MVP.docx OpenXML verified (24-ST-013, title_ciphertext, 8.22 CVSS)")
+
 # 16. Academic & Professional Attribution Hygiene (Zero AI Agent Bleed into Specifications)
 forbidden_personas = [
     'Alexander', 'Victoria', 'Arthur', 'Julian', 'Marcus', 'Elena',
@@ -232,11 +298,17 @@ hygiene_files = [
     ('BRD.md', brd_full),
     ('WBS.md', wbs),
     ('KEY_MANAGEMENT.md', km),
-    ('CVSS_TEST_FIXTURES.md', cvss_text)
+    ('CVSS_TEST_FIXTURES.md', cvss_text),
+    ('WEEK_1_DISCOVERY_REPORT.md', w1_report),
+    ('WEEK_1_PART_A_USER_PERSONAS.md', w1_part_a),
+    ('WEEK_1_PART_B_CHARTER_AND_MVP.md', w1_part_b),
+    ('HOD_PROPOSAL.md', hod_prop),
+    ('week-01-problem-discovery-personas.md', w1_task),
 ]
 for doc_name, doc_content in hygiene_files:
     for persona in forbidden_personas:
         check(persona not in doc_content, f"{doc_name} has zero bleed of internal agent persona '{persona}'")
+
 
 print(f"\nSpecification Linting Results: {len(passes)} checks PASSED, {len(errors)} checks FAILED.")
 for p in passes:
