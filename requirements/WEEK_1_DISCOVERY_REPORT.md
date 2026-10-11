@@ -1,4 +1,5 @@
 # Academic Progress Report — Week 1: Problem Discovery & User Personas
+
 ## BugBountyTrack — Private Bug Bounty & Vulnerability Disclosure Platform
 
 ---
@@ -23,10 +24,10 @@
 
 ### Supporting Deliverable Documents (Google Drive Links)
 
-| Deliverable Document                                                     | Scope Covered                                                                                                  | Google Drive Link                                                                                     |
-| :----------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------- |
-| **Document 1: User Personas & Discovery Interviews**                     | Executive Context, 4 Operational Frictions, and 2 Detailed User Personas (Hunter & Defender) with Empathy Maps | https://docs.google.com/document/d/1drXMfAk4pIKc_9aMKZav62KfVZQ04--zT6VyuhDZKFA/edit?usp=sharing      |
-| **Document 2: Project Charter, Problem Statement & 5 Core MVP Features** | Project Charter, Scope Boundaries, Finalized 1-Paragraph Problem Statement, and 5 Core MVP Features            | (https://docs.google.com/document/d/1-N7Pv-3CO95XNWcvjSga6vf0vDKOvFKdPQ5l6uGpQJY/edit?usp=drive_link) |
+| Deliverable Document | Scope Covered | Google Drive Link |
+| :--- | :--- | :--- |
+| **Document 1: User Personas & Discovery Interviews** | Executive Context, 4 Operational Frictions, and 2 Detailed User Personas (Hunter & Defender) with Empathy Maps | `[PASTE_GOOGLE_DRIVE_LINK_1_PERSONAS_HERE]` |
+| **Document 2: Project Charter, Problem Statement & 5 Core MVP Features** | Project Charter, Scope Boundaries, Finalized 1-Paragraph Problem Statement, and 5 Core MVP Features | `[PASTE_GOOGLE_DRIVE_LINK_2_CHARTER_MVP_HERE]` |
 
 ---
 
@@ -35,6 +36,7 @@
 Vulnerability disclosure is recognized by international cybersecurity standards (ISO/IEC 29147 and ISO/IEC 30111) as a core operational discipline for modern software engineering. When independent security researchers discover vulnerabilities in Internet-facing systems, an established channel must exist to receive, triage, remediate, and verify these findings in a cooperative, confidential manner.
 
 While large enterprises and open-source projects have access to commercial crowdsourced platforms (e.g., HackerOne, Bugcrowd, Intigriti) and free entry tiers (e.g., HackerOne Essential VDP, GitHub Security Advisories), small software engineering teams (5–50 developers) and independent startups face three structural architectural gaps:
+
 - **Server-Managed Plaintext Exposure**: Existing VDP platforms—including their free tiers—operate on a server-managed model where exploit descriptions and proof-of-concept payloads are stored in plaintext on vendor infrastructure, accessible to platform operators, cloud intermediaries, and support databases.
 - **Administrative & Ecosystem Lock-In**: Free forge-specific tools (such as GitHub Security Advisories) require mandatory reporter accounts and do not cover multi-service SaaS applications, APIs, or infrastructure outside a single public code repository, while enterprise platforms involve heavy sales-led onboarding unsuited for small engineering squads.
 - **The Ad-Hoc Disclosure & Verification Pitfall**: Teams unwilling to store unpatched zero-day exploits in plaintext on third-party servers publish generic `security@` or `support@` email inboxes. These inboxes lack end-to-end encryption, expose sensitive exploit steps over intermediate mail transfer agents (MTAs), and treat bug closure as an informal text update without verifiable Git commit linkage or structured researcher retesting.
@@ -50,17 +52,17 @@ During the discovery phase, structured interviews and workflow analyses were con
 ```mermaid
 flowchart TD
     subgraph Friction["Systemic Friction in Current Disclosure Workflows"]
-        F1["Third-Party Plaintext Storage<br/>(Server-readable exploits on vendor VDPs)"]
-        F2["Confidentiality Leaks<br/>(Plaintext PoCs in ad-hoc email inboxes)"]
-        F3["Legal Exposure & Intake Friction<br/>(Missing Safe Harbor & mandatory signup)"]
-        F4["Fix-and-Forget Syndrome<br/>(Informal closures without Git SHA/retest)"]
+        F1["1. Third-Party Plaintext Storage (Server-readable exploits on vendor VDPs)"]
+        F2["2. Confidentiality Leaks (Plaintext PoCs in ad-hoc email inboxes)"]
+        F3["3. Legal Exposure & Intake Friction (Missing Safe Harbor & mandatory signup)"]
+        F4["4. Fix-and-Forget Syndrome (Informal closures without Git SHA or retest)"]
     end
 
     subgraph Solution["BugBountyTrack Architectural Remedy"]
-        S1["Zero-Knowledge Micro-VDP<br/>(Ciphertext-only database storage)"]
-        S2["Client-Side OpenPGP v6 Encryption<br/>(Multi-defender PKESK in browser)"]
-        S3["Signed RFC 9116 + Guest Intake<br/>(Safe Harbor & .bbt-recovery.json)"]
-        S4["Git-Linked State Machine<br/>(Commit SHA binding & attested retest)"]
+        S1["1. Zero-Knowledge Micro-VDP (Ciphertext-only database storage)"]
+        S2["2. Client-Side OpenPGP v6 Encryption (Multi-defender PKESK in browser)"]
+        S3["3. Signed RFC 9116 + Guest Intake (Safe Harbor & .bbt-recovery.json)"]
+        S4["4. Git-Linked State Machine (Commit SHA binding & attested retest)"]
     end
 
     F1 --> S1
@@ -72,18 +74,22 @@ flowchart TD
 ### 3.1 Primary Friction Dimensions Identified
 
 #### Friction 1: Third-Party Plaintext Exposure & Ad-Hoc Email Leaks
+
 - **Observed Behavior**: Free VDP tiers store raw exploit payloads in server-readable plaintext on vendor databases, while teams avoiding third-party plaintext storage ask researchers to email proof-of-concept (PoC) scripts, SQL injection payloads, or authentication bypass steps to addresses like `security@company.com`.
 - **Vulnerability**: Standard email protocols (SMTP) do not provide end-to-end encryption. Mail server administrators, cloud email gateways, and unauthorized internal staff gain plaintext visibility into unpatched zero-day vulnerabilities. Conversely, storing plaintext exploits on a third-party VDP vendor turns the vendor database into a single point of compromise.
 
 #### Friction 2: Legal Ambiguity & Onboarding Chilling Effect on Ethical Hackers
+
 - **Observed Behavior**: Without a formalized, cryptographically signed `/.well-known/security.txt` disclosure policy, security researchers operate in legal uncertainty under the Computer Fraud and Abuse Act (CFAA) or national cybercrime statutes, and frequently abandon submissions when forced to register an account for a single report.
 - **Vulnerability**: Researchers refrain from reporting critical findings out of fear of legal retaliation or registration friction, leaving production vulnerabilities unpatched until malicious actors exploit them.
 
 #### Friction 3: Triage Chaos & Subjective Severity Disagreements
+
 - **Observed Behavior**: Communications occur across fragmented email threads without standardized scoring metrics. Researchers label submissions as "Critical" to command urgent attention, while engineering teams downgrade valid reports to "Low" or "Informative" without transparent mathematical justification.
 - **Vulnerability**: Severe operational friction and mistrust develop between the engineering team and the security research community due to subjective severity evaluation.
 
 #### Friction 4: The "Fix-and-Forget" Remediation Verification Gap
+
 - **Observed Behavior**: Traditional issue trackers (Jira, Linear, GitHub Issues) and basic VDP workflows allow a developer to mark a vulnerability ticket as "Closed" or "Resolved" via a simple status toggle the moment a pull request is merged. There is no cryptographic verification that a specific Git commit landed on the target branch, and no structured retest workflow re-engaging the original finder.
 - **Vulnerability**: Security patches deployed without verifiable commit linkage and finder retesting frequently address only surface symptoms (such as an incomplete regex filter or a single API route) while leaving the underlying vulnerability exploitable via adjacent vectors.
 
@@ -97,32 +103,8 @@ To ensure the system addresses concrete human workflows, two detailed personas w
 
 ### Persona 1: The Ethical Security Researcher ("The Hunter")
 
-```mermaid
-mindmap
-  root((Alex Rivera<br/>The Hunter))
-    Motivations
-      Ethical discovery
-      Portfolio reputation
-      Transparent recognition
-      Fair severity scoring
-    Frustrations
-      Ghosting by companies
-      Unencrypted email leaks
-      Legal intimidation
-      Subjective severity downgrade
-    Technical Stack
-      Burp Suite Pro
-      curl / Python requests
-      GnuPG / CLI tools
-      Linux / macOS
-    Core Needs
-      Instant RFC 9116 discovery
-      Client-side PGP encryption
-      Deterministic CVSS 3.1
-      Attested retest recognition
-```
-
 #### Demographic & Professional Profile
+
 * **Name**: Alex Rivera
 * **Age**: 23
 * **Role**: Independent Security Researcher / Undergraduate Cybersecurity Student
@@ -131,11 +113,13 @@ mindmap
 * **Primary Tooling**: Burp Suite Professional, `ffuf`, `nuclei`, `curl`, Python (`requests`), GnuPG CLI
 
 #### Goals & Motivations
+
 1. **Responsible Coordination**: Notify vulnerable organizations rapidly and ethically—either via an authenticated Hunter account or via a 60-second account-less guest submission—before malicious actors exploit the weakness.
 2. **Reputation & Proof of Competence**: Earn verifiable proof of discoveries (CVSS v3.1 metrics, verified remediation attribution, and Hall of Fame credit) for their professional portfolio.
 3. **Legal Safety**: Verify explicit legal Safe Harbor terms via a signed `/.well-known/security.txt` policy guaranteeing protection for good-faith testing within scope.
 
 #### Critical Pain Points & Operational Friction
+
 * **The Black Hole (Ghosting)**: Submits detailed reports to `security@target.com` and receives zero acknowledgement or status updates for months.
 * **Payload Insecurity**: Refuses to email raw exploit scripts in plaintext or upload them to platforms where third-party staff can inspect unpatched zero-days.
 * **Subjective Severity Downgrades**: Frustrated when an organization acknowledges a high-impact vulnerability but unilaterally labels it "Low Severity" without a deterministic CVSS v3.1 vector breakdown.
@@ -154,32 +138,8 @@ mindmap
 
 ### Persona 2: The Startup Engineering Lead ("The Defender")
 
-```mermaid
-mindmap
-  root((Sarah Chen<br/>The Defender))
-    Motivations
-      Protect production data
-      Maintain SOC2/compliance
-      Zero-friction triage
-      Fast verifiable patches
-    Frustrations
-      Scanner spam & begging
-      No PGP infrastructure
-      Manual email triage
-      Unverified patch regressions
-    Technical Stack
-      Next.js / Node.js
-      PostgreSQL
-      GitHub Actions / Docker
-      Vercel / AWS
-    Core Needs
-      Automated security.txt
-      In-browser PGP decryption
-      Objective CVSS 3.1
-      Git commit SHA binding
-```
-
 #### Demographic & Professional Profile
+
 * **Name**: Sarah Chen
 * **Age**: 31
 * **Role**: CTO / Lead Full-Stack Engineer at a 7-person B2B FinTech SaaS startup
@@ -188,15 +148,17 @@ mindmap
 * **Primary Tooling**: TypeScript, Next.js, Docker, GitHub Actions, Linear, Slack
 
 #### Goals & Motivations
+
 1. **Protect Customer Assets with Zero-Knowledge Privacy**: Ensure incoming vulnerability reports are encrypted client-side so only her designated program defenders (`PROGRAM_DEFENDER`) can decrypt them—never a third-party VDP vendor.
 2. **Compliance & Credibility**: Rapidly demonstrate adherence to RFC 9116 (`security.txt`) and export **Redacted Closure Evidence** summaries for B2B enterprise customer security questionnaires and SOC 2 audits.
 3. **Efficient Engineering Focus**: Spend minimal time filtering automated noise and maximum time implementing verifiable code remedies linked to GitHub commits.
 
 #### Critical Pain Points & Operational Friction
+
 * **Scanner Spam Fatigue**: Shared `security@` inbox is bombarded with generic output from automated scanners demanding bounties for non-issues.
 * **Cryptographic Setup Barrier**: Wants PGP-encrypted vulnerability intake, but managing CLI GnuPG keyrings across a 7-person engineering team is impractical without automated in-browser key management (`RFC 9580 v6 Curve25519`).
 * **Database Exposure Fear**: Knows that storing unpatched exploits in plaintext on third-party vendor servers or internal trackers creates a catastrophic single point of failure if that database is breached.
-* **Verification Uncertainty**: Merges a pull request claiming to fix a flaw, but lacks a formal state machine to confirm the commit landed on the target branch andwithstood researcher retesting.
+* **Verification Uncertainty**: Merges a pull request claiming to fix a flaw, but lacks a formal state machine to confirm the commit landed on the target branch and withstood researcher retesting.
 
 #### Empathy Map (Sarah Chen)
 
@@ -223,15 +185,16 @@ These five features directly address the four operational frictions identified d
 
 ```mermaid
 flowchart LR
-    F1["1. RFC 9116<br/>security.txt"] --> F2["2. Client OpenPGP<br/>Payload Encryption"]
-    F2 --> F3["3. Deterministic<br/>CVSS 3.1 Engine"]
-    F3 --> F4["4. Dual-Lane<br/>Triage Portal"]
-    F4 --> F5["5. Git-Linked<br/>Retest State Machine"]
+    F1["1. RFC 9116 security.txt"] --> F2["2. Client OpenPGP Payload Encryption"]
+    F2 --> F3["3. Deterministic CVSS 3.1 Engine"]
+    F3 --> F4["4. Dual-Lane Triage Portal"]
+    F4 --> F5["5. Git-Linked Retest State Machine"]
 ```
 
 ---
 
 ### Feature 1: Hosted RFC 9116 `security.txt` & Scope Policy Generator (`FR-2`)
+
 * **Problem Solved**: Eliminates researcher legal ambiguity and provides standardized, machine-readable discovery for defensive disclosure programs.
 * **Technical & Cryptographic Boundary**:
   - Generates a standards-compliant RFC 9116 policy incorporating `Contact`, `Expires`, `Encryption` (URI to program OpenPGP v6 public key), `Policy` (URI to program Safe Harbor scope), `Preferred-Languages`, and `Canonical` after automated DNS TXT domain verification (`_bbt-challenge.<domain>`).
@@ -242,17 +205,19 @@ flowchart LR
 ---
 
 ### Feature 2: Client-Side OpenPGP v6 Exploit Payload Encryption & Neutral Labeling (`FR-3`)
+
 * **Problem Solved**: Prevents plaintext exploit and proof-of-concept exposure over transit networks and eliminates zero-day vulnerability leakage if the server-side database is ever compromised.
 * **Technical & Cryptographic Boundary**:
   - Executes strictly inside the user's browser runtime (`openpgp.js` v6 via `WebCrypto` and WebAssembly).
   - Enforces a unified **RFC 9580 Version 6 Curve25519** (`Ed25519` signing + `X25519` encryption) profile with **64-character hexadecimal SHA-256 fingerprints**. Private keys are encrypted at rest using **Argon2id S2K** (`t=3`, `m=64 MiB`, `p=4`, enabled via CSP `'wasm-unsafe-eval'`) and stored exclusively in browser **`IndexedDB`** (never in unencrypted browser storage).
-  - Encrypts all sensitive report fields—including the vulnerability title (`title_ciphertext`), description, reproduction steps, impact statement, and raw PoC attachments (up to 25 MB uploaded via presigned Cloudflare R2 URLs)—using multi-recipient OpenPGP Public-Key Encrypted Session Key (`PKESK`) packets addressed to all active **Program Defenders** ($N ≤ 10$ via `PROGRAM_DEFENDER`), the organization's **Offline Master Recovery Key** (`recovery_public_key`), and the **Submitter/Guest Key**, guarded by optimistic concurrency counter `recipient_set_version`.
+  - Encrypts all sensitive report fields—including the vulnerability title (`title_ciphertext`), description, reproduction steps, impact statement, and raw PoC attachments (up to 25 MB uploaded via presigned Cloudflare R2 URLs)—using multi-recipient OpenPGP Public-Key Encrypted Session Key (`PKESK`) packets addressed to all active **Program Defenders** (`N ≤ 10` via `PROGRAM_DEFENDER`), the organization's **Offline Master Recovery Key** (`recovery_public_key`), and the **Submitter/Guest Key**, guarded by optimistic concurrency counter `recipient_set_version`.
   - Captures a server-readable neutral `operational_label` enum (`AUTHENTICATION_BYPASS`, `INJECTION_VULNERABILITY`, `INFORMATION_DISCLOSURE`, `CROSS_SITE_SCRIPTING`, `ACCESS_CONTROL_ISSUE`, `DENIAL_OF_SERVICE`, `OTHER`) so queue routing and external alerts never leak vulnerability titles.
 * **Acceptance Condition**: Direct inspection of PostgreSQL records and Cloudflare R2 objects confirms sensitive titles, descriptions, and attachments exist solely as OpenPGP ciphertext blocks (`-----BEGIN PGP MESSAGE-----`).
 
 ---
 
 ### Feature 3: Deterministic CVSS 3.1 Severity Scoring Engine (`FR-4`)
+
 * **Problem Solved**: Eliminates subjective severity disputes between ethical researchers and organization triage leads.
 * **Technical Boundary**:
   - Implemented as a standalone, deterministic pure TypeScript function adhering strictly to the **FIRST.org Common Vulnerability Scoring System v3.1** specification (using the official `8.22` exploitability coefficient and standard `RoundUp` arithmetic).
@@ -263,6 +228,7 @@ flowchart LR
 ---
 
 ### Feature 4: Dual-Lane Intake (Account-Less Guest & Authenticated Hunter) & Encrypted Triage Portal (`FR-1`, `FR-5`, `FR-8`)
+
 * **Problem Solved**: Centralizes scattered disclosures into a structured, role-isolated workspace while eliminating mandatory account-registration friction for one-off reporters.
 * **Technical & Privacy Boundary**:
   - Built with Next.js App Router and PostgreSQL (enforcing Row-Level Security via `SET LOCAL app.current_tenant_id = :org_id`), supporting both **Authenticated Hunters** and **Account-Less Guest Reporters**.
@@ -274,18 +240,10 @@ flowchart LR
 ---
 
 ### Feature 5: Git-Linked Remediation & Retest Verification State Machine (`FR-6`, `FR-7`)
+
 * **Problem Solved**: Eliminates the "Fix-and-Forget" verification gap by binding vulnerability closure to verifiable code/configuration artifacts and attested retesting.
 * **Technical Boundary**:
-  - Enforces a deterministic finite state machine governing the vulnerability lifecycle:
-    ```text
-    NEW -> TRIAGING -> ACCEPTED -> FIX_PROPOSED (FIX_COMMITTED) -> RETEST_PENDING
-      |                   |                                              |
-      |                   +--> NEED_MORE_INFO --> CLOSED_INCOMPLETE      +--> VERIFIED_RESEARCHER
-      |                   |                                              +--> VERIFIED_INTERNAL
-      |                   +<-- RETEST_FAILED (returns from retest)       +--> CLOSED_UNVERIFIED_TIMEOUT
-      |
-      +--> REJECTED_SPAM / REJECTED_INVALID / DUPLICATE / WITHDRAWN / RISK_ACCEPTED (CLOSED_RISK_ACCEPTED)
-    ```
+  - Enforces a deterministic finite state machine governing the vulnerability lifecycle (`NEW → TRIAGING → ACCEPTED → FIX_PROPOSED (FIX_COMMITTED) → RETEST_PENDING → [TERMINAL STATE]`, with non-remediation branches `NEED_MORE_INFO → CLOSED_INCOMPLETE`, `RETEST_FAILED → ACCEPTED`, and `REJECTED_SPAM / REJECTED_INVALID / DUPLICATE / WITHDRAWN / RISK_ACCEPTED`).
   - Advancing a report to `FIX_PROPOSED` (`FIX_COMMITTED`) requires recording either a verified **40-character Git commit SHA** (`[0-9a-f]{40}`, validated against the repository branch via the GitHub REST API v3) or a client-computed **64-character SHA-256 configuration hash** (`CONFIG_INFRASTRUCTURE`), alongside the target deployment environment (`Staging`, `Pre-Production`, `Production`).
   - Decouples fix declaration from ticket closure: from `RETEST_PENDING`, a report transitions to resolved only when the original researcher attests mitigation (`VERIFIED_RESEARCHER`), an authorized defender certifies the fix (`VERIFIED_INTERNAL`), or an expired grace period (≥ 14 days) is closed with mandatory administrative justification (`CLOSED_UNVERIFIED_TIMEOUT`, never counted as a verified fix). All state transitions are recorded in an append-only, SHA-256 hash-chained (`prev_hash`) audit table (`INSERT` and `SELECT` privileges only).
 * **Acceptance Condition**: Automated state machine guards reject any closure transition lacking verified commit/hash evidence, actor attribution, and required justification metadata.
@@ -297,4 +255,4 @@ flowchart LR
 | Signatory Role | Name & Academic Designation | Status / Signature | Date |
 | :--- | :--- | :--- | :--- |
 | **Submitted By (Student Author)** | **Taha Asadullah** (Roll No: `24-ST-013`, Section: `SET-B`, BS Software Engineering Technology, PTUT Lahore) | *Signed: Taha Asadullah* | October 2026 |
-| **Reviewed By (Academic Supervisor)** | **Sir Umar Hayat** (Assistant Professor, Department of Software Engineering Technology, PTUT Lahore) | `[ ] Approved` / `[ ] Revisions` — Signature: ___________________ | ____________ |
+| **Reviewed By (Academic Supervisor)** | **Sir Umar Hayat** (Assistant Professor, Department of Software Engineering Technology, PTUT Lahore) | `[ ] Approved` / `[ ] Revisions` — Signature: `[__________________]` | `[____________]` |

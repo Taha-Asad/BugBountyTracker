@@ -1,7 +1,9 @@
 # Week 1 Deliverable (Part A): Target User Personas & Operational Discovery
+
 ## Project BugBountyTrack — Multi-Tenant Vulnerability Disclosure Platform
 
 **Document Release State**: Version 3.2.0 (Gate 1 Certified — Zero-Trust Specification Standard)
+
 **Standard Compliance**: ISO/IEC 29147, ISO/IEC 30111, RFC 9116, RFC 9580
 
 ---
@@ -27,6 +29,7 @@
 Vulnerability disclosure is recognized by international cybersecurity standards (ISO/IEC 29147 and ISO/IEC 30111) as a foundational discipline for modern software systems. When external ethical security researchers discover vulnerabilities in production web applications or APIs, organizations require a confidential, legally unambiguous channel to receive, triage, remediate, and verify those findings.
 
 While established platforms and code hosts offer free entry tiers (such as HackerOne Essential VDP or GitHub Security Advisories), small engineering teams (5–50 developers) and independent B2B SaaS startups face three structural architectural gaps:
+
 * **Server-Managed Plaintext Exposure**: Free and commercial tiers of traditional VDP platforms operate on a server-managed model where exploit descriptions and proof-of-concept (PoC) attachments are stored in plaintext on vendor infrastructure, accessible to platform operators, cloud intermediaries, and support databases.
 * **Single-Forge Lock-In & Mandatory Account Friction**: Repository-bound tools (such as GitHub Security Advisories) require reporters to hold platform accounts and do not span multi-service SaaS architectures, APIs, or cloud infrastructure outside a single repository.
 * **Insecure Ad-Hoc Channels & Unverified Closures**: Organizations unwilling to store unpatched zero-day exploits in plaintext on third-party vendor servers fall back to generic `security@company.com` email inboxes or standard issue trackers (Jira, Linear), exposing sensitive exploit steps over unencrypted email servers and closing security tickets via informal text status updates without Git commit verification or researcher retesting.
@@ -60,12 +63,14 @@ Structured discovery interviews representing both sides of the disclosure workfl
 | **Preferred Workflow** | Fast keyboard-driven submission, verifiable cryptographic privacy, objective scoring, and portfolio attribution |
 
 #### Core Goals & Motivations (Alex Rivera)
+
 1. **Responsible & Timely Disclosure**: Notify engineering teams of critical vulnerabilities before malicious actors exploit them—either using an authenticated Hunter account (for portfolio reputation) or via a 60-second anonymous guest submission.
 2. **Explicit Legal Safe Harbor**: Confirm via a machine-readable, cryptographically signed `/.well-known/security.txt` policy that good-faith security testing within scope is authorized and protected from legal action.
 3. **Deterministic Severity Evaluation**: Receive fair, reproducible severity scoring grounded in the official FIRST.org CVSS v3.1 mathematical standard rather than subjective email negotiation.
 4. **Verifiable Remediation Credit**: Participate in structured patch retesting to confirm that the reported vulnerability is genuinely eliminated and earn verified attribution.
 
 #### Critical Pain Points & Frustrations (Alex Rivera)
+
 * **The Black Hole ("Ghosting")**: Submitting comprehensive vulnerability reproduction steps to `security@target.com` and receiving zero acknowledgment or status visibility for weeks.
 * **Plaintext Exploit Leakage**: Refusing to transmit live zero-day exploit payloads over unencrypted email or upload them to third-party servers where vendor staff can inspect them in plaintext.
 * **Arbitrary Severity Downgrades**: Experiencing organizations unilaterally downgrading a high-impact vulnerability to "Low" without providing a transparent CVSS v3.1 metric breakdown.
@@ -94,12 +99,14 @@ Structured discovery interviews representing both sides of the disclosure workfl
 | **Preferred Workflow** | Zero-setup browser cryptography, structured triage queues, automated GitHub commit checks, and exportable compliance reports |
 
 #### Core Goals & Motivations (Sarah Chen)
+
 1. **Zero-Knowledge Exploit Confidentiality**: Provide external researchers with an encrypted disclosure portal where vulnerability titles, descriptions, and PoC attachments are encrypted in the browser so only authorized program defenders (`PROGRAM_DEFENDER`) can decrypt them—never a third-party vendor.
 2. **Enterprise Compliance & Audit Readiness**: Publish a browser-signed RFC 9116 `security.txt` policy and export **Redacted Closure Evidence** certificates (documenting lifecycle timestamps, verified Git commit SHAs, and retest attestations without exposing raw exploit instructions) for enterprise B2B security questionnaires and SOC 2 audits.
 3. **High-Signal Engineering Triage**: Separate genuine vulnerability reports from automated scanner spam and bind every engineering fix to a verified GitHub commit SHA and formal retest state.
 4. **Resilient Key & Team Governance**: Maintain an offline **Organization Master Recovery Key** (`recovery_public_key`) so the startup never loses decryption access if an engineer leaves or loses their device.
 
 #### Critical Pain Points & Frustrations (Sarah Chen)
+
 * **Scanner Spam Overload**: Wasting valuable engineering hours sifting through automated scanner noise and low-effort bounty demands in a shared `security@` inbox.
 * **CLI GnuPG Operational Complexity**: Configuring command-line GPG keyrings and email client plugins across a 7-person engineering squad is brittle and impractical; she needs key generation (`RFC 9580 v6 Curve25519`), `IndexedDB` storage (`Argon2id S2K`), and multi-recipient encryption handled automatically in the browser.
 * **Third-Party Vendor Breach Risk**: Refusing to store unpatched zero-day exploits in plaintext on external VDP vendor servers where a platform breach would expose her company's vulnerabilities.
@@ -121,4 +128,4 @@ Structured discovery interviews representing both sides of the disclosure workfl
 | Signatory Role | Name & Academic Designation | Status / Signature | Date |
 | :--- | :--- | :--- | :--- |
 | **Submitted By (Student Author)** | **Taha Asadullah** (Roll No: `24-ST-013`, Section: `SET-B`, BS Software Engineering Technology, PTUT Lahore) | *Signed: Taha Asadullah* | October 2026 |
-| **Reviewed By (Academic Supervisor)** | **Sir Umar Hayat** (Assistant Professor, Department of Software Engineering Technology, PTUT Lahore) | `[ ] Approved` / `[ ] Revisions` — Signature: ___________________ | ____________ |
+| **Reviewed By (Academic Supervisor)** | **Sir Umar Hayat** (Assistant Professor, Department of Software Engineering Technology, PTUT Lahore) | `[ ] Approved` / `[ ] Revisions` — Signature: `[__________________]` | `[____________]` |

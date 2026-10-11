@@ -38,6 +38,7 @@ Structured discovery interviews across both sides of the vulnerability disclosur
 ## Part 2: The 2 Detailed User Personas
 
 ### Persona 1: Alex Rivera — "The Hunter" (External Ethical Security Researcher)
+
 * **Demographic & Role**: Age 23; Independent Security Researcher & Undergraduate Cybersecurity Student (2 years bug bounty experience, Top 5% university CTF competitor).
 * **Operating Environment & Tooling**: Kali Linux, macOS, Firefox Developer Edition, Burp Suite Professional, `ffuf`, `nuclei`, `curl`, Python (`requests`), GnuPG CLI.
 * **Core Goals & Motivations**:
@@ -58,6 +59,7 @@ Structured discovery interviews across both sides of the vulnerability disclosur
 ---
 
 ### Persona 2: Sarah Chen — "The Defender" (Startup CTO / Security Triage Lead)
+
 * **Demographic & Role**: Age 31; CTO & Lead Full-Stack Engineer at a 7-person B2B FinTech SaaS startup (8 years full-stack engineering experience).
 * **Operating Environment & Tooling**: macOS, VS Code, TypeScript, Next.js, Neon PostgreSQL, GitHub Actions, Docker, Vercel, Linear.
 * **Core Goals & Motivations**:
@@ -104,8 +106,7 @@ These five features directly address the four operational frictions identified d
    * **Guest Recovery & Privacy Boundary**: Guest submissions generate a durable `guest_actor_id` (UUIDv4), a downloadable Argon2id-encrypted recovery bundle (`.bbt-recovery.json` v1) for multi-device restoration at `/report/restore`, and an unguessable tracking URL (`/report/track/BBT-RPT-XXXX#token=<access_token>`) where client JavaScript immediately scrubs the `#token=` URI fragment from the browser address bar via `window.history.replaceState()` while the server stores only `guest_token_hash`. The triage portal separates the **Researcher–Organization Conversation** lane from the **Reviewer Internal Notes** lane (encrypted exclusively for `PROGRAM_DEFENDER` + Recovery Key) and renders decrypted Markdown through a strict AST sanitizer (`unified` / `remark-parse` / `rehype-sanitize`).
 
 5. **Git-Linked Remediation & Attested Retest State Machine (`FR-6`, `FR-7`)**
-   * **What It Does**: Enforces a deterministic remediation lifecycle:
-     `NEW → TRIAGING → ACCEPTED → FIX_PROPOSED (or FIX_COMMITTED) → RETEST_PENDING → [TERMINAL STATE]`
+   * **What It Does**: Enforces a deterministic remediation lifecycle (`NEW → TRIAGING → ACCEPTED → FIX_PROPOSED (or FIX_COMMITTED) → RETEST_PENDING → [TERMINAL STATE]`).
    * **Evidence & Closure Boundary**: Advancing a report to `FIX_PROPOSED` (`FIX_COMMITTED`) requires binding either a verified **40-character GitHub commit SHA** (checked via GitHub REST API v3 on the target branch) or a client-computed **64-character SHA-256 configuration hash** (`CONFIG_INFRASTRUCTURE`). From `RETEST_PENDING`, tickets close only via explicit, audited outcomes: `VERIFIED_RESEARCHER` (independent finder sign-off), `VERIFIED_INTERNAL` (defender attestation), or `CLOSED_UNVERIFIED_TIMEOUT` (≥ 14-day grace period with written justification; never counted as a verified fix), while failed retests (`RETEST_FAILED`) return the ticket to `ACCEPTED`. Non-remediation closures (`CLOSED_INCOMPLETE`, `RISK_ACCEPTED` / `CLOSED_RISK_ACCEPTED`, `REJECTED_SPAM`, `REJECTED_INVALID`, `DUPLICATE`, `WITHDRAWN`) are tracked distinctly in an append-only SHA-256 hash-chained (`prev_hash`) audit ledger.
 
 ---
@@ -115,4 +116,4 @@ These five features directly address the four operational frictions identified d
 | Signatory Role | Name & Academic Designation | Status / Signature | Date |
 | :--- | :--- | :--- | :--- |
 | **Submitted By (Student Author)** | **Taha Asadullah** (Roll No: `24-ST-013`, Section: `SET-B`, BS Software Engineering Technology, PTUT Lahore) | *Signed: Taha Asadullah* | October 2026 |
-| **Reviewed By (Academic Supervisor)** | **Sir Umar Hayat** (Assistant Professor, Department of Software Engineering Technology, PTUT Lahore) | `[ ] Approved` / `[ ] Revisions` — Signature: ___________________ | ____________ |
+| **Reviewed By (Academic Supervisor)** | **Sir Umar Hayat** (Assistant Professor, Department of Software Engineering Technology, PTUT Lahore) | `[ ] Approved` / `[ ] Revisions` — Signature: `[__________________]` | `[____________]` |
