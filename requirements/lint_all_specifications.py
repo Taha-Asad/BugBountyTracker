@@ -82,12 +82,12 @@ check('recipient_set_version' in srs, "SRS.md specifies recipient_set_version co
 check('token_hash' in srs, "SRS.md specifies token_hash for invitations")
 check('operational_label' in srs, "SRS.md specifies operational_label neutral enum")
 check('title_ciphertext' in srs, "SRS.md specifies title_ciphertext")
-check('50 MB' in srs and '2 GB' in srs, "SRS.md specifies 50 MB DB and 2 GB R2 demo quotas")
+check('25 MB' in srs and '50 MB' in srs and '2 GB' in srs, "SRS.md specifies 25 MB DB intake (+2 MB audit reserve), <= 50 MB report cap, and 2 GB R2 demo quotas")
 check('CLOSED_UNVERIFIED_TIMEOUT' in srs, "SRS.md specifies CLOSED_UNVERIFIED_TIMEOUT")
 check('RETEST_FAILED' in srs, "SRS.md specifies RETEST_FAILED event returning to ACCEPTED")
 check('INSERT' in srs and 'SELECT' in srs, "SRS.md specifies append-only audit boundary")
 check('Redacted closure evidence export' in srs or 'Redacted Closure Evidence' in srs, "SRS.md specifies Redacted Closure Evidence Export")
-check('prev_hash' in srs, "SRS.md specifies tamper-evident prev_hash audit chain")
+check('prev_report_chain_hash' in srs and 'prev_tenant_row_hash' in srs, "SRS.md specifies tamper-evident dual prev_report_chain_hash and prev_tenant_row_hash audit chains")
 check('guest_token_hash' in srs or 'Account-Less (Guest)' in srs, "SRS.md specifies account-less guest vulnerability intake")
 check('Lemon Squeezy' not in srs and 'SuperAdmin' not in srs and '$49' not in srs,
       "SRS.md stays strictly focused on Academic MVP scope (zero Lemon Squeezy, SuperAdmin, or $49/mo commercial bloat)")
@@ -363,6 +363,14 @@ check('FORCE ROW LEVEL SECURITY' in srs and 'NOBYPASSRLS' in srs and '2,592' in 
 check('Lead Defender' not in srs and '13-state' not in srs and '13-State' not in srs,
       "SRS.md has zero legacy 'Lead Defender' or '13-state' contradictions")
 check('7 developers' in srs, "SRS.md aligns Sarah Chen persona with Week 1 7-developer team size")
+check('organization_audit_heads' in srs and 'guest_mutation_nonces' in srs and 'report_recipient_version' in srs,
+      "SRS.md Revision 2.3 specifies organization_audit_heads, guest_mutation_nonces, and report_recipient_version")
+check('s2kType' in srs and 'submission_session_token' in srs and 'cvss_explanation_ciphertext' in srs,
+      "SRS.md Revision 2.3 specifies explicit s2kType=argon2, submission_session_token, and Class B cvss_explanation_ciphertext")
+check('report_chain_hash' in srs and 'config_artifact_ciphertext' in srs and 'Table 2.2' in srs and 'Section 7.3' not in srs or '7.3 Deterministic Operational Scenario' in srs,
+      "SRS.md Revision 2.3 specifies report_chain_hash, config_artifact_ciphertext, Table 2.2 Permission Matrix, and Section 7.3 Scenario Walkthrough")
+check('FR-3.9' not in srs and 'FR-6.5' not in srs,
+      "SRS.md Revision 2.3 has zero dangling FR-3.9 or FR-6.5 phantom references")
 
 
 # 16. Academic & Professional Attribution Hygiene (Zero AI Agent Bleed into Specifications)

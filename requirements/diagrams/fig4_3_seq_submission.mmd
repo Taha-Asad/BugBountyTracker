@@ -1,25 +1,25 @@
 sequenceDiagram
     autonumber
-    actor Hunter as Ethical Researcher (Guest)
+    actor Hunter as Ethical Researcher (Hunter / Guest)
     participant Browser as Browser Client (OpenPGP v6)
     participant Server as Next.js API Gateway
     participant R2 as Cloudflare R2
-    participant DB as Neon PostgreSQL (RLS)
+    participant DB as Neon PostgreSQL (Forced RLS)
 
-    Hunter->>Browser: Selects Scope, Class A Label, Title, PoC & Recovery Passphrase
-    Browser->>Server: GET /api/v1/programs/{slug}/encryption-targets
-    Server-->>Browser: recipient_set_version, PROGRAM_DEFENDER Keys, recovery_public_key
-    Browser->>Browser: Generate RFC 9580 v6 Curve25519 Ephemeral Keypair (<50ms target)
-    Browser->>Server: POST /api/uploads/presign (Turnstile Token + Encrypted Size <= 25 MB)
-    Server->>DB: Verify CAPTCHA, Rate Limit & Reserve 30m PENDING_UPLOAD Quota
-    Server-->>Browser: Presigned R2 PUT URL
-    Browser->>R2: PUT Encrypted PoC Blob (Symmetric File Key K_file)
-    Browser->>Browser: openpgp.encrypt(Class B Payload + K_file, [ReportKey, DefKeys, RecoveryKey])
-    Browser->>Server: POST /api/v1/reports (recipient_set_version, Class A Metadata, Class B Ciphertext)
-    Server->>R2: HeadObjectCommand (Verify Uploaded Size & Ownership)
-    Server->>DB: Atomic Tx: Snapshot REPORT_RECIPIENT + INSERT report (state='NEW', v=1) + AUDIT_EVENT
-    DB-->>Server: Persisted (seq_no, row_hash)
+    Hunter->>Browser: Selects Scope, Class A Label, Title, PoC & Passphrase
+    Browser->>Server: POST /api/v1/submission-sessions (Single Turnstile Token)
+    Server-->>Browser: 30m submission_session_token + recipient_set_version + Public Keys
+    Browser->>Browser: Unlock HUNTER Key OR Generate Guest v6 Keypair (s2kType=argon2)
+    Browser->>Browser: Encrypt PoC Binary via OpenPGP SEIPDv2 (K_file) + Compute ciphertext_sha256
+    Browser->>Server: POST /api/uploads/presign (submission_session_token, bytes <= 25MB, sha256)
+    Server->>DB: Reserve 15m upload_reservations Row (Check 25MB DB / 2GB R2 Quota)
+    Server-->>Browser: Presigned R2 PUT URL (Locked Content-Length & If-None-Match: *)
+    Browser->>R2: PUT OpenPGP Binary Ciphertext Blob
+    Browser->>Browser: openpgp.encrypt(Class B Payload + K_file, [SubmitterKey, DefKeys, RecoveryKey])
+    Browser->>Server: POST /api/v1/reports (submission_session_token, recipient_set_version, Class A+B)
+    Server->>R2: HeadObjectCommand Outside DB Tx (Verify Uploaded Size & ETag)
+    Server->>DB: Short Tx (Lock Order: org -> prog -> report -> organization_audit_heads)
+    DB-->>Server: Bind Reservation + Snapshot REPORT_RECIPIENT + Insert Report & Audit Seq + Outbox
     Server-->>Browser: 201 Created (BBT-102, guest_actor_id, access_token)
-    Browser->>Browser: Argon2id + AES-256-GCM Encrypt (access_token + PrivateKey) -> .bbt-recovery.json
-    Browser->>Browser: Store Private Key in IndexedDB & history.replaceState(Scrub URI Fragment Token)
-    Browser-->>Hunter: Render Tracking View & Download Authenticated .bbt-recovery.json
+    Browser->>Browser: If Guest: OpenPGP SYMENC+SEIPDv2 Encrypt (token+key) -> .bbt-recovery.json
+    Browser-->>Hunter: Scrub URI Fragment Token & Render Tracking View

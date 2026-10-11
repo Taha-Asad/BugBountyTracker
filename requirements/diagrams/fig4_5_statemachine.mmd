@@ -6,23 +6,24 @@ stateDiagram-v2
 
     TRIAGING --> WITHDRAWN : Hunter/Guest Retracts (Terminal)
     TRIAGING --> REJECTED_SPAM : Defender Filters Spam
-    TRIAGING --> NEED_MORE_INFO : Clarification Requested
-    NEED_MORE_INFO --> TRIAGING : Researcher Responds
-    NEED_MORE_INFO --> CLOSED_INCOMPLETE : Inactive >= 14d (Cron)
+    TRIAGING --> NEED_MORE_INFO : Clarification Requested (14d Timer)
+    NEED_MORE_INFO --> TRIAGING : Researcher Posts Class B Reply
+    NEED_MORE_INFO --> CLOSED_INCOMPLETE : info_timeout_due <= now() (Hourly Cron)
 
     TRIAGING --> REJECTED_INVALID : Out of Scope / Invalid
-    TRIAGING --> DUPLICATE : Linked to Primary Report
-    TRIAGING --> RISK_ACCEPTED : ORG_OWNER Accepts Risk
-    TRIAGING --> ACCEPTED : Flaw Confirmed + CVSS 3.1 Scored
+    TRIAGING --> DUPLICATE : Linked to Primary Report (P1 FK)
+    TRIAGING --> RISK_ACCEPTED : ORG_OWNER + MFA Accepts Risk
+    TRIAGING --> ACCEPTED : CVSS 3.1 Scored + Class B Explanation
 
-    ACCEPTED --> RISK_ACCEPTED : ORG_OWNER Accepts Risk
-    ACCEPTED --> FIX_PROPOSED : Step 1: Fix Proposed (Attempt N: Commit SHA / Config Hash)
-    FIX_PROPOSED --> RETEST_PENDING : Step 2 & 3: Deployment Recorded + Retest Requested
+    ACCEPTED --> RISK_ACCEPTED : ORG_OWNER + MFA Accepts Risk
+    ACCEPTED --> FIX_PROPOSED : Step 1: Fix Proposed (Attempt N Verified)
+    FIX_PROPOSED --> ACCEPTED : Cancel Proposed Fix (Attempt N Superseded)
+    FIX_PROPOSED --> RETEST_PENDING : Step 2 & 3: Deploy Recorded + Retest Requested
 
     RETEST_PENDING --> ACCEPTED : RETEST_FAILED on Attempt N (Requires Attempt N+1)
     RETEST_PENDING --> VERIFIED_RESEARCHER : Hunter Attests Attempt N Fixed
     RETEST_PENDING --> VERIFIED_INTERNAL : Defender Attests Attempt N Fixed
-    RETEST_PENDING --> CLOSED_UNVERIFIED_TIMEOUT : >= 14d Grace Period + Class C Rationale
+    RETEST_PENDING --> CLOSED_UNVERIFIED_TIMEOUT : retest_timeout_due <= now() + Class C Rationale
 
     state ReopenHub <<choice>>
     VERIFIED_RESEARCHER --> ReopenHub : REOPEN_REGRESSION
@@ -32,5 +33,5 @@ stateDiagram-v2
     RISK_ACCEPTED --> ReopenHub : REOPEN_REGRESSION
     REJECTED_INVALID --> ReopenHub : REOPEN_REGRESSION
     DUPLICATE --> ReopenHub : REOPEN_REGRESSION
-    REJECTED_SPAM --> ReopenHub : ORG_OWNER False-Positive Recovery
+    REJECTED_SPAM --> ReopenHub : ORG_OWNER + MFA False-Positive Recovery
     ReopenHub --> TRIAGING : Class C Justification Logged (state_version+1)

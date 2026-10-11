@@ -4,23 +4,22 @@ sequenceDiagram
     participant Browser as Defender Browser
     participant KeyStore as IndexedDB Keystore
     participant Server as Next.js API Gateway
-    participant DB as Neon PostgreSQL (RLS)
+    participant DB as Neon PostgreSQL (Forced RLS)
 
     Defender->>Browser: Opens /dashboard/reports/BBT-102
     Browser->>Server: GET /api/v1/reports/BBT-102 (HttpOnly Session Cookie)
-    Server->>DB: SET LOCAL app.current_tenant_id + Verify REPORT_RECIPIENT Membership
-    DB-->>Server: Return Class A Metadata + Class B/C Ciphertext (state='NEW', state_version=1)
+    Server->>DB: SET LOCAL app.current_tenant_id + Verify Active REPORT_RECIPIENT (key_id)
+    DB-->>Server: Return Class A + Class B/C Ciphertext (state='NEW', state_version=1, rep_ver=1)
     Server-->>Browser: 200 OK (Ciphertext Record)
     Defender->>Browser: Enters Local Encryption Passphrase
-    Browser->>KeyStore: Fetch Argon2id-Protected Private Subkey
-    KeyStore-->>Browser: Encrypted Key Material
-    Browser->>Browser: Unlock Private Key via Argon2id S2K (passes=3, p=4, mem=64MiB)
-    Browser->>Browser: openpgp.decrypt(title_ciphertext, encrypted_payload)
-    Browser->>Browser: rehype-sanitize AST Cleansing (Neutralize OWASP XSS Vectors)
+    Browser->>KeyStore: Fetch Argon2id-Protected v6 Private Subkey
+    KeyStore-->>Browser: Encrypted Secret Key Packet (s2kType=argon2, memExp=16)
+    Browser->>Browser: Unlock Key (~200-400ms) + openpgp.decrypt(Class B & Class C)
+    Browser->>Browser: rehype-sanitize AST Cleansing (100-Vector OWASP XSS Corpus)
     Browser-->>Defender: Renders Sanitized Report in Triage Desk
     Defender->>Browser: Clicks "Begin Triage" (Claim Report)
-    Browser->>Server: PATCH /api/v1/reports/BBT-102/state (from='NEW', to='TRIAGING', state_version=1)
-    Server->>DB: Atomic Tx: UPDATE state='TRIAGING', state_version=2 + INSERT audit_events
-    Defender->>Browser: Scores 8 CVSS v3.1 Metrics + Encrypts Class C Justification -> "Accept"
-    Browser->>Server: PATCH /api/v1/reports/BBT-102/state (from='TRIAGING', to='ACCEPTED', state_version=2)
-    Server->>DB: Atomic Tx: Save CVSS 3.1 Score + UPDATE state='ACCEPTED', v=3 + INSERT audit_events
+    Browser->>Server: PATCH /api/v1/reports/BBT-102/state (NEW -> TRIAGING, state_version=1)
+    Server->>DB: Lock org -> report -> organization_audit_heads: state_version=2 + Audit Event
+    Defender->>Browser: Scores 8 CVSS Metrics (Any Order) + Encrypts Class B Explanation & Class C Notes
+    Browser->>Server: PATCH /api/v1/reports/BBT-102/state (TRIAGING -> ACCEPTED, state_version=2, rep_ver=1)
+    Server->>DB: Canonicalize Vector + Recalc Score + Save History + state_version=3 + Audit + Outbox
