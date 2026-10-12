@@ -1,44 +1,61 @@
 erDiagram
-    ORGANIZATION ||--o{ SUBSCRIPTION : holds
+    CLUSTER_STORAGE_STATE ||--o{ ORGANIZATION : governs
+    ORGANIZATION ||--|| ORGANIZATION_AUDIT_HEAD : anchors
     ORGANIZATION ||--o{ PROGRAM : hosts
     ORGANIZATION ||--o{ USER_MEMBERSHIP : employs
     ORGANIZATION ||--o{ PROGRAM_INVITATION : issues
     PROGRAM ||--o{ PROGRAM_DEFENDER : assigns
+    PROGRAM ||--o{ SUBMISSION_SESSION : issues
     USER ||--o{ PROGRAM_DEFENDER : participates
     USER ||--o{ USER_MEMBERSHIP : belongs_to
-    USER ||--o{ PGP_KEY : owns
+    USER ||--o{ USER_KEY : owns
     USER ||--o{ SESSION : authenticates
     PROGRAM ||--o{ REPORT : receives
+    REPORT ||--o{ REPORT_RECIPIENT : wraps_for
+    REPORT ||--o{ UPLOAD_RESERVATION : reserves
+    REPORT ||--o{ GUEST_MUTATION_NONCE : sequences
+    REPORT ||--o{ CVSS_ASSESSMENT_HISTORY : records
     REPORT ||--o{ DISCUSSION_MESSAGE : contains
-    REPORT ||--o{ REMEDIATION_RECORD : verified_by
+    REPORT ||--o{ REMEDIATION_RECORD : proposes
+    REMEDIATION_RECORD ||--o{ RETEST_EVIDENCE : verified_by
     REPORT ||--o{ RETEST_EVIDENCE : tested_by
     REPORT ||--o{ CLOSURE_EVIDENCE_EXPORT : generates
     REPORT ||--o{ AUDIT_EVENT : tracks
 
+    CLUSTER_STORAGE_STATE {
+        int singleton_id PK
+        bigint emergency_db_buffer_used_bytes "Max 20 MiB Shared Pool"
+        datetime updated_at
+    }
+
     ORGANIZATION {
-        string id PK
+        uuid id PK
         string name
         string slug UK
         string domain
         boolean domain_verified
+        string plan_tier "FREE_PILOT |PRO_TEAM"
+        int max_programs
+        int max_seats
+        bigint storage_quota_bytes
+        bigint r2_used_bytes
+        bigint db_ciphertext_used_bytes
+        bigint db_intake_quota_bytes
+        bigint db_reserve_quota_bytes
+        bigint emergency_reserve_granted_bytes "Max +2 MiB Grant"
         datetime created_at
     }
 
-    SUBSCRIPTION {
-        string id PK
-        string organization_id FK
-        string plan_tier "COMMUNITY | TEAM"
-        string status "ACTIVE | PAST_DUE | CANCELED"
-        string lemon_squeezy_sub_id UK
-        int max_programs
-        int max_seats
-        int storage_quota_mb
-        datetime current_period_end
+    ORGANIZATION_AUDIT_HEAD {
+        uuid org_id PK
+        bigint last_tenant_seq_no
+        string last_tenant_hash "64-char SHA-256 hex"
+        datetime updated_at
     }
 
     PROGRAM {
-        string id PK
-        string organization_id FK
+        uuid id PK
+        uuid organization_id FK
         string name
         string slug UK
         string visibility "PUBLIC | INVITE_ONLY"
@@ -49,25 +66,49 @@ erDiagram
     }
 
     PROGRAM_DEFENDER {
-        string id PK
-        string program_id FK
-        string user_id FK
+        uuid id PK
+        uuid program_id FK
+        uuid user_id FK
         string role "LEAD_TRIAGER | REVIEWER"
         boolean is_active
         datetime assigned_at
     }
 
     PROGRAM_INVITATION {
-        string id PK
-        string program_id FK
+        uuid id PK
+        uuid program_id FK
         string token_hash UK
         string invitee_email
         datetime expires_at
         datetime accepted_at
     }
 
+    SUBMISSION_SESSION {
+        uuid submission_id PK
+        uuid organization_id FK
+        uuid program_id FK
+        string status "ISSUED | CONSUMED | EXPIRED"
+        string request_digest_sha256 "nullable"
+        uuid report_id FK "nullable"
+        string cached_response_json "OpenPGP Encrypted Guest Token"
+        datetime expires_at
+    }
+
+    UPLOAD_RESERVATION {
+        uuid reservation_id PK
+        uuid submission_id FK
+        uuid organization_id FK
+        uuid report_id FK "nullable"
+        string r2_object_key UK
+        bigint reserved_bytes
+        string status "RESERVED | ATTACHED | DELETING | DELETED | DELETE_FAILED"
+        uuid claim_id "nullable 2-min Lease"
+        datetime claim_expires_at "nullable"
+        datetime expires_at
+    }
+
     USER {
-        string id PK
+        uuid id PK
         string email UK
         string password_hash
         string totp_secret_cipher
@@ -77,75 +118,113 @@ erDiagram
     }
 
     SESSION {
-        string id PK
-        string user_id FK
-        string session_token UK
+        uuid id PK
+        uuid user_id FK
+        string token_hash UK "SHA-256 of Raw Cookie Token"
         datetime expires_at
         datetime created_at
     }
 
     USER_MEMBERSHIP {
-        string id PK
-        string organization_id FK
-        string user_id FK
+        uuid id PK
+        uuid organization_id FK
+        uuid user_id FK
         string role "ORG_OWNER | ORG_DEFENDER | ORG_READONLY"
     }
 
-    PGP_KEY {
-        string id PK
-        string user_id FK
+    USER_KEY {
+        uuid id PK
+        uuid user_id FK
         string key_type "PRIMARY_SIGNING | ENCRYPTION_SUBKEY"
         string public_key_armor
+        string encrypted_private_key_backup "Argon2id S2K Backup"
         string fingerprint UK "64-char SHA-256 hex"
         boolean is_active
         datetime created_at
     }
 
     REPORT {
-        string id PK
-        string organization_id FK
-        string program_id FK
-        string hunter_id FK "nullable"
-        string guest_actor_id UK "nullable UUIDv4"
+        uuid id PK
+        uuid organization_id FK
+        uuid program_id FK
+        uuid hunter_id FK "nullable"
+        uuid guest_actor_id UK "nullable UUIDv4"
         string guest_token_hash UK "nullable SHA-256"
         string guest_public_key "nullable Curve25519"
         string guest_recovery_hash "nullable SHA-256"
-        string assigned_defender_id FK "nullable"
-        string state "14-State Lifecycle Enum"
-        string operational_label "7-Category Neutral Enum"
-        string title_ciphertext "CIPHERTEXT ONLY"
+        uuid assigned_defender_id FK "nullable"
+        string state "15-State Lifecycle Enum"
+        string operational_label "8-Category Neutral Enum"
+        string title_ciphertext "Class B Ciphertext"
         string asset_scope
         string cvss_vector
         float cvss_suggested
         float cvss_score
-        string encrypted_payload "CIPHERTEXT ONLY"
-        string risk_accepted_by_user_id FK "nullable"
-        string risk_rationale "nullable"
+        string encrypted_payload "Class B Ciphertext"
+        string payload_body_sha256 "Immutable Content Digest"
+        uuid risk_accepted_by_user_id FK "nullable"
+        string risk_rationale_ciphertext "Class C Ciphertext nullable"
         datetime risk_review_date "nullable"
+        int remediation_attempt_no
+        boolean capacity_deadline_paused
+        datetime capacity_paused_at "nullable"
         datetime sla_triage_due
         datetime sla_remediation_due
         datetime created_at
         datetime updated_at
     }
 
+    REPORT_RECIPIENT {
+        uuid id PK
+        uuid report_id FK
+        uuid user_id FK "nullable"
+        string key_fingerprint
+        string recipient_lane "CLASS_B | CLASS_C"
+        string wrapped_session_key "PKESK Packet"
+        datetime wrapped_at
+    }
+
+    GUEST_MUTATION_NONCE {
+        uuid report_id PK
+        bigint nonce PK
+        string action_type
+        string request_digest_sha256
+        datetime consumed_at
+    }
+
+    CVSS_ASSESSMENT_HISTORY {
+        uuid id PK
+        uuid report_id FK
+        uuid actor_user_id FK
+        string previous_vector
+        string new_vector
+        float new_score
+        string rationale_ciphertext "Class B Ciphertext"
+        datetime created_at
+    }
+
     DISCUSSION_MESSAGE {
-        string id PK
-        string report_id FK
+        uuid id PK
+        uuid report_id FK
         string sender_actor_type "USER | GUEST | SYSTEM"
-        string sender_user_id FK "nullable"
-        string sender_guest_actor_id "nullable"
+        uuid sender_user_id FK "nullable"
+        uuid sender_guest_actor_id "nullable"
         string lane "RESEARCHER_ORG | REVIEWER_INTERNAL"
-        string encrypted_body "CIPHERTEXT ONLY"
+        string encrypted_body "Class B or Class C Ciphertext"
+        string body_sha256
         datetime created_at
     }
 
     REMEDIATION_RECORD {
-        string id PK
-        string report_id FK
+        uuid id PK
+        uuid report_id FK
+        int attempt_no
+        string deployment_status "PROPOSED_UNDEPLOYED | DEPLOYED_CONFIRMED"
         string evidence_type "CODE_COMMIT | CONFIG_INFRASTRUCTURE"
-        string commit_sha
-        string branch_name
-        string config_hash
+        string commit_sha "nullable"
+        string branch_name "nullable"
+        string config_hash "nullable SHA-256"
+        string config_snapshot_ciphertext "Class B <= 256 KiB"
         string deployment_env
         string deployed_version
         boolean github_verified
@@ -153,34 +232,40 @@ erDiagram
     }
 
     RETEST_EVIDENCE {
-        string id PK
-        string report_id FK
+        uuid id PK
+        uuid report_id FK
+        uuid remediation_record_id FK
+        int attempt_no
         string verifier_actor_type "HUNTER | DEFENDER | TIMEOUT"
-        string verifier_user_id FK "nullable"
-        string verifier_guest_actor_id "nullable"
+        uuid verifier_user_id FK "nullable"
+        uuid verifier_guest_actor_id "nullable"
         boolean fix_confirmed
-        string verification_notes_cipher "CIPHERTEXT ONLY"
+        string verification_notes_cipher "Class B Ciphertext"
         datetime retest_date
     }
 
     CLOSURE_EVIDENCE_EXPORT {
-        string id PK
-        string report_id FK
+        uuid id PK
+        uuid report_id FK
+        int closure_report_seq_no "M <= K"
         string export_type "PDF | JSON"
         string export_sha256
-        string closing_officer_id FK
+        uuid closing_officer_id FK
         datetime generated_at
     }
 
     AUDIT_EVENT {
-        string id PK
-        string organization_id FK
-        string report_id FK
+        uuid id PK
+        uuid organization_id FK
+        uuid report_id FK "nullable"
+        bigint tenant_seq_no
+        bigint report_seq_no "nullable"
         string actor_type "USER | GUEST | SYSTEM"
-        string actor_user_id FK "nullable"
-        string actor_guest_actor_id "nullable"
+        uuid actor_user_id FK "nullable"
+        uuid actor_guest_actor_id "nullable"
         string action
-        string justification "nullable"
-        string prev_hash
+        string event_digest "64-char SHA-256 hex"
+        string report_hash "nullable 64-char hex"
+        string tenant_hash "64-char SHA-256 hex"
         datetime timestamp
     }

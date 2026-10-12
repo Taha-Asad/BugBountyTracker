@@ -12,14 +12,14 @@ sequenceDiagram
     Browser->>Browser: Unlock HUNTER Key OR Generate Guest v6 Keypair (s2kType=argon2)
     Browser->>Browser: Encrypt PoC Binary via OpenPGP SEIPDv2 (K_file) + Compute ciphertext_sha256
     Browser->>Server: POST /api/uploads/presign (submission_session_token, bytes <= 25MiB, sha256)
-    Server->>DB: Reserve 15m upload_reservations Row (Check 1GiB Tenant & 9.5GiB Cluster R2 Cap)
+    Server->>DB: Reserve 15m upload_reservations Row (Check 19MiB Intake, 1GiB Tenant & 9.5GiB Cluster R2)
     Server-->>Browser: Presigned R2 PUT URL (Locked Content-Length & If-None-Match: *)
     Browser->>R2: PUT OpenPGP Binary Ciphertext Blob
     Browser->>Browser: openpgp.encrypt(Class B Payload + K_file, [SubmitterKey, DefKeys, RecoveryKey])
     Browser->>Server: POST /api/v1/reports (submission_session_token, recipient_set_version, Class A+B)
     Server->>R2: HeadObjectCommand Outside DB Tx (Verify Uploaded Size & ETag)
     Server->>DB: Short Tx (Lock: org -> prog -> submission_sessions -> report -> organization_audit_heads)
-    DB-->>Server: Consume Session + Bind Reservation + Snapshot REPORT_RECIPIENT + Insert Report & Audit
-    Server-->>Browser: 201 Created (BBT-102, guest_actor_id, access_token)
-    Browser->>Browser: If Guest: OpenPGP SYMENC+SEIPDv2 Encrypt (token+key) -> .bbt-recovery.json
+    DB-->>Server: Consume Session (Encrypted Guest Cache) + Bind Reservation + Insert Report & Audit
+    Server-->>Browser: 201 Created (BBT-102, guest_actor_id, encrypted_guest_credentials_armored)
+    Browser->>Browser: If Guest: Decrypt access_token + OpenPGP SYMENC+SEIPDv2 -> .bbt-recovery.json
     Browser-->>Hunter: Scrub URI Fragment Token & Render Tracking View

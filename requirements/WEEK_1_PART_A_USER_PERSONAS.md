@@ -20,7 +20,7 @@
 | **Category** | 9. Cybersecurity, Privacy & LegalTech |
 | **Student Author** | Taha Asadullah (Roll No: `24-ST-013`, Section: `SET-B`) |
 | **Academic Supervisor** | Sir Umar Hayat (Assistant Professor, PTUT Lahore) |
-| **Milestone Scope** | Week 1 (Part A): Discovery Interviews, Friction Taxonomy & User Personas |
+| **Milestone Scope** | Week 1 (Part A): Secondary Research, Friction Taxonomy & Provisional Composite Personas |
 
 ---
 
@@ -30,28 +30,30 @@ Vulnerability disclosure is recognized by international cybersecurity standards 
 
 While established platforms and code hosts offer free entry tiers (such as HackerOne Essential VDP or GitHub Security Advisories), small engineering teams (5–50 developers) and independent B2B SaaS startups face three structural architectural gaps:
 
-* **Server-Managed Plaintext Exposure**: Free and commercial tiers of traditional VDP platforms operate on a server-managed model where exploit descriptions and proof-of-concept (PoC) attachments are stored in plaintext on vendor infrastructure, accessible to platform operators, cloud intermediaries, and support databases.
+* **Provider-Managed Key Control**: Free and commercial tiers of traditional VDP platforms operate on a provider-managed encryption model where the third-party platform vendor holds the decryption keys and can access submitted exploit descriptions and proof-of-concept (PoC) attachments on server infrastructure, rather than enforcing client-side end-to-end encryption (E2EE).
 * **Single-Forge Lock-In & Mandatory Account Friction**: Repository-bound tools (such as GitHub Security Advisories) require reporters to hold platform accounts and do not span multi-service SaaS architectures, APIs, or cloud infrastructure outside a single repository.
-* **Insecure Ad-Hoc Channels & Unverified Closures**: Organizations unwilling to store unpatched zero-day exploits in plaintext on third-party vendor servers fall back to generic `security@company.com` email inboxes or standard issue trackers (Jira, Linear), exposing sensitive exploit steps over unencrypted email servers and closing security tickets via informal text status updates without Git commit verification or researcher retesting.
+* **Insecure Ad-Hoc Channels & Unverified Closures**: Organizations unwilling to delegate zero-day exploit visibility to third-party platform operators fall back to generic `security@company.com` email inboxes or standard issue trackers (Jira, Linear), where—unless senders manually configure PGP—sensitive exploit steps traverse mail servers without end-to-end encryption and security tickets are closed via informal text status updates without Git commit verification or researcher retesting.
 
 ---
 
-## 3. Target User Interviews & 4 Operational Frictions Identified
+## 3. Secondary Research, Workflow Modeling & 4 Operational Frictions Identified
 
-Structured discovery interviews representing both sides of the disclosure workflow—independent ethical security researchers ("Hunters") and startup engineering leads ("Defenders")—revealed four primary operational frictions:
+Secondary industry research, public vulnerability disclosure post-mortems, and standards-based workflow modeling (ISO/IEC 29147, ISO/IEC 30111, RFC 9116, RFC 9580, FIRST.org CVSS v3.1) across both sides of the disclosure workflow—independent ethical security researchers ("Hunters") and startup engineering leads ("Defenders")—identified four primary operational frictions:
+
+> **Methodological & Empirical Separation Note**: No live external target-user interview transcripts were completed prior to this baseline. The friction taxonomy (`FRC-01`–`FRC-04`) and the two personas in Section 4 (**Alex Rivera** and **Sarah Chen**) are explicitly documented as **secondary research and workflow modeling constructs (Provisional Composite Personas)**. Because the original Week 1 assignment specifies target-user interviews—and later Phase 4 peer usability testing (`SUS`) does not substitute for earlier target-user discovery interviews—live target-user interview sessions are tracked as a separate empirical validation item and will be recorded in a dedicated Empirical Interview Log when completed, keeping actual interview findings strictly distinct from modeling assumptions.
 
 | Friction ID | Friction Dimension | Observed Industry Behavior | Security & Operational Consequence | BugBountyTrack Remedy |
 | :--- | :--- | :--- | :--- | :--- |
-| **FRC-01** | **Third-Party Plaintext Exposure** | Existing VDP tiers store raw exploit write-ups and PoC scripts in server-readable plaintext on vendor databases. | A vendor breach or unauthorized third-party access exposes active, unpatched zero-day exploits across tenant organizations. | Zero-knowledge client-side OpenPGP v6 (`Curve25519`) encryption before transit; server stores only ciphertext and a neutral `operational_label`. |
-| **FRC-02** | **Insecure Ad-Hoc Email Channels** | Teams avoiding vendor lock-in ask researchers to email vulnerability reports to `security@` or `support@` addresses. | Standard SMTP lacks end-to-end encryption; raw SQLi/RCE payloads sit in plaintext across mail relays, shared inboxes, and Slack threads. | In-browser multi-recipient `PKESK` encryption addressed strictly to `PROGRAM_DEFENDER` keys and an offline master recovery key. |
-| **FRC-03** | **Legal Ambiguity & Registration Friction** | Startups lack signed `/.well-known/security.txt` Safe Harbor policies, and portals demand full account signup for one-off reports. | Researchers withhold valid reports due to fear of legal prosecution (CFAA/PECA) or abandon submissions due to registration friction. | Browser-signed RFC 9116 `security.txt` with Disclose.io Safe Harbor terms, plus 60-second Account-Less Guest Intake with `.bbt-recovery.json`. |
+| **FRC-01** | **Provider-Managed Encryption** | Existing VDP tiers rely on provider-managed encryption where the platform vendor holds the decryption keys. | A vendor compromise or unauthorized third-party access exposes active, unpatched zero-day exploits across tenant organizations. | Zero-knowledge client-side OpenPGP v6 (`Curve25519`) encryption before transit; server stores only ciphertext and a neutral `operational_label`. |
+| **FRC-02** | **Insecure Ad-Hoc Email Channels** | Teams avoiding vendor lock-in ask researchers to email vulnerability reports to `security@` or `support@` addresses. | Unless senders manually configure PGP, standard SMTP lacks mandatory E2EE; raw SQLi/RCE payloads sit readable across mail relays and shared inboxes. | In-browser multi-recipient `PKESK` encryption addressed strictly to `PROGRAM_DEFENDER` keys and an offline master recovery key. |
+| **FRC-03** | **Legal Ambiguity & Registration Friction** | Startups lack signed `/.well-known/security.txt` discovery files linking to Safe Harbor terms, and portals demand full account signup for one-off reports. | Researchers withhold valid reports due to fear of legal prosecution (CFAA/PECA) or abandon submissions due to registration friction. | Browser-signed RFC 9116 `security.txt` linking to hosted Disclose.io Safe Harbor terms, plus 60-second Account-Less Guest Intake with `.bbt-recovery.json`. |
 | **FRC-04** | **The "Fix-and-Forget" Verification Gap** | Trackers mark tickets "Closed" via a text toggle when a PR merges, without checking the branch commit or re-engaging the finder. | Superficial patches fix only a single symptom while leaving the root cause exploitable via adjacent vectors. | Git-linked remediation state machine requiring a verified 40-char commit SHA (or 64-char SHA-256 config hash) and attested retest sign-off. |
 
 ---
 
-## 4. Detailed Target User Personas & Empathy Maps
+## 4. Provisional Composite Target User Personas & Empathy Maps
 
-### 4.1 Persona 1: Alex Rivera — "The Hunter" (External Ethical Security Researcher)
+### 4.1 Persona 1: Alex Rivera — "The Hunter" (Provisional Composite: External Ethical Security Researcher)
 
 | Attribute | Profile Specification |
 | :--- | :--- |

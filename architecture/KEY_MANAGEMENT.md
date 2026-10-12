@@ -2,7 +2,7 @@
 
 **Project**: BugBountyTrack — Vulnerability Disclosure Platform with Remediation Tracking  
 **Document**: Architecture Design Note (`ARCH-NOTE-001`)  
-**Status**: Active Architecture Reference (Version 3.2.0)  
+**Status**: Active Architecture Reference (Version 3.3.0 — `SRS Revision 2.6`)  
 **Standard**: OpenPGP Specification (RFC 4880 / RFC 9580) & `openpgp.js` Integration  
 
 ---
@@ -146,7 +146,7 @@ The platform enforces strict cryptographic separation between collaborative rese
 | **VCS / Config Reference** | Commit SHA / 64-hex `config_hash` | Server-Visible Plaintext (Class A) | Automated GitHub `BASE...HEAD` and config snapshot verification. |
 | **Vulnerability Title & PoC**| Text (`pgp_armored`) | Client-Encrypted Ciphertext (Class B) | Detailed exploit mechanics (`title_ciphertext`). Fully confidential. |
 | **Reproduction & CVSS Explanation** | Text (`pgp_armored`) | Client-Encrypted Ciphertext (Class B) | Step-by-step reproduction & researcher-visible `cvss_explanation_ciphertext`. |
-| **Thread Messages & Config Snapshot**| Text (`pgp_armored`) | Client-Encrypted Ciphertext (Class B) | `RESEARCHER_ORG` lane and `config_artifact_ciphertext` (`<= 256 KiB`). |
+| **Thread Messages & Config Snapshot**| Text (`pgp_armored`) | Client-Encrypted Ciphertext (Class B) | `RESEARCHER_ORG` lane and `config_artifact_ciphertext` (`<= 160 KiB` incompressible UTF-8 plaintext / `<= 256 KiB` armored ciphertext). |
 | **Internal Review Notes & Rationales** | Text (`pgp_armored`) | Client-Encrypted Ciphertext (Class C) | `REVIEWER_INTERNAL` lane, `cvss_internal_notes_ciphertext`, `risk_rationale_ciphertext`. |
 | **Evidence Attachments** | Binary (`OpenPGP SEIPDv2` in R2) | Client-Encrypted Ciphertext (Class B) | PoC scripts, PCAP traces (`<= 25 MiB` each, `<= 3`/report, `K_file` wrapped for Class B). |
 

@@ -85,6 +85,34 @@ SECTIONS = [
     ("Figure 4.4)", "fig4_5_statemachine"),
 ]
 
+STANDALONE_DIAGRAMS = [
+    "fig4_1_component",
+    "fig4_6_erd",
+]
+
+def render_mmd(file_stem, mmd_file):
+    png_out = os.path.join(DIAGRAMS_DIR, f"{file_stem}.png")
+    svg_out = os.path.join(DIAGRAMS_DIR, f"{file_stem}.svg")
+
+    # 1. Render PNG (3x scale for high-DPI Word document embedding)
+    cmd_png = [MMDC_PATH, "-p", PUPPETEER_CONFIG, "-c", MERMAID_CONFIG, "-i", mmd_file, "-o", png_out, "-b", "white", "-s", "3"]
+    res_png = subprocess.run(cmd_png, capture_output=True, text=True)
+    if res_png.returncode != 0:
+        print(f"[FAIL] PNG render failed for {file_stem}:\n{res_png.stderr}")
+        return False
+
+    # 2. Render SVG
+    cmd_svg = [MMDC_PATH, "-p", PUPPETEER_CONFIG, "-c", MERMAID_CONFIG, "-i", mmd_file, "-o", svg_out, "-b", "white"]
+    res_svg = subprocess.run(cmd_svg, capture_output=True, text=True)
+    if res_svg.returncode != 0:
+        print(f"[FAIL] SVG render failed for {file_stem}:\n{res_svg.stderr}")
+        return False
+
+    png_size = os.path.getsize(png_out)
+    svg_size = os.path.getsize(svg_out)
+    print(f"[PASS] {file_stem}: PNG ({png_size:,} bytes) | SVG ({svg_size:,} bytes)")
+    return True
+
 def main():
     if not os.path.exists(SRS_PATH):
         print(f"Error: SRS.md not found at {SRS_PATH}")
@@ -99,15 +127,23 @@ def main():
         sys.exit(1)
 
     print("=" * 80)
-    print("BUGBOUNTYTRACK CANONICAL DIAGRAM GENERATOR (VERSION 3.2.0)")
-    print("Rendering high-resolution diagrams directly from SRS.md Mermaid specifications")
+    print("BUGBOUNTYTRACK CANONICAL DIAGRAM GENERATOR (VERSION 3.3.0)")
+    print("Rendering all 6 high-resolution diagrams from SRS.md and requirements/diagrams/")
     print("=" * 80)
 
+    import re
     success_count = 0
+    total_expected = len(STANDALONE_DIAGRAMS) + len(SECTIONS)
+
+    for file_stem in STANDALONE_DIAGRAMS:
+        mmd_file = os.path.join(DIAGRAMS_DIR, f"{file_stem}.mmd")
+        if not os.path.exists(mmd_file):
+            print(f"[FAIL] Standalone diagram '{mmd_file}' not found!")
+            continue
+        if render_mmd(file_stem, mmd_file):
+            success_count += 1
+
     for heading, file_stem in SECTIONS:
-        idx = srs_content.find(f"### 4.")
-        # Find the specific section heading containing the Figure marker
-        import re
         m = re.search(rf"^###\s+4\.\d+.*{re.escape(heading)}", srs_content, re.MULTILINE)
         if not m:
             print(f"[FAIL] Heading containing '{heading}' not found in SRS.md!")
@@ -126,32 +162,13 @@ def main():
         with open(mmd_file, "w", encoding="utf-8") as f:
             f.write(mermaid_code + "\n")
 
-        png_out = os.path.join(DIAGRAMS_DIR, f"{file_stem}.png")
-        svg_out = os.path.join(DIAGRAMS_DIR, f"{file_stem}.svg")
-
-        # 1. Render PNG (3x scale for high-DPI Word document embedding)
-        cmd_png = [MMDC_PATH, "-p", PUPPETEER_CONFIG, "-c", MERMAID_CONFIG, "-i", mmd_file, "-o", png_out, "-b", "white", "-s", "3"]
-        res_png = subprocess.run(cmd_png, capture_output=True, text=True)
-        if res_png.returncode != 0:
-            print(f"[FAIL] PNG render failed for {file_stem}:\n{res_png.stderr}")
-            continue
-
-        # 2. Render SVG
-        cmd_svg = [MMDC_PATH, "-p", PUPPETEER_CONFIG, "-c", MERMAID_CONFIG, "-i", mmd_file, "-o", svg_out, "-b", "white"]
-        res_svg = subprocess.run(cmd_svg, capture_output=True, text=True)
-        if res_svg.returncode != 0:
-            print(f"[FAIL] SVG render failed for {file_stem}:\n{res_svg.stderr}")
-            continue
-
-        png_size = os.path.getsize(png_out)
-        svg_size = os.path.getsize(svg_out)
-        print(f"[PASS] {file_stem}: PNG ({png_size:,} bytes) | SVG ({svg_size:,} bytes)")
-        success_count += 1
+        if render_mmd(file_stem, mmd_file):
+            success_count += 1
 
     print("-" * 80)
-    print(f"Generated {success_count}/{len(SECTIONS)} diagrams successfully.")
-    if success_count == len(SECTIONS):
-        print("ALL DIAGRAMS SYNCHRONIZED AND UP TO DATE!")
+    print(f"Generated {success_count}/{total_expected} diagrams successfully.")
+    if success_count == total_expected:
+        print("ALL 6 DIAGRAMS SYNCHRONIZED AND UP TO DATE!")
         return 0
     else:
         return 1

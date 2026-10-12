@@ -26,7 +26,7 @@
 
 ## 2. Finalized 1-Paragraph Academic Problem Statement
 
-> **While established vulnerability platforms and source-code hosts offer free entry tiers (such as HackerOne Essential VDP or GitHub Security Advisories), they operate on a server-managed model where sensitive exploit payloads are stored in plaintext on third-party vendor infrastructure, or are locked to single-forge repository ecosystems. Teams unwilling to delegate plaintext zero-day access to external vendors typically fall back to ad-hoc communication channels (email, issue trackers, social media DMs), exposing exploit reproduction steps across unencrypted mail servers and creating legal ambiguity due to missing RFC 9116 Safe Harbor policies. Furthermore, existing issue trackers and entry-level VDP tiers treat vulnerability resolution as an informal status change ("Closed" or "Resolved"), creating a "fix-and-forget" verification gap where patches are deployed without verifiable Git commit linkage or attested researcher retesting. BugBountyTrack resolves these gaps by delivering a lightweight, multi-tenant Vulnerability Disclosure Platform (VDP) that automates signed RFC 9116 `security.txt` policy generation, enforces zero-knowledge client-side OpenPGP exploit payload encryption (RFC 9580 v6 Curve25519), provides deterministic CVSS 3.1 scoring, and governs remediation through an evidence-based, Git-linked retest state machine.**
+> **While established vulnerability platforms and source-code hosts offer free entry tiers (such as HackerOne Essential VDP or GitHub Security Advisories), they rely on provider-managed encryption where the platform vendor holds the decryption keys and can access submitted exploit payloads on server infrastructure, or are locked to single-forge repository ecosystems. Teams unwilling to delegate zero-day exploit visibility to third-party platform operators typically fall back to ad-hoc communication channels (email, issue trackers, social media DMs), where—unless senders manually configure PGP—exploit reproduction steps traverse mail servers and shared inboxes without end-to-end encryption, while missing RFC 9116 `security.txt` discovery files and hosted Safe Harbor policy terms leave researchers in legal ambiguity. Furthermore, existing issue trackers and entry-level VDP tiers treat vulnerability resolution as an informal status change ("Closed" or "Resolved"), creating a "fix-and-forget" verification gap where patches are deployed without verifiable Git commit linkage or attested researcher retesting. BugBountyTrack resolves these gaps by delivering a lightweight, multi-tenant Vulnerability Disclosure Platform (VDP) that automates signed RFC 9116 `security.txt` discovery linked to hosted Safe Harbor terms, enforces zero-knowledge client-side OpenPGP exploit payload encryption (RFC 9580 v6 Curve25519), provides deterministic CVSS 3.1 scoring, and governs remediation through an evidence-based, Git-linked retest state machine.**
 
 ---
 
@@ -35,7 +35,7 @@
 ### 3.1 Core Engineering Objectives
 
 1. **Zero-Knowledge Payload Isolation**: Ensure the platform server never holds private decryption or signing keys and never processes plaintext vulnerability titles, descriptions, reproduction steps, or PoC attachments.
-2. **Standardized Legal & Policy Discovery**: Enable organizations to generate, client-side cleartext-sign (RFC 9116 §2.3), and publish compliant `/.well-known/security.txt` policies with Disclose.io-aligned Safe Harbor terms.
+2. **Standardized Legal & Policy Discovery**: Enable organizations to generate, client-side cleartext-sign (RFC 9116 §2.3), and publish compliant `/.well-known/security.txt` discovery files linking via `Policy:` to Disclose.io-aligned Safe Harbor terms.
 3. **Frictionless Dual-Lane Intake**: Support both authenticated researchers (`HUNTER`) and 60-second account-less guest submitters equipped with portable, Argon2id-encrypted recovery packages (`.bbt-recovery.json` v1).
 4. **Deterministic Severity & Remediation Governance**: Eliminate subjective severity disputes via FIRST.org CVSS v3.1 calculation and enforce a strict Git-commit-linked (`[0-9a-f]{40}`) and researcher-attested retest state machine.
 
@@ -54,7 +54,7 @@ To guarantee build-proof engineering quality within the academic evaluation time
 
 ## 4. The 5 Core MVP Features
 
-The following five core features directly resolve the four operational frictions identified during target user discovery and define the Minimum Viable Product (MVP):
+The following five core features directly resolve the four operational frictions identified through secondary research and workflow modeling and define the Minimum Viable Product (MVP):
 
 ### Feature 1: Hosted RFC 9116 `security.txt` & Safe Harbor Policy Generator (`FR-2`)
 
@@ -62,7 +62,7 @@ The following five core features directly resolve the four operational frictions
 * **Technical & Cryptographic Boundary**:
   * Generates an RFC 9116 compliant policy incorporating `Contact`, `Expires`, `Encryption` (URI to program OpenPGP v6 public key), `Policy` (URI to Safe Harbor scope), `Preferred-Languages`, and `Canonical` following automated DNS TXT domain ownership verification (`_bbt-challenge.<domain>`).
   * **Client-Side Cleartext Signing (RFC 9116 §2.3)**: Because the backend is strictly zero-knowledge and never holds private keys, the `security.txt` file is **cleartext-signed inside the Organization Owner's browser** using their local Ed25519 private signing key (`openpgp.js` v6). The organization publishes the signed file at `https://[org-domain]/.well-known/security.txt`, while BugBountyTrack serves preview and signature verification at `/api/v1/programs/[slug]/security.txt`.
-  * Includes a guided Safe Harbor policy builder based on Disclose.io Core terms defining authorized testing scope and good-faith legal protection.
+  * Includes a guided Safe Harbor policy builder based on Disclose.io Core terms defining authorized testing scope and good-faith legal protection (referenced via the RFC 9116 `Policy:` directive).
 * **Acceptance Criteria**: Endpoint serves HTTP 200 with MIME type `text/plain; charset=utf-8`, passes automated RFC 9116 syntax validation, and verifies cryptographically against the organization's advertised public key.
 
 ---
@@ -73,8 +73,8 @@ The following five core features directly resolve the four operational frictions
 * **Technical & Cryptographic Boundary**:
   * Executes strictly inside the client browser runtime (`openpgp.js` v6 via `WebCrypto` and WebAssembly).
   * Enforces **RFC 9580 Version 6 Curve25519** (`Ed25519` signing + `X25519` encryption) keys with **64-character hexadecimal SHA-256 fingerprints**. Private keys are encrypted at rest with **Argon2id S2K** (`t=3`, `m=64 MiB`, `p=4`, enabled via CSP `'wasm-unsafe-eval'`) and stored exclusively in browser **`IndexedDB`** (never in unencrypted browser storage or server tables).
-  * Encrypts all sensitive report fields—including the vulnerability title (`title_ciphertext`), description, reproduction steps, impact assessment, and PoC attachments (up to 25 MB uploaded directly to Cloudflare R2 via presigned URLs)—using multi-recipient OpenPGP Public-Key Encrypted Session Key (`PKESK`) packets addressed to all active **Program Defenders** (`N ≤ 10` via `PROGRAM_DEFENDER`), the **Offline Organization Master Recovery Key** (`recovery_public_key`), and the **Submitter/Guest Key**, guarded by optimistic concurrency counter `recipient_set_version`.
-  * Captures a server-readable neutral `operational_label` enum (`AUTHENTICATION_BYPASS`, `INJECTION_VULNERABILITY`, `INFORMATION_DISCLOSURE`, `CROSS_SITE_SCRIPTING`, `ACCESS_CONTROL_ISSUE`, `DENIAL_OF_SERVICE`, `OTHER`) so queue filtering and email/webhook notifications never leak vulnerability titles.
+  * Encrypts all sensitive report fields—including the vulnerability title (`title_ciphertext`), description, reproduction steps, impact assessment, and PoC attachments (up to 25 MiB uploaded directly to Cloudflare R2 via presigned URLs)—using multi-recipient OpenPGP Public-Key Encrypted Session Key (`PKESK`) packets addressed to all active **Program Defenders** (`N ≤ 10` via `PROGRAM_DEFENDER`), the **Offline Organization Master Recovery Key** (`recovery_public_key`), and the **Submitter/Guest Key**, guarded by optimistic concurrency counter `recipient_set_version`.
+  * Captures a server-readable neutral 8-category `operational_label` enum (`AUTHENTICATION_BYPASS`, `INJECTION_VULNERABILITY`, `INFORMATION_DISCLOSURE`, `CROSS_SITE_SCRIPTING`, `ACCESS_CONTROL_ISSUE`, `SERVER_SIDE_REQUEST_FORGERY`, `DENIAL_OF_SERVICE`, `OTHER`) so queue filtering and email/webhook notifications never leak vulnerability titles.
 * **Acceptance Criteria**: Direct inspection of PostgreSQL rows and Cloudflare R2 objects confirms sensitive titles, descriptions, and attachments exist exclusively as OpenPGP ciphertext blocks (`-----BEGIN PGP MESSAGE-----`).
 
 ---

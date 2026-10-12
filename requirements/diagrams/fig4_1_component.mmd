@@ -12,12 +12,12 @@ flowchart TD
     subgraph AppTier["Serverless Application Tier (Vercel Node.js 22 LTS)"]
         APIRoute["Next.js App Router API Gateway"]
         subgraph SecLayer["Access, Rate & Quota Governance"]
-            AuthMiddleware["DB Sessions, TOTP MFA & PROGRAM_DEFENDER RBAC"]
+            AuthMiddleware["DB Sessions (token_hash), TOTP MFA & PROGRAM_DEFENDER RBAC"]
             RateLimiter["Shared Rate Limiter & Cloudflare Turnstile"]
-            QuotaGuard["Storage & Intake Quota Guard (QUOTA_HELD / 90% / 100%)"]
+            QuotaGuard["Storage & Intake Quota Guard (90% Alert / 95% Hard Cap / 100% Ceiling)"]
         end
-        subgraph WorkLayer["Lifecycle, Verification & Billing Services"]
-            SLAEngine["Hourly SLA Cron & Abandonment Timeout Engine"]
+        subgraph WorkLayer["Lifecycle, Verification & Cleanup Services"]
+            SLAEngine["Hourly SLA Cron, Claim-Lease R2 Cleanup & Abandonment Engine"]
             GitHubClient["GitHub REST API v3 Client (Commit SHA & Branch Compare)"]
         end
         APIRoute --> AuthMiddleware
@@ -28,13 +28,13 @@ flowchart TD
     end
 
     subgraph PersistenceTier["Cloud Persistence & External Services Tier"]
-        PostgresDB[("Neon PostgreSQL 16 (Tenant RLS & Append-Only Audit Chain)")]
+        PostgresDB[("Neon PostgreSQL 16 (bbt_app_runtime / bbt_migrator, Forced RLS & Audit Chain)")]
         R2Storage[("Cloudflare R2 (Presigned Encrypted Blob Storage)")]
-        ExtServices["External APIs: GitHub v3, Resend/Postmark, DNS TXT, Lemon Squeezy MoR"]
+        ExtServices["External APIs: GitHub v3, Resend/Postmark, DNS TXT, Cloudflare Turnstile"]
     end
 
     CryptoEngine -- "OpenPGP Ciphertext + Neutral Label (HTTPS)" --> APIRoute
-    CryptoEngine -- "Direct Presigned Upload (<= 25 MB Ciphertext)" --> R2Storage
-    APIRoute -- "Prisma ORM (SET LOCAL app.current_tenant_id)" --> PostgresDB
-    QuotaGuard -- "Presign URL & Enforce Storage Cap" --> R2Storage
-    WorkLayer -- "Commit Check, Metadata Alerts, DNS & MoR Webhooks" --> ExtServices
+    CryptoEngine -- "Direct Presigned Upload (<= 25 MiB Ciphertext)" --> R2Storage
+    APIRoute -- "Prisma ORM (bbt_core.fn_enter_tenant_context)" --> PostgresDB
+    QuotaGuard -- "Presign URL & Enforce Pool Quotas" --> R2Storage
+    WorkLayer -- "Commit Check, Metadata Alerts, DNS & Turnstile Verification" --> ExtServices

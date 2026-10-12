@@ -15,29 +15,31 @@
 
 | Deliverable Document | Scope Covered | Google Drive Link |
 | :--- | :--- | :--- |
-| **Document 1: User Personas & Discovery Interviews** | Executive Context, 4 Operational Frictions, and 2 Detailed User Personas (Hunter & Defender) with Empathy Maps | [View User Personas & Discovery Doc (Google Drive)](https://docs.google.com/document/d/1drXMfAk4pIKc_9aMKZav62KfVZQ04--zT6VyuhDZKFA/edit?usp=drive_link) |
+| **Document 1: Provisional User Personas & Operational Discovery** | Executive Context, Secondary Research & Workflow Modeling of 4 Operational Frictions, and 2 Provisional Composite Personas (Hunter & Defender) with Empathy Maps | [View User Personas & Discovery Doc (Google Drive)](https://docs.google.com/document/d/1drXMfAk4pIKc_9aMKZav62KfVZQ04--zT6VyuhDZKFA/edit?usp=drive_link) |
 | **Document 2: Project Charter, Problem Statement & 5 Core MVP Features** | Project Charter, Scope Boundaries, Finalized 1-Paragraph Problem Statement, and 5 Core MVP Features | [View Project Charter & MVP Features Doc (Google Drive)](https://docs.google.com/document/d/1-N7Pv-3CO95XNWcvjSga6vf0vDKOvFKdPQ5l6uGpQJY/edit?usp=drive_link) |
 
 ---
 
-## Part 1: Target User Interviews — 4 Operational Frictions Identified
+## Part 1: Secondary Research & Workflow Modeling — 4 Operational Frictions Identified
 
-Structured discovery interviews across both sides of the vulnerability disclosure workflow—**independent ethical security researchers** who discover flaws and **startup engineering leads** who remediate them—identified **four structural operational frictions**:
+Secondary industry research, public vulnerability disclosure post-mortems, and standards-based workflow modeling (ISO/IEC 29147, ISO/IEC 30111, RFC 9116, RFC 9580, FIRST.org CVSS v3.1) across both sides of the vulnerability disclosure workflow—**independent ethical security researchers** who discover flaws and **startup engineering leads** who remediate them—identified **four structural operational frictions**:
 
-1. **Third-Party Server-Managed Plaintext Exposure (Zero-Knowledge Gap)**
-   * While established vulnerability platforms and source-code hosts offer free entry tiers (such as HackerOne Essential VDP or GitHub Security Advisories), they operate on a **server-managed model** where raw exploit descriptions and proof-of-concept (PoC) payloads are stored in **plaintext on third-party vendor servers** (accessible to vendor operations, cloud intermediaries, and support databases), or lock teams to a single repository forge rather than covering an organization's full web application and API surface.
+> **Methodological & Empirical Separation Note**: No live external target-user interview transcripts were completed prior to this baseline. The friction taxonomy below and the two personas in Part 2 (**Alex Rivera** and **Sarah Chen**) are explicitly documented as **secondary research and workflow modeling constructs (Provisional Composite Personas)**. Because the original Week 1 assignment specifies target-user interviews—and later Phase 4 peer usability testing (`SUS`) does not substitute for earlier target-user discovery interviews—live target-user interview sessions are tracked as a separate empirical validation item and will be recorded in a dedicated Empirical Interview Log when completed, keeping actual interview findings strictly distinct from modeling assumptions.
+
+1. **Provider-Managed Encryption & Key Control (Zero-Knowledge Gap)**
+   * While established vulnerability platforms and source-code hosts offer free entry tiers (such as HackerOne Essential VDP or GitHub Security Advisories), they rely on **provider-managed encryption** where the third-party platform vendor holds the decryption keys and can access submitted exploit descriptions and proof-of-concept (PoC) payloads on server infrastructure, or lock teams to a single repository forge rather than covering an organization's full web application and API surface.
 2. **Confidentiality Leaks in Ad-Hoc Email Channels (Insecure Transit & Storage)**
-   * Engineering teams unwilling to store unpatched zero-day exploits in plaintext on third-party vendor databases typically fall back to generic `security@company.com` email inboxes, shared issue trackers, or chat messages. Standard email (SMTP) provides no end-to-end cryptographic isolation—leaving live SQL injection payloads, authentication bypass steps, and customer data proofs sitting in plaintext across mail servers, shared inboxes, and employee ticket queues.
+   * Engineering teams unwilling to delegate zero-day exploit visibility to third-party platform operators typically fall back to generic `security@company.com` email inboxes, shared issue trackers, or chat messages. Unless senders manually configure PGP keys out-of-band, standard email (SMTP) lacks mandatory end-to-end encryption—leaving live SQL injection payloads, authentication bypass steps, and customer data proofs readable across mail servers, shared inboxes, and employee ticket queues.
 3. **Legal Ambiguity & Reporter Onboarding Friction (Missing Safe Harbor & Account Fatigue)**
-   * Without an official, cryptographically signed RFC 9116 `/.well-known/security.txt` policy defining explicit **Safe Harbor** terms (authorized testing scope and good-faith legal protection), ethical researchers face legal uncertainty under cybercrime statutes and frequently withhold reports. Furthermore, requiring mandatory account registration just to report a single vulnerability drives away one-off ethical reporters.
+   * Without an official, cryptographically signed RFC 9116 `/.well-known/security.txt` discovery file linking via `Policy:` to explicit **Safe Harbor** terms (authorized testing scope and good-faith legal protection), ethical researchers face legal uncertainty under cybercrime statutes and frequently withhold reports. Furthermore, requiring mandatory account registration just to report a single vulnerability drives away one-off ethical reporters.
 4. **The "Fix-and-Forget" Verification Gap (Unverified Ticket Closures)**
    * Both general issue trackers (Jira, Linear, GitHub Issues) and entry-level VDP tiers treat vulnerability remediation as an informal text status update ("Closed" or "Resolved"). Neither enforces verifiable linkage to a real Git commit SHA or configuration hash, nor requires an attested retest workflow with the reporting researcher—frequently resulting in superficial or incomplete patches that fix only a single symptom while leaving the underlying vulnerability exploitable.
 
 ---
 
-## Part 2: The 2 Detailed User Personas
+## Part 2: The 2 Provisional Composite User Personas (Workflow Modeling)
 
-### Persona 1: Alex Rivera — "The Hunter" (External Ethical Security Researcher)
+### Persona 1: Alex Rivera — "The Hunter" (Provisional Composite: External Ethical Security Researcher)
 
 * **Demographic & Role**: Age 23; Independent Security Researcher & Undergraduate Cybersecurity Student (2 years bug bounty experience, Top 5% university CTF competitor).
 * **Operating Environment & Tooling**: Kali Linux, macOS, Firefox Developer Edition, Burp Suite Professional, `ffuf`, `nuclei`, `curl`, Python (`requests`), GnuPG CLI.
@@ -47,7 +49,7 @@ Structured discovery interviews across both sides of the vulnerability disclosur
   3. **Objective Severity Scoring**: Receive deterministic, math-based severity evaluation (FIRST.org CVSS v3.1) rather than arguing over subjective ratings.
 * **Critical Pain Points & Frustrations**:
   1. **The Black Hole ("Ghosting")**: Submitting detailed vulnerability reports to `security@target.com` and receiving zero acknowledgment or status updates.
-  2. **Plaintext Payload Exposure**: Refusing to send live zero-day exploit scripts over unencrypted email or store them in plaintext on third-party servers.
+  2. **Plaintext Payload Exposure**: Refusing to send live zero-day exploit scripts over unencrypted email or upload them to third-party servers where vendor staff hold decryption keys.
   3. **Subjective Severity Downgrades**: Watching organizations arbitrarily downgrade high-impact vulnerabilities to "Low" without a transparent CVSS v3.1 vector breakdown.
   4. **Premature Closures Without Retest**: Discovering that a developer pushed an incomplete regex filter and closed the ticket without inviting Alex to verify whether the exploit was actually neutralized.
 * **Empathy Map (Alex Rivera)**:
@@ -58,7 +60,7 @@ Structured discovery interviews across both sides of the vulnerability disclosur
 
 ---
 
-### Persona 2: Sarah Chen — "The Defender" (Startup CTO / Security Triage Lead)
+### Persona 2: Sarah Chen — "The Defender" (Provisional Composite: Startup CTO / Security Triage Lead)
 
 * **Demographic & Role**: Age 31; CTO & Lead Full-Stack Engineer at a 7-person B2B FinTech SaaS startup (8 years full-stack engineering experience).
 * **Operating Environment & Tooling**: macOS, VS Code, TypeScript, Next.js, Neon PostgreSQL, GitHub Actions, Docker, Vercel, Linear.
@@ -69,10 +71,10 @@ Structured discovery interviews across both sides of the vulnerability disclosur
 * **Critical Pain Points & Frustrations**:
   1. **Scanner Spam Overload**: Wasting engineering hours filtering automated scanner noise and low-effort bounty begging in a shared `security@` email inbox.
   2. **CLI PGP Key-Management Friction**: Setting up command-line GnuPG keyrings and email plugins across a 7-person engineering team is error-prone; she needs key generation (`RFC 9580 v6 Curve25519`) and multi-recipient encryption/decryption handled transparently inside the browser.
-  3. **Vendor Database Breach Risk**: Refusing to store unpatched zero-day exploits in plaintext on third-party VDP vendor servers or internal bug trackers where a third-party breach would expose every open vulnerability.
+  3. **Vendor Database Breach Risk**: Refusing to delegate unpatched zero-day decryption keys to third-party VDP vendor servers or internal bug trackers where a third-party breach would expose every open vulnerability.
   4. **Uncertain Patch Effectiveness**: Merging a developer pull request without a structured retest workflow to confirm the vulnerability is truly eliminated in staging/production.
 * **Empathy Map (Sarah Chen)**:
-  * **Says**: *"Free VDP tiers store raw exploits in plaintext on vendor servers, while our `security@` email inbox is flooded with unencrypted scanner noise."*
+  * **Says**: *"Free VDP tiers hold decryption keys on vendor servers, while our `security@` email inbox is flooded with unencrypted scanner noise."*
   * **Thinks**: *"If a researcher reports a real flaw, I need it encrypted client-side for my designated defenders only, with an offline recovery key backup and proof that our Git commit fixed it."*
   * **Does**: Reviews GitHub pull requests; manages production deployments; answers B2B customer security audits; assigns triage tasks.
   * **Feels**: Protective of customer data and limited engineering time; relieved when reports arrive with deterministic CVSS vectors and structured retest states.
@@ -81,13 +83,13 @@ Structured discovery interviews across both sides of the vulnerability disclosur
 
 ## Part 3: Finalized 1-Paragraph Problem Statement
 
-> **While established vulnerability platforms and source-code hosts offer free entry tiers (such as HackerOne Essential VDP or GitHub Security Advisories), they operate on a server-managed model where sensitive exploit payloads are stored in plaintext on third-party vendor infrastructure, or are locked to single-forge repository ecosystems. Teams unwilling to delegate plaintext zero-day access to external vendors typically fall back to ad-hoc communication channels (email, issue trackers, social media DMs), exposing exploit reproduction steps across unencrypted mail servers and creating legal ambiguity due to missing RFC 9116 Safe Harbor policies. Furthermore, existing issue trackers and entry-level VDP tiers treat vulnerability resolution as an informal status change ("Closed" or "Resolved"), creating a "fix-and-forget" verification gap where patches are deployed without verifiable Git commit linkage or attested researcher retesting. BugBountyTrack resolves these gaps by delivering a lightweight, multi-tenant Vulnerability Disclosure Platform (VDP) that automates signed RFC 9116 `security.txt` policy generation, enforces zero-knowledge client-side OpenPGP exploit payload encryption (RFC 9580 v6 Curve25519), provides deterministic CVSS 3.1 scoring, and governs remediation through an evidence-based, Git-linked retest state machine.**
+> **While established vulnerability platforms and source-code hosts offer free entry tiers (such as HackerOne Essential VDP or GitHub Security Advisories), they rely on provider-managed encryption where the platform vendor holds the decryption keys and can access submitted exploit payloads on server infrastructure, or are locked to single-forge repository ecosystems. Teams unwilling to delegate zero-day exploit visibility to third-party platform operators typically fall back to ad-hoc communication channels (email, issue trackers, social media DMs), where—unless senders manually configure PGP—exploit reproduction steps traverse mail servers and shared inboxes without end-to-end encryption, while missing RFC 9116 `security.txt` discovery files and hosted Safe Harbor policy terms leave researchers in legal ambiguity. Furthermore, existing issue trackers and entry-level VDP tiers treat vulnerability resolution as an informal status change ("Closed" or "Resolved"), creating a "fix-and-forget" verification gap where patches are deployed without verifiable Git commit linkage or attested researcher retesting. BugBountyTrack resolves these gaps by delivering a lightweight, multi-tenant Vulnerability Disclosure Platform (VDP) that automates signed RFC 9116 `security.txt` discovery linked to hosted Safe Harbor terms, enforces zero-knowledge client-side OpenPGP exploit payload encryption (RFC 9580 v6 Curve25519), provides deterministic CVSS 3.1 scoring, and governs remediation through an evidence-based, Git-linked retest state machine.**
 
 ---
 
 ## Part 4: The 5 Core MVP Features
 
-These five features directly address the four operational frictions identified during target user discovery and define the core Minimum Viable Product (MVP) scope:
+These five features directly address the four operational frictions identified through secondary research and workflow modeling and define the core Minimum Viable Product (MVP) scope:
 
 1. **Hosted RFC 9116 `security.txt` & Safe Harbor Policy Generator (`FR-2`)**
    * **What It Does**: Generates a standards-compliant RFC 9116 disclosure policy (`Contact`, `Expires`, `Encryption`, `Policy`, `Preferred-Languages`, `Canonical`) and Disclose.io-aligned Safe Harbor scope definition after automated DNS TXT domain ownership verification (`_bbt-challenge.<domain>`).
