@@ -435,9 +435,12 @@ with open(os.path.join(PROJECT_DIR, 'PROJECT_SUMMARY.md'), 'r', encoding='utf-8'
     proj_sum = f.read()
 with open(os.path.join(PROJECT_DIR, 'README.md'), 'r', encoding='utf-8') as f:
     readme_txt = f.read()
+with open(os.path.join(SCRIPT_DIR, 'SRS_UNIVERSITY_SUBMISSION.md'), 'r', encoding='utf-8') as f:
+    uni_srs_txt = f.read()
 
 hygiene_files = [
     ('SRS.md', srs),
+    ('SRS_UNIVERSITY_SUBMISSION.md', uni_srs_txt),
     ('BRD.md', brd_full),
     ('WBS.md', wbs),
     ('KEY_MANAGEMENT.md', km),

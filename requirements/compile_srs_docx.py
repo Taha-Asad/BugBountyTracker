@@ -305,243 +305,281 @@ section_diagram_map = {
     "4.5 ": "rId204",
 }
 
-lines = md_text.splitlines()
-body_parts = []
-i = 0
-in_code_block = False
-code_block_lang = ""
-code_block_lines = []
-current_section_prefix = None
-inserted_diagrams = set()
+png_basename_to_rid = {
+    "fig4_2_usecase.png": "rId201",
+    "fig4_3_seq_submission.png": "rId202",
+    "fig4_4_seq_decryption.png": "rId203",
+    "fig4_5_statemachine.png": "rId204",
+}
 
-while i < len(lines):
-    line = lines[i]
-    sline = line.strip()
 
-    # Handle fenced code blocks
-    if sline.startswith("```"):
-        if not in_code_block:
-            in_code_block = True
-            code_block_lang = sline[3:].strip().lower()
-            code_block_lines = []
-        else:
-            in_code_block = False
-            if code_block_lang == "mermaid":
-                # Replace mermaid block with its corresponding rendered PNG diagram
-                if (
-                    current_section_prefix
-                    and current_section_prefix in section_diagram_map
-                ):
-                    rid = section_diagram_map[current_section_prefix]
-                    if rid not in inserted_diagrams:
-                        _, png_path, doc_id, d_name = diagram_files[rid]
-                        body_parts.append(make_image_p(rid, doc_id, d_name, png_path))
-                        inserted_diagrams.add(rid)
+def compile_markdown_to_docx(md_source_path, target_docx_path, resources_docx_path):
+    with open(md_source_path, "r", encoding="utf-8") as f:
+        source_md_text = f.read()
+
+    lines = source_md_text.splitlines()
+    body_parts = []
+    i = 0
+    in_code_block = False
+    code_block_lang = ""
+    code_block_lines = []
+    current_section_prefix = None
+    inserted_diagrams = set()
+
+    while i < len(lines):
+        line = lines[i]
+        sline = line.strip()
+
+        # Handle fenced code blocks
+        if sline.startswith("```"):
+            if not in_code_block:
+                in_code_block = True
+                code_block_lang = sline[3:].strip().lower()
+                code_block_lines = []
             else:
-                # Render non-mermaid code block (e.g., FR-7.1 state transition grammar)
-                for cline in code_block_lines:
-                    if cline.strip():
-                        body_parts.append(
-                            make_p(
-                                cline.strip(),
-                                sz=20,
-                                space_before=20,
-                                space_after=20,
-                                left_border=True,
-                                left_indent=360,
-                                line_spacing=240,
+                in_code_block = False
+                if code_block_lang == "mermaid":
+                    if (
+                        current_section_prefix
+                        and current_section_prefix in section_diagram_map
+                    ):
+                        rid = section_diagram_map[current_section_prefix]
+                        if rid not in inserted_diagrams:
+                            _, png_path, doc_id, d_name = diagram_files[rid]
+                            body_parts.append(make_image_p(rid, doc_id, d_name, png_path))
+                            inserted_diagrams.add(rid)
+                else:
+                    for cline in code_block_lines:
+                        if cline.strip():
+                            body_parts.append(
+                                make_p(
+                                    cline.strip(),
+                                    sz=20,
+                                    space_before=20,
+                                    space_after=20,
+                                    left_border=True,
+                                    left_indent=360,
+                                    line_spacing=240,
+                                )
                             )
-                        )
-        i += 1
-        continue
+            i += 1
+            continue
 
-    if in_code_block:
-        code_block_lines.append(line)
-        i += 1
-        continue
+        if in_code_block:
+            code_block_lines.append(line)
+            i += 1
+            continue
 
-    # Skip markdown image links since we embed the PNG directly via section_diagram_map
-    if sline.startswith("!["):
-        if current_section_prefix and current_section_prefix in section_diagram_map:
-            rid = section_diagram_map[current_section_prefix]
-            if rid not in inserted_diagrams:
+        # Embed PNG diagram on markdown image links
+        if sline.startswith("!["):
+            rid = None
+            for bname, candidate_rid in png_basename_to_rid.items():
+                if bname in sline:
+                    rid = candidate_rid
+                    break
+            if not rid and current_section_prefix and current_section_prefix in section_diagram_map:
+                rid = section_diagram_map[current_section_prefix]
+            if rid and rid not in inserted_diagrams:
                 _, png_path, doc_id, d_name = diagram_files[rid]
                 body_parts.append(make_image_p(rid, doc_id, d_name, png_path))
                 inserted_diagrams.add(rid)
-        i += 1
-        continue
+            i += 1
+            continue
 
-    if not sline:
-        i += 1
-        continue
+        if not sline:
+            i += 1
+            continue
 
-    if sline == "---":
-        body_parts.append(make_hr_p())
-        i += 1
-        continue
+        if sline == "---":
+            body_parts.append(make_hr_p())
+            i += 1
+            continue
 
-    # Blockquotes
-    if sline.startswith(">"):
-        q_text = sline.lstrip(">").strip()
-        if q_text:
+        # Blockquotes
+        if sline.startswith(">"):
+            q_text = sline.lstrip(">").strip()
+            if q_text:
+                body_parts.append(
+                    make_p(
+                        q_text,
+                        italic=True,
+                        sz=21,
+                        space_before=40,
+                        space_after=40,
+                        left_border=True,
+                        left_indent=360,
+                    )
+                )
+            i += 1
+            continue
+
+        # Markdown Tables
+        if sline.startswith("|") and sline.endswith("|"):
+            table_lines = []
+            while (
+                i < len(lines)
+                and lines[i].strip().startswith("|")
+                and lines[i].strip().endswith("|")
+            ):
+                table_lines.append(lines[i].strip())
+                i += 1
+            parsed_rows = []
+            for tl in table_lines:
+                cells = [c.strip() for c in tl.strip("|").split("|")]
+                if all(re.match(r"^[:\-]+$", c) for c in cells if c):
+                    continue
+                parsed_rows.append(cells)
+            if parsed_rows:
+                body_parts.append(make_table(parsed_rows))
+            continue
+
+        # Headings
+        if sline.startswith("# "):
+            h_text = sline[2:].strip()
             body_parts.append(
                 make_p(
-                    q_text,
-                    italic=True,
-                    sz=21,
-                    space_before=40,
-                    space_after=40,
-                    left_border=True,
-                    left_indent=360,
+                    h_text,
+                    bold=True,
+                    sz=32,
+                    space_before=120,
+                    space_after=120,
+                    jc="center",
+                    keep_next=True,
+                    bottom_border=True,
                 )
             )
-        i += 1
-        continue
-
-    # Markdown Tables
-    if sline.startswith("|") and sline.endswith("|"):
-        table_lines = []
-        while (
-            i < len(lines)
-            and lines[i].strip().startswith("|")
-            and lines[i].strip().endswith("|")
-        ):
-            table_lines.append(lines[i].strip())
             i += 1
-        parsed_rows = []
-        for tl in table_lines:
-            cells = [c.strip() for c in tl.strip("|").split("|")]
-            if all(re.match(r"^[:\-]+$", c) for c in cells if c):
-                continue
-            parsed_rows.append(cells)
-        if parsed_rows:
-            body_parts.append(make_table(parsed_rows))
-        continue
+            continue
 
-    # Headings
-    if sline.startswith("# "):
-        h_text = sline[2:].strip()
-        body_parts.append(
-            make_p(
-                h_text,
-                bold=True,
-                sz=32,
-                space_before=120,
-                space_after=120,
-                jc="center",
-                keep_next=True,
-                bottom_border=True,
+        if sline.startswith("## "):
+            h_text = sline[3:].strip()
+            body_parts.append(
+                make_p(
+                    h_text,
+                    bold=True,
+                    sz=28,
+                    space_before=240,
+                    space_after=100,
+                    keep_next=True,
+                    bottom_border=True,
+                )
             )
-        )
-        i += 1
-        continue
+            i += 1
+            continue
 
-    if sline.startswith("## "):
-        h_text = sline[3:].strip()
-        body_parts.append(
-            make_p(
-                h_text,
-                bold=True,
-                sz=28,
-                space_before=240,
-                space_after=100,
-                keep_next=True,
-                bottom_border=True,
+        if sline.startswith("### "):
+            h_text = sline[4:].strip()
+            current_section_prefix = None
+            for prefix in section_diagram_map:
+                if h_text.startswith(prefix):
+                    current_section_prefix = prefix
+                    break
+            body_parts.append(
+                make_p(
+                    h_text,
+                    bold=True,
+                    sz=24,
+                    space_before=180,
+                    space_after=80,
+                    keep_next=True,
+                )
             )
-        )
-        i += 1
-        continue
+            i += 1
+            continue
 
-    if sline.startswith("### "):
-        h_text = sline[4:].strip()
-        current_section_prefix = None
-        for prefix in section_diagram_map:
-            if h_text.startswith(prefix):
-                current_section_prefix = prefix
-                break
-        body_parts.append(
-            make_p(
-                h_text,
-                bold=True,
-                sz=24,
-                space_before=180,
-                space_after=80,
-                keep_next=True,
+        if sline.startswith("#### "):
+            h_text = sline[5:].strip()
+            body_parts.append(
+                make_p(
+                    h_text,
+                    bold=True,
+                    sz=22,
+                    space_before=140,
+                    space_after=60,
+                    keep_next=True,
+                )
             )
-        )
-        i += 1
-        continue
+            i += 1
+            continue
 
-    if sline.startswith("#### "):
-        h_text = sline[5:].strip()
-        body_parts.append(
-            make_p(
-                h_text,
-                bold=True,
-                sz=22,
-                space_before=140,
-                space_after=60,
-                keep_next=True,
+        # Bullet points
+        if sline.startswith("* ") or sline.startswith("- ") or sline.startswith("• "):
+            b_text = sline[2:].strip()
+            indent = 720 if line.startswith("  ") or line.startswith("\t") else 360
+            bullet_char = "◦  " if indent > 360 else "•  "
+            body_parts.append(
+                make_p(
+                    f"{bullet_char}{b_text}",
+                    sz=22,
+                    space_before=30,
+                    space_after=30,
+                    left_indent=indent,
+                )
             )
-        )
-        i += 1
-        continue
+            i += 1
+            continue
 
-    # Bullet points
-    if sline.startswith("* ") or sline.startswith("- ") or sline.startswith("• "):
-        b_text = sline[2:].strip()
-        indent = 720 if line.startswith("  ") or line.startswith("\t") else 360
-        bullet_char = "◦  " if indent > 360 else "•  "
-        body_parts.append(
-            make_p(
-                f"{bullet_char}{b_text}",
-                sz=22,
-                space_before=30,
-                space_after=30,
-                left_indent=indent,
+        # Numbered lists
+        if re.match(r"^\d+\.\s+", sline):
+            indent = 720 if line.startswith("  ") or line.startswith("\t") else 360
+            body_parts.append(
+                make_p(
+                    sline,
+                    sz=22,
+                    space_before=30,
+                    space_after=30,
+                    left_indent=indent,
+                )
             )
-        )
+            i += 1
+            continue
+
+        # Standard Paragraph
+        body_parts.append(make_p(sline, sz=22, space_before=60, space_after=80))
         i += 1
-        continue
 
-    # Numbered lists
-    if re.match(r"^\d+\.\s+", sline):
-        indent = 720 if line.startswith("  ") or line.startswith("\t") else 360
-        body_parts.append(
-            make_p(
-                sline,
-                sz=22,
-                space_before=30,
-                space_after=30,
-                left_indent=indent,
-            )
-        )
-        i += 1
-        continue
+    print(
+        f"[{os.path.basename(md_source_path)}] Parsed {len(lines)} lines into {len(body_parts)} body elements; diagrams: {sorted(list(inserted_diagrams))}"
+    )
 
-    # Standard Paragraph
-    body_parts.append(make_p(sline, sz=22, space_before=60, space_after=80))
-    i += 1
+    sectPr_xml = (
+        "<w:sectPr>"
+        '<w:headerReference w:type="default" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="rId1"/>'
+        '<w:footerReference w:type="default" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="rId2"/>'
+        '<w:pgSz w:w="12240" w:h="15840"/>'
+        '<w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/>'
+        "</w:sectPr>"
+    )
 
-print(f"Parsed {len(lines)} lines into {len(body_parts)} body elements.")
-print(f"Inserted diagrams: {sorted(list(inserted_diagrams))}")
+    doc_xml = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+        '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '
+        'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">\n'
+        f'<w:body>{"".join(body_parts)}{sectPr_xml}</w:body>\n'
+        "</w:document>"
+    )
 
-sectPr_xml = (
-    "<w:sectPr>"
-    '<w:headerReference w:type="default" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="rId1"/>'
-    '<w:footerReference w:type="default" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="rId2"/>'
-    '<w:pgSz w:w="12240" w:h="15840"/>'
-    '<w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/>'
-    "</w:sectPr>"
-)
+    with zipfile.ZipFile(target_docx_path, "w", compression=zipfile.ZIP_DEFLATED) as zout:
+        zout.writestr("[Content_Types].xml", content_types_xml.encode("utf-8"))
+        zout.writestr("_rels/.rels", root_rels_xml.encode("utf-8"))
+        zout.writestr("word/document.xml", doc_xml.encode("utf-8"))
+        zout.writestr("word/_rels/document.xml.rels", doc_rels_xml.encode("utf-8"))
+        zout.writestr("word/styles.xml", styles_xml.encode("utf-8"))
+        zout.writestr("word/settings.xml", settings_xml.encode("utf-8"))
+        zout.writestr("word/header1.xml", header_xml.encode("utf-8"))
+        zout.writestr("word/footer1.xml", footer_xml.encode("utf-8"))
+        for rid, (zip_path, local_path, _, _) in diagram_files.items():
+            if os.path.exists(local_path):
+                with open(local_path, "rb") as img_f:
+                    zout.writestr(zip_path, img_f.read())
+            else:
+                raise FileNotFoundError(f"Missing diagram image: {local_path}")
 
-doc_xml = (
-    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-    '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '
-    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">\n'
-    f'<w:body>{"".join(body_parts)}{sectPr_xml}</w:body>\n'
-    "</w:document>"
-)
+    shutil.copy2(target_docx_path, resources_docx_path)
+    print(
+        f"Successfully generated {target_docx_path} ({os.path.getsize(target_docx_path)} bytes) and synchronized {resources_docx_path}"
+    )
+
 
 header_xml = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:hdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
@@ -682,26 +720,17 @@ doc_rels_xml = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <Relationship Id="rId204" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig4_5_statemachine.png"/>
 </Relationships>"""
 
-target_docx = os.path.join(SCRIPT_DIR, "SRS.docx")
-with zipfile.ZipFile(target_docx, "w", compression=zipfile.ZIP_DEFLATED) as zout:
-    zout.writestr("[Content_Types].xml", content_types_xml.encode("utf-8"))
-    zout.writestr("_rels/.rels", root_rels_xml.encode("utf-8"))
-    zout.writestr("word/document.xml", doc_xml.encode("utf-8"))
-    zout.writestr("word/_rels/document.xml.rels", doc_rels_xml.encode("utf-8"))
-    zout.writestr("word/styles.xml", styles_xml.encode("utf-8"))
-    zout.writestr("word/settings.xml", settings_xml.encode("utf-8"))
-    zout.writestr("word/header1.xml", header_xml.encode("utf-8"))
-    zout.writestr("word/footer1.xml", footer_xml.encode("utf-8"))
-    for rid, (zip_path, local_path, _, _) in diagram_files.items():
-        if os.path.exists(local_path):
-            with open(local_path, "rb") as img_f:
-                zout.writestr(zip_path, img_f.read())
-        else:
-            raise FileNotFoundError(f"Missing diagram image: {local_path}")
-
-resources_docx = os.path.join(PROJECT_DIR, "Resources", "SRS.docx")
-shutil.copy2(target_docx, resources_docx)
-
-print(
-    f"Successfully generated {target_docx} ({os.path.getsize(target_docx)} bytes) and synchronized {resources_docx}"
+compile_markdown_to_docx(
+    os.path.join(SCRIPT_DIR, "SRS.md"),
+    os.path.join(SCRIPT_DIR, "SRS.docx"),
+    os.path.join(PROJECT_DIR, "Resources", "SRS.docx"),
 )
+
+uni_md = os.path.join(SCRIPT_DIR, "SRS_UNIVERSITY_SUBMISSION.md")
+if os.path.exists(uni_md):
+    compile_markdown_to_docx(
+        uni_md,
+        os.path.join(SCRIPT_DIR, "SRS_UNIVERSITY_SUBMISSION.docx"),
+        os.path.join(PROJECT_DIR, "Resources", "SRS_UNIVERSITY_SUBMISSION.docx"),
+    )
+
