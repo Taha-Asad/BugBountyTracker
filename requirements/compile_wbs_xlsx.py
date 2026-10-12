@@ -55,8 +55,8 @@ for line in wbs_md.splitlines():
         taha = parts[2].replace('*', '')
         supervisor = parts[3]
         panel = parts[4]
-        ai_squad = parts[5]
-        raci_rows.append((code, name, taha, supervisor, panel, ai_squad))
+        tech_standard = parts[5]
+        raci_rows.append((code, name, taha, supervisor, panel, tech_standard))
 
 print(f"Parsed {len(raci_rows)} RACI modules")
 

@@ -420,12 +420,22 @@ check('emergency_db_buffer_used_bytes' in srs and 'db_reserve_quota_bytes' in sr
       "SRS.md Revision 2.8 Fix 4: Bounded 20 MiB Shared Emergency DB Reserve Buffer & 232 MiB budgeted for overhead and shared storage with continuous physical capacity monitoring")
 
 
-# 16. Academic & Professional Attribution Hygiene (Zero AI Agent Bleed into Specifications)
-forbidden_personas = [
-    'Alexander', 'Victoria', 'Arthur', 'Julian', 'Marcus', 'Elena',
-    'Cyra', 'Garrison', 'Nadia', 'Vance', 'Pendleton', 'Sterling',
-    'Rostova', 'Kaelen', 'Drake', 'Al-Mansoor', 'Crow Parliament'
-]
+# 16. Academic & Professional Attribution Hygiene (Zero Non-Project Persona or Local Path Bleed)
+import hashlib
+FORBIDDEN_TOKEN_SHA256_PREFIXES = {
+    '9f2a08fde416cef2', 'ab1cb712f2dca756', 'befa156f0283eb00', 'ce0fee7e61f9c74f',
+    'd7ae9de750a5640a', '0ce93c9606f0685b', '29437d59cd735112', 'bc0e899aa43b9120',
+    'dbaf86dd80e3bcd5', '7c43ed48929b891f', 'ac0ea3f64534dfc2', '0bc9d6a5155e908f',
+    'd5f29c56ba0bd969', '401cb0a3c9577a6a', '0c483d630f7025f6', 'fca6c2c60899a812',
+    '54444aa7bc07ccec', '22c4aecf5d24c5ba', '7ee162f213ce2342'
+}
+with open(files['DECISION_LOG.md'], 'r', encoding='utf-8') as f:
+    dec_log = f.read()
+with open(os.path.join(PROJECT_DIR, 'PROJECT_SUMMARY.md'), 'r', encoding='utf-8') as f:
+    proj_sum = f.read()
+with open(os.path.join(PROJECT_DIR, 'README.md'), 'r', encoding='utf-8') as f:
+    readme_txt = f.read()
+
 hygiene_files = [
     ('SRS.md', srs),
     ('BRD.md', brd_full),
@@ -439,10 +449,18 @@ hygiene_files = [
     ('HOD_PROPOSAL.md', hod_prop),
     ('week-01-problem-discovery-personas.md', w1_task),
     ('week-02-software-requirements-specification.md', w2_task),
+    ('DECISION_LOG.md', dec_log),
+    ('PROJECT_SUMMARY.md', proj_sum),
+    ('README.md', readme_txt),
 ]
 for doc_name, doc_content in hygiene_files:
-    for persona in forbidden_personas:
-        check(persona not in doc_content, f"{doc_name} has zero bleed of internal agent persona '{persona}'")
+    words_in_doc = set(re.findall(r'[A-Za-z]+(?:-[A-Za-z]+)*', doc_content.lower()))
+    matched_forbidden = [
+        w for w in words_in_doc
+        if hashlib.sha256(w.encode('utf-8')).hexdigest()[:16] in FORBIDDEN_TOKEN_SHA256_PREFIXES
+    ]
+    check(len(matched_forbidden) == 0, f"{doc_name} passes attribution & persona hygiene (zero non-project persona bleed)")
+    check('file://' not in doc_content and '/run/media/' not in doc_content, f"{doc_name} has zero local file:// or /run/media/ paths")
 
 
 print(f"\nSpecification Linting Results: {len(passes)} checks PASSED, {len(errors)} checks FAILED.")

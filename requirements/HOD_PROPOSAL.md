@@ -94,7 +94,7 @@ Client-side asymmetric cryptography is a mandatory architectural requirement to 
 
 * **Cryptographic Engine & Profile**: Implemented via a pinned `openpgp.js` library running in the client browser (`WebCrypto` / WASM), standardized on **RFC 9580 Version 6 Curve25519** (`Ed25519` signing + `X25519` encryption) with **64-character hexadecimal SHA-256 fingerprints**.
 * **Bounded Multi-Defender Recipient Scope**: Encrypted payloads and attachments are encrypted using multi-recipient Public-Key Encrypted Session Key (`PKESK`) packets addressed to:
-  1. All active **Program Defenders** ($N \le 10$ authorized via `PROGRAM_DEFENDER` for that program),
+  1. All active **Program Defenders** (`N <= 10` authorized via `PROGRAM_DEFENDER` for that program),
   2. The organization's **Offline Master Recovery Public Key** (for disaster recovery), and
   3. The **Submitter / Ephemeral Guest Public Key**.
   Optimistic concurrency checks (`recipient_set_version`) reject submissions encrypted against stale defender rosters (`HTTP 409 Conflict`).
@@ -104,7 +104,7 @@ Client-side asymmetric cryptography is a mandatory architectural requirement to 
 * **Evidence Preservation & Safe Rendering**: Proof-of-concept text is stored unmodified to preserve exploit integrity. Text is rendered safely after client decryption through an Abstract Syntax Tree (AST) parser with strict HTML escaping and zero remote image/beacon fetching.
 * **Key Lifecycle & Storage**: Private keys reside strictly on client devices inside **`IndexedDB`** encrypted via **Argon2id** passphrase derivation (`S2K` type `3`, `64 MiB` memory, `t=3`, `p=4`), or inside downloadable `.bbt-recovery.json` (v1) recovery bundles for guest reporters. Private keys are never stored in plaintext browser storage.
 
-*(Detailed key management protocols and rotation mechanisms are documented in [KEY_MANAGEMENT.md](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/architecture/KEY_MANAGEMENT.md)).*
+*(Detailed key management protocols and rotation mechanisms are documented in [KEY_MANAGEMENT.md](../architecture/KEY_MANAGEMENT.md)).*
 
 ---
 

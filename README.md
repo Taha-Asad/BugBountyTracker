@@ -83,18 +83,18 @@ projects/BugBountyTrack/
    - **Direct-to-R2 Encrypted Uploads**: Browser encrypts attachments up to 25 MB and uploads directly to Cloudflare R2 via presigned URLs (`/api/uploads/presign`), bypassing Vercel serverless 4.5 MB request body limits.
    - **Encrypted Titles & Neutral Enums**: Decoupled `title_ciphertext` (OpenPGP ciphertext) from a coarse `operational_label` enum (`AUTHENTICATION_BYPASS`, `INJECTION_VULNERABILITY`, etc.) to prevent sensitive vulnerability metadata leaks in notification emails and dashboards.
 2. **Zero-Friction Account-Less Guest Intake**:
-   - External security researchers can submit findings without account registration. The browser generates an ephemeral Curve25519 keypair and displays a high-entropy secret tracking URL (`/report/track/BBT-RPT-XXXX?token=<secret>`). Researchers can optionally register later to bind reports to their public profile.
+   - External security researchers can submit findings without account registration. The browser generates an ephemeral Curve25519 keypair and displays a high-entropy secret tracking URL (`/report/track/BBT-RPT-XXXX#token=<access_token>`). Researchers can optionally register later to bind reports to their public profile.
 3. **Evidence-Based Remediation & Attested Retest**:
    - Decouples fix declaration from verification via GitHub REST API v3 (`GET /repos/{owner}/{repo}/commits/{ref}`) across public and private repositories.
    - State machine with **3 separate, non-overlapping terminal branches** from `RETEST_PENDING`:
      - `VERIFIED_RESEARCHER`: Independent empirical verification by reporting researcher.
      - `VERIFIED_INTERNAL`: Internal reviewer certification with conflict-of-interest disclosure.
      - `CLOSED_UNVERIFIED_TIMEOUT`: Expired grace period (≥ 14 days) with recorded rationale (never counted as a passed retest).
-   - Expanded triage states: `RISK_ACCEPTED`, `REJECTED_SPAM`, `REJECTED_INVALID`, `DUPLICATE`, and `WITHDRAWN`.
+   - Expanded triage states: `RISK_ACCEPTED`, `REJECTED_SPAM`, `REJECTED_INVALID`, `DUPLICATE`, `WITHDRAWN`, and `CLOSED_INCOMPLETE`.
    - `RETEST_FAILED` loops back to `ACCEPTED` triage as a discrete audit event.
-   - **Tamper-Evident Audit Ledger**: All triage transitions recorded in an append-only log linked with SHA-256 `prev_hash` cryptographic chains.
+   - **Tamper-Evident Audit Ledger**: All triage transitions recorded in an append-only log linked with SHA-256 `prev_tenant_row_hash` and `prev_report_chain_hash` cryptographic chains.
 4. **Traceable CVSS 3.1 Scoring Engine**:
-   - Pure TypeScript calculation engine verified against 45 mathematically unique test vectors (30 real-world NVD CVEs with verified URLs + 15 mathematical boundary cases) documented in [`CVSS_TEST_FIXTURES.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/requirements/CVSS_TEST_FIXTURES.md).
+   - Pure TypeScript calculation engine verified against 45 mathematically unique test vectors (30 real-world NVD CVEs with verified URLs + 15 mathematical boundary cases) documented in [`requirements/CVSS_TEST_FIXTURES.md`](requirements/CVSS_TEST_FIXTURES.md).
    - Executable mathematical verification script (`requirements/verify_cvss_engine.py`) achieves 100% calculation parity against the FIRST.org specification.
 5. **Redacted Closure Evidence Exports**:
    - Generates sanitized PDF/JSON closure summaries capturing the timeline, verified commit hash, deployment environment, and retest attestations without raw exploit instructions. Available across all subscription tiers, including Team ($49/mo).

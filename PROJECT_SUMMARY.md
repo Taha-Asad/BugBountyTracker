@@ -104,10 +104,10 @@ PART B — Commercial Launch Extension (Weeks 13–18, 160h across Sprints 7–9
 
 | Document | Path | Description |
 | :--- | :--- | :--- |
-| **Academic Proposal** | [`requirements/HOD_PROPOSAL.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/requirements/HOD_PROPOSAL.md) | Formal 2–3 page document for HOD and supervisor review. |
-| **Key Architecture** | [`architecture/KEY_MANAGEMENT.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/architecture/KEY_MANAGEMENT.md) | Detailed technical specifications for OpenPGP key mechanics and trust boundaries. |
-| **Decision Log** | [`decisions/DECISION_LOG.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/decisions/DECISION_LOG.md) | Living register of confirmed decisions, assumptions, and deferred features. |
-| **Business Requirements** | [`requirements/BRD.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/requirements/BRD.md) | Certified commercial and business requirements specification. |
-| **Working SRS Draft** | [`requirements/SRS.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/requirements/SRS.md) | Detailed IEEE 830-1998 software requirements specification. |
-| **Work Breakdown Structure** | [`requirements/WBS.md`](file:///run/media/thefoolishcrow/New%20Volume/Obsidian/TheFallenCrow/projects/BugBountyTrack/requirements/WBS.md) | 18-week, 424-hour engineering plan across 9 Sprints and 38 work packages. |
+| **Academic Proposal** | [`requirements/HOD_PROPOSAL.md`](requirements/HOD_PROPOSAL.md) | Formal 2–3 page document for HOD and supervisor review. |
+| **Key Architecture** | [`architecture/KEY_MANAGEMENT.md`](architecture/KEY_MANAGEMENT.md) | Detailed technical specifications for OpenPGP key mechanics and trust boundaries. |
+| **Decision Log** | [`decisions/DECISION_LOG.md`](decisions/DECISION_LOG.md) | Living register of confirmed decisions, assumptions, and deferred features. |
+| **Business Requirements** | [`requirements/BRD.md`](requirements/BRD.md) | Certified commercial and business requirements specification. |
+| **Working SRS Draft** | [`requirements/SRS.md`](requirements/SRS.md) | Detailed IEEE 830-1998 software requirements specification (Revision 2.8). |
+| **Work Breakdown Structure** | [`requirements/WBS.md`](requirements/WBS.md) | 18-week, 424-hour engineering plan across 9 Sprints and 38 work packages. |
 

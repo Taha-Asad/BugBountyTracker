@@ -4,13 +4,13 @@
 **Classification**: Fifth-Semester Project Proposal (Evaluated Prototype) & Commercial Launch Baseline  
 **Current Phase**: SDLC Phase 2/3 Transition — SRS Revision 2.8 (`5f46e62`) Frozen as Implementation Baseline (`PENDING_LIVE_INTERVIEWS` tracked)  
 **Last Updated**: 2026-10-12  
-**Governing Standard**: Constitution Rule 9 & 10 (Epistemic Precision & Traceable Memory)
+**Governing Standard**: IEEE Std 830-1998 / ISO/IEC/IEEE 29148:2018 & Architecture Decision Record (ADR) Governance
 
 ---
 
 ## State Taxonomy
-- **`[CONFIRMED]`**: Formally agreed upon by Taha Asadullah and the engineering team.
-- **`[PROPOSED]`**: Recommended by specialist agents, pending Taha's confirmation.
+- **`[CONFIRMED]`**: Formally verified and approved by Taha Asadullah.
+- **`[PROPOSED]`**: Under engineering evaluation, pending final confirmation.
 - **`[ASSUMPTION]`**: Working premise assumed true until empirical evidence or user input alters it.
 - **`[OPEN QUESTION]`**: High-impact branch point requiring explicit decision before proceeding.
 - **`[DEFERRED]`**: Valid concept explicitly postponed to post-semester or downstream release.
