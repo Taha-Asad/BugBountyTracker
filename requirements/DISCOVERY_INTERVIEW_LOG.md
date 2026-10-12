@@ -10,8 +10,8 @@
 | **Project Title** | **BugBountyTrack — Private Bug Bounty & Vulnerability Disclosure Platform** |
 | **Student Author** | Taha Asadullah (Roll No: `24-ST-013`, Section: `SET-B`) |
 | **Academic Supervisor** | Sir Umar Hayat (Assistant Professor, PTUT Lahore) |
-| **Document Version** | `Revision 2.7` (Empirical Discovery Tracking Ledger) |
-| **Current Empirical Status** | **`PENDING_LIVE_INTERVIEWS` (`0` Live Target-User Interviews Recorded to Date)** |
+| **Document Version** | `Revision 2.8` (Empirical Discovery Tracking Ledger) |
+| **Current Empirical Status** | **`PENDING_LIVE_INTERVIEWS` (`0` Live Target-User Interviews Recorded to Date; Target: `>= 4` Participants [`>= 2` Cohort A + `>= 2` Cohort B])** |
 | **Last Updated** | October 12, 2026 |
 
 ---
@@ -23,22 +23,33 @@ This document is the canonical repository ledger referenced by `SRS.md` (`Sectio
 1. **Secondary Research & Workflow Modeling (`COMPLETED — PROVISIONAL BASELINE`)**:
    * The four operational frictions (`FRC-01: Provider-Managed Encryption`, `FRC-02: Insecure Ad-Hoc Email Channels`, `FRC-03: Legal Ambiguity & Registration Friction`, and `FRC-04: The "Fix-and-Forget" Verification Gap`) and the two target-user personas (**Alex Rivera — "The Hunter"** and **Sarah Chen — "The Defender"**) documented in `WEEK_1_DISCOVERY_REPORT.md`, `WEEK_1_PART_A_USER_PERSONAS.md`, and `SRS.md` are **Provisional Composite Personas** derived from secondary industry research, public vulnerability disclosure post-mortems, and international standards analysis (`ISO/IEC 29147:2018`, `ISO/IEC 30111:2019`, `IETF RFC 9116`, `IETF RFC 9580`, and `FIRST.org CVSS v3.1`).
    * **Zero live human interview quotes, transcripts, or survey statistics have been fabricated or retrofitted into those documents.**
-2. **Live Target-User Discovery Interviews (`TRACKED IN THIS LEDGER — PENDING EXECUTION`)**:
-   * Because the original Week 1 Problem Discovery rubric specifies interviewing target users (ethical security researchers and small-team engineering leads) to validate real-world workflow pain points, this file (`requirements/DISCOVERY_INTERVIEW_LOG.md`) provides the structured interview protocol, consent boundary, and empirical recording ledger.
-   * Until live human interview sessions are completed and logged in **Section 4** below, all personas in the repository remain explicitly labelled **Provisional Composite Personas**.
-3. **Phase 4 Peer Usability & Accessibility Evaluation (`SCHEDULED FOR GATE 4 / WBS WP-5.3`)**:
+2. **Live Target-User Discovery Interviews (`PENDING_LIVE_INTERVIEWS` — Target `>= 4` Participants Across Cohorts A & B)**:
+   * Because the original Week 1 Problem Discovery rubric specifies interviewing target users (ethical security researchers and small-team engineering leads) to validate real-world workflow pain points, this file (`requirements/DISCOVERY_INTERVIEW_LOG.md`) provides the synchronized sampling criteria (`>= 4` participants: `>= 2` Cohort A + `>= 2` Cohort B), **Evidence Tiering (`Tier 1 Primary Evidence` vs. `Tier 2 Supplementary Evidence`)**, **Two-Stage Non-Leading Interview Script** (asking about actual past workflows and problems first before probing proposed features), consent boundary, and empirical recording ledger.
+   * Until live human interview sessions are completed and logged in **Section 4** below, both `SRS.md` (`Section 1.4.2`) and this ledger carry the synchronized status **`PENDING_LIVE_INTERVIEWS`** and all personas remain explicitly labelled **Provisional Composite Personas**.
+3. **Phase 4 Peer Usability & Accessibility Evaluation (`SCHEDULED FOR GATE 4 / WBS WP-6.2`)**:
    * Later System Usability Scale (`SUS >= 75.0`, `NFR-04`) evaluation with 3–5 computer science / cybersecurity peers tests the **implemented user interface (`SCR-01` to `SCR-12`)** and does **not** substitute for upstream target-user problem discovery interviews.
 
 ---
 
-## 2. Target-User Sampling Criteria & Ethical Consent Protocol
+## 2. Target-User Sampling Criteria, Evidence Tiering & Ethical Consent Protocol
 
-### 2.1 Target Participant Cohorts
+### 2.1 Target Participant Cohorts & Evidence Tiering (`Tier 1 Primary` vs. `Tier 2 Supplementary`)
 
-| Cohort ID | Target Archetype | Inclusion Criteria | Target Sample Size | Current Completed Count |
+To prevent academic or competition-only experience from being conflated with production vulnerability disclosure and triage workflows, every interviewed participant is classified into one of two explicit evidence tiers (**at least one `Tier 1 Primary Evidence` participant is required in each cohort**):
+
+* **Tier 1 — Primary Empirical Evidence (`Production Disclosure / Triage Experience`)**:
+  * **Cohort A (`HUNTER` — Tier 1)**: External security researcher, penetration tester, or bug finder who has submitted at least one real-world vulnerability report or coordinated disclosure to an external organization, vendor, or public/private VDP/bounty program.
+  * **Cohort B (`DEFENDER` — Tier 1)**: CTO, engineering lead, or AppSec/DevSecOps triager responsible for receiving, triaging, or shipping security patches for externally reported vulnerabilities in a production software team (`5–50` developers).
+* **Tier 2 — Supplementary Empirical Evidence (`Adjacent / Academic / CTF Experience`)**:
+  * **Cohort A (`HUNTER` — Tier 2)**: University cybersecurity / Capture-The-Flag (CTF) practitioner with exploit development experience who has not yet submitted a live external vulnerability report to a vendor.
+  * **Cohort B (`DEFENDER` — Tier 2)**: University lab infrastructure lead or capstone team lead managing shared multi-developer repositories and deployments without prior external VDP triage history.
+  * *Methodological Rule*: **Tier 2 observations are recorded strictly as supplementary usability and mental-model feedback** and may not be cited on their own as validation of production industry disclosure/triage friction without corroborating Tier 1 evidence.
+
+| Cohort ID | Target Archetype | Evidence Tier Requirement | Target Sample Size | Current Completed Count |
 | :--- | :--- | :--- | :---: | :---: |
-| **Cohort A (`HUNTER`)** | External Ethical Security Researcher / Bug Finder | At least 6 months of practical vulnerability research, bug bounty participation, CTF competition experience, or responsible disclosure reporting to real web/API targets. | `>= 2` Participants | `0 / 2` (`PENDING`) |
-| **Cohort B (`DEFENDER`)** | Small-Team Engineering Lead / Startup CTO / AppSec Triager | Responsible for production deployment, repository governance, or security triage in a software engineering team of `5–50` developers (or university capstone/lab production infrastructure lead). | `>= 2` Participants | `0 / 2` (`PENDING`) |
+| **Cohort A (`HUNTER`)** | External Ethical Security Researcher / Bug Finder | **`>= 1` Tier 1 Primary** (real external vulnerability disclosure experience); `<= 1` Tier 2 Supplementary (CTF/lab researcher) | `>= 2` Participants | `0 / 2` (`PENDING_LIVE_INTERVIEWS`) |
+| **Cohort B (`DEFENDER`)** | Small-Team Engineering Lead / Startup CTO / AppSec Triager | **`>= 1` Tier 1 Primary** (production software team security triage/deployment lead); `<= 1` Tier 2 Supplementary (academic/lab infra lead) | `>= 2` Participants | `0 / 2` (`PENDING_LIVE_INTERVIEWS`) |
+| **Total Sample** | Combined Hunter + Defender Discovery Sample | Synchronized with `SRS.md` (`Section 1.4.2`) | **`>= 4` Participants** | **`0 / 4` (`PENDING_LIVE_INTERVIEWS`)** |
 
 ### 2.2 Ethical Interview & Data Privacy Protocol
 
@@ -48,98 +59,123 @@ This document is the canonical repository ledger referenced by `SRS.md` (`Sectio
 
 ---
 
-## 3. Semi-Structured Discovery Interview Guide
+## 3. Two-Stage Non-Leading Discovery Interview Guide
+
+> **Methodological Rule (Non-Leading Sequence)**: Every interview session is divided into two sequential stages. **Stage 1 must be completed in full before any proposed `BugBountyTrack` design concept is mentioned**, ensuring that participants describe their actual past behavior and pain points without being led toward the project's architecture. **Stage 2** is asked only after Stage 1 concludes, to test whether the proposed mechanisms introduce new usability friction.
 
 ### 3.1 Cohort A Interview Script — External Security Researchers ("Hunters")
 
-1. **Current Disclosure Channel Experience (`FRC-01`, `FRC-02`)**:
-   * *"Walk me through the last time you discovered a security flaw in an independent web application or SaaS product that was not on a paid enterprise bounty program. How did you locate their contact channel, and how did you send the proof-of-concept (PoC)?"*
-   * *"Have you ever hesitated to send a raw exploit payload over standard email (`security@domain.com`) or a web form? What were your specific concerns regarding plaintext storage or third-party platform visibility?"*
-2. **Discovery Policy & Legal Safe Harbor (`FRC-03`)**:
-   * *"Before testing or reporting a flaw, do you check for `/.well-known/security.txt` (RFC 9116)? Which fields or legal assurances (such as Safe Harbor authorization and explicit `IN_SCOPE` / `OUT_OF_SCOPE` tables) determine whether you proceed or walk away?"*
-3. **Account Registration vs. Account-Less Guest Reporting (`FRC-03`, `FR-1.6`)**:
-   * *"When reporting a one-off vulnerability to a startup's self-hosted portal, how do you react if the portal requires full account registration before you can submit? If the portal offered an account-less submission with a downloadable encrypted recovery file (`.bbt-recovery.json`), would you use it, and what usability pitfalls would worry you?"*
-4. **Triage Communication, Severity Scoring & Patch Retesting (`FRC-04`, `FR-4`, `FR-6`, `FR-7`)**:
-   * *"After submitting a report, what is the most common breakdown you experience during triage and severity assessment? Have you seen a vendor close a ticket as 'Fixed' when the underlying bug was still exploitable? What evidence (e.g., CVSS 3.1 metric breakdown, Git commit SHA, deployed environment, retest prompt) would give you confidence that the fix is real?"*
+#### Stage 1 — Actual Past Behavior & Unprompted Problem Discovery (Asked First, Zero Mention of Proposed Features)
+
+1. **Past Disclosure Channel & PoC Handling (`FRC-01`, `FRC-02`)**:
+   * *"Think back to the last time you found a security bug in a web application or API that was not on a major paid bug bounty platform. Walk me step-by-step through how you found out who to contact and how you sent the technical details."*
+   * *"When you had to send a working proof-of-concept (PoC), screenshots, or exploit steps, what channel did you use, and did anything about how that data was transmitted or stored concern you?"*
+2. **Policy Discovery & Decision to Report (`FRC-03`)**:
+   * *"Before testing or reporting a flaw to an independent company, what information do you look for on their website or domain? Have you ever decided not to report a valid bug you found—and if so, what caused you to walk away?"*
+3. **Identity, Accounts & Follow-Up Tracking (`FRC-03`)**:
+   * *"When you report a vulnerability to a company for the first time, do you prefer using a registered account, an alias, or reporting anonymously? How have you kept track of follow-up questions on reports you submitted in the past?"*
+4. **Past Triage Disputes & Fix Verification (`FRC-04`)**:
+   * *"Tell me about a time when a vendor disagreed with the severity of your report or told you a bug was fixed. How did they explain their reasoning, and how did you check whether the issue was actually resolved?"*
+
+#### Stage 2 — Proposed Feature & Usability Probe (Asked Only After Stage 1 Is Completed)
+
+5. **Probe A1 — Account-Less Submission & `.bbt-recovery.json` Recovery File (`FR-1.6`)**:
+   * *"Suppose a self-hosted disclosure portal lets you submit without creating an account by generating a passphrase-encrypted `.bbt-recovery.json` file in your browser so you can check updates later. Compared to how you track reports today, would you use that workflow, or what would annoy or worry you about managing that recovery file?"*
+6. **Probe A2 — Mandatory CVSS v3.1 Explanation & Deployment-Linked Retest (`FR-4.4`, `FR-6.1`–`FR-6.3`, `FR-7.2`)**:
+   * *"If a triage team scored your report using CVSS v3.1 and was required to share a written metric explanation alongside the target environment and Git commit SHA (or redacted config diff) when asking you to retest, which of those details would actually be useful to you, and which would feel unnecessary?"*
 
 ### 3.2 Cohort B Interview Script — Small-Team Engineering Leads ("Defenders")
 
-1. **Current Vulnerability Intake & Triage Workflow (`FRC-01`, `FRC-02`)**:
-   * *"How does your engineering team currently receive external vulnerability reports (e.g., `security@` email alias, GitHub Security Advisories, issue tracker, or third-party VDP)? Who has access to read incoming reports?"*
-   * *"If an external researcher emails a working SQL injection or authentication bypass proof-of-concept today, where does that payload end up stored (mail servers, Slack, Jira/Linear), and how do you restrict access to authorized engineers?"*
-2. **Cryptographic Key Management Ergonomics (`FRC-02`, `FR-3.1`–`FR-3.8`)**:
-   * *"Has your team ever published a PGP key for `security@`? If yes, what operational problems occurred with key rotation, team member onboarding/offboarding, or lost passphrases? If browser-side encryption handled multi-recipient key wrapping automatically with an offline Master Recovery Key backup, what friction would remain for your team?"*
-3. **Spam Filtering, SLA Deadlines & Quota Protection (`FRC-03`, `FR-5.4`, `FR-8.3`, `FR-8.4`)**:
-   * *"What proportion of external security messages you receive are low-effort scanner noise versus actionable reports? How do you track response deadlines so valid researchers are not accidentally ignored during busy sprint cycles?"*
-4. **Remediation Traceability & Customer Compliance Proof (`FRC-04`, `FR-6.1`–`FR-6.3`, `FR-7.7`)**:
-   * *"When a developer merges a security fix pull request, how do you verify that the commit reached the target branch/environment before telling the reporter it is resolved? Do enterprise customers or auditors ever ask for proof of how a reported vulnerability was handled without wanting to see the raw exploit?"*
+#### Stage 1 — Actual Past Behavior & Unprompted Problem Discovery (Asked First, Zero Mention of Proposed Features)
+
+1. **Current Intake Channels & Internal Access Control (`FRC-01`, `FRC-02`)**:
+   * *"Walk me through how your team currently receives external security reports or bug reports from outside your organization. Once a report arrives, where is it stored, and who in the company can view the raw details?"*
+   * *"What challenges, if any, has your team experienced with sensitive exploit details ending up in shared email inboxes, chat channels, or general issue trackers?"*
+2. **Past Experience with Encryption & Key Management (`FRC-02`)**:
+   * *"Has your team ever used PGP or another encryption tool for incoming security reports? If yes, what happened when team members joined, left, or changed laptops? If no, what kept you from adopting it?"*
+3. **Noise, Deadlines & Triage Workflow (`FRC-03`, `FRC-04`)**:
+   * *"When external security emails or reports come in, how do you separate low-value scanner noise from real issues, and how do you track whether someone on the team has replied to the reporter?"*
+4. **Patch Verification & External Audit Requests (`FRC-04`)**:
+   * *"Once an engineer writes a fix for a reported security issue, how do you currently confirm that the fix is deployed before closing the ticket? Have customers, partners, or auditors ever asked your team for evidence of how a vulnerability was resolved?"*
+
+#### Stage 2 — Proposed Feature & Usability Probe (Asked Only After Stage 1 Is Completed)
+
+5. **Probe B1 — Browser-Side Multi-Recipient OpenPGP & Offline Master Recovery Key (`FR-3.1`–`FR-3.8`)**:
+   * *"We are prototyping a workflow where reports are encrypted in the browser for authorized triage engineers' keys plus an offline Organization Master Recovery Key tested during onboarding. Where do you think a small engineering team would struggle with passphrase unlock, device changes, or offboarding in that setup?"*
+6. **Probe B2 — Git Commit / Config-Diff Binding & Redacted Closure Exports (`FR-6.1`–`FR-6.4`, `FR-7.7`)**:
+   * *"If the triage tool verified that a proposed fix commit SHA was merged into your target branch (or captured an encrypted configuration diff) before inviting the researcher to retest, and could export a signed, redacted closure summary, how would that fit—or conflict with—your team's release process?"*
 
 ---
 
-## 4. Empirical Interview Session Ledger (`0` Completed / `4` Planned Slots)
+## 4. Empirical Interview Session Ledger (`0` Completed / `>= 4` Planned Slots — `PENDING_LIVE_INTERVIEWS`)
 
-> **Ledger Integrity Note**: All interview slots below are currently marked **`[PENDING — NO LIVE INTERVIEW RECORDED YET]`**. As live target-user interviews are conducted by the Student Author (Taha Asadullah), each completed session will be populated with the date, participant role profile, verbatim/summarized observations, and hypothesis validation mapping.
+> **Ledger Integrity Note**: All interview slots below are currently marked **`PENDING_LIVE_INTERVIEWS`**. As live target-user interviews are conducted by the Student Author (Taha Asadullah), each completed session will be populated with the date, anonymized participant profile, **Evidence Tier (`Tier 1 Primary` vs. `Tier 2 Supplementary`)**, separate **Stage 1 (Past Behavior)** and **Stage 2 (Feature Probe)** notes, and hypothesis validation mapping.
 
 ### 4.1 Slot `INT-HUNTER-01` — External Ethical Security Researcher #1
 
 | Field | Empirical Record |
 | :--- | :--- |
 | **Session ID** | `INT-HUNTER-01` |
-| **Status** | **`[PENDING — NO LIVE INTERVIEW RECORDED YET]`** |
+| **Status** | **`PENDING_LIVE_INTERVIEWS` (`No live interview recorded yet`)** |
+| **Target Evidence Tier** | **`Tier 1 Primary Evidence`** *(External security researcher with real vulnerability disclosure reporting experience)* |
 | **Interview Date & Modality** | *Pending scheduling (In-person / Video call / Written structured interview)* |
-| **Participant Profile (Anonymized)** | *Pending participant recruitment (Target: Independent bug bounty researcher or university CTF security practitioner)* |
-| **Observed Current Disclosure Workflow** | *No empirical data recorded yet.* |
+| **Participant Profile (Anonymized)** | *Pending participant recruitment* |
+| **Stage 1 Notes (Unprompted Past Workflow & Pain Points)** | *No empirical data recorded yet.* |
+| **Stage 2 Notes (Proposed Feature & Usability Probe)** | *No empirical data recorded yet.* |
 | **Hypothesis Validation (`FRC-01`..`FRC-04`)** | *Pending empirical comparison against Provisional Persona 1 (Alex Rivera).* |
-| **Key Quotes / Concrete Friction Examples** | *None recorded yet.* |
-| **Resulting SRS / Design Adjustments** | *None yet — baseline remains governed by secondary research in `SRS.md` (`Revision 2.7`).* |
+| **Resulting SRS / Design Adjustments** | *None yet — baseline remains governed by secondary research in `SRS.md` (`Revision 2.8`).* |
 
 ### 4.2 Slot `INT-HUNTER-02` — External Ethical Security Researcher #2
 
 | Field | Empirical Record |
 | :--- | :--- |
 | **Session ID** | `INT-HUNTER-02` |
-| **Status** | **`[PENDING — NO LIVE INTERVIEW RECORDED YET]`** |
+| **Status** | **`PENDING_LIVE_INTERVIEWS` (`No live interview recorded yet`)** |
+| **Target Evidence Tier** | **`Tier 1 Primary Evidence`** *(or `Tier 2 Supplementary Evidence` if CTF/academic researcher)* |
 | **Interview Date & Modality** | *Pending scheduling (In-person / Video call / Written structured interview)* |
-| **Participant Profile (Anonymized)** | *Pending participant recruitment (Target: External application security researcher or penetration tester)* |
-| **Observed Current Disclosure Workflow** | *No empirical data recorded yet.* |
+| **Participant Profile (Anonymized)** | *Pending participant recruitment* |
+| **Stage 1 Notes (Unprompted Past Workflow & Pain Points)** | *No empirical data recorded yet.* |
+| **Stage 2 Notes (Proposed Feature & Usability Probe)** | *No empirical data recorded yet.* |
 | **Hypothesis Validation (`FRC-01`..`FRC-04`)** | *Pending empirical comparison against Provisional Persona 1 (Alex Rivera).* |
-| **Key Quotes / Concrete Friction Examples** | *None recorded yet.* |
-| **Resulting SRS / Design Adjustments** | *None yet — baseline remains governed by secondary research in `SRS.md` (`Revision 2.7`).* |
+| **Resulting SRS / Design Adjustments** | *None yet — baseline remains governed by secondary research in `SRS.md` (`Revision 2.8`).* |
 
 ### 4.3 Slot `INT-DEFENDER-01` — Small-Team Engineering Lead / Startup Triager #1
 
 | Field | Empirical Record |
 | :--- | :--- |
 | **Session ID** | `INT-DEFENDER-01` |
-| **Status** | **`[PENDING — NO LIVE INTERVIEW RECORDED YET]`** |
+| **Status** | **`PENDING_LIVE_INTERVIEWS` (`No live interview recorded yet`)** |
+| **Target Evidence Tier** | **`Tier 1 Primary Evidence`** *(CTO, Engineering Lead, or AppSec owner at a 5–50 developer production software team)* |
 | **Interview Date & Modality** | *Pending scheduling (In-person / Video call / Written structured interview)* |
-| **Participant Profile (Anonymized)** | *Pending participant recruitment (Target: CTO, Lead Engineer, or DevSecOps owner at a 5–50 developer software team)* |
-| **Observed Current Intake & Patch Workflow** | *No empirical data recorded yet.* |
+| **Participant Profile (Anonymized)** | *Pending participant recruitment* |
+| **Stage 1 Notes (Unprompted Past Workflow & Pain Points)** | *No empirical data recorded yet.* |
+| **Stage 2 Notes (Proposed Feature & Usability Probe)** | *No empirical data recorded yet.* |
 | **Hypothesis Validation (`FRC-01`..`FRC-04`)** | *Pending empirical comparison against Provisional Persona 2 (Sarah Chen).* |
-| **Key Quotes / Concrete Friction Examples** | *None recorded yet.* |
-| **Resulting SRS / Design Adjustments** | *None yet — baseline remains governed by secondary research in `SRS.md` (`Revision 2.7`).* |
+| **Resulting SRS / Design Adjustments** | *None yet — baseline remains governed by secondary research in `SRS.md` (`Revision 2.8`).* |
 
 ### 4.4 Slot `INT-DEFENDER-02` — Small-Team Engineering Lead / Startup Triager #2
 
 | Field | Empirical Record |
 | :--- | :--- |
 | **Session ID** | `INT-DEFENDER-02` |
-| **Status** | **`[PENDING — NO LIVE INTERVIEW RECORDED YET]`** |
+| **Status** | **`PENDING_LIVE_INTERVIEWS` (`No live interview recorded yet`)** |
+| **Target Evidence Tier** | **`Tier 1 Primary Evidence`** *(or `Tier 2 Supplementary Evidence` if university/lab infrastructure lead)* |
 | **Interview Date & Modality** | *Pending scheduling (In-person / Video call / Written structured interview)* |
-| **Participant Profile (Anonymized)** | *Pending participant recruitment (Target: Engineering Manager or Infrastructure/Security Lead maintaining web/API services)* |
-| **Observed Current Intake & Patch Workflow** | *No empirical data recorded yet.* |
+| **Participant Profile (Anonymized)** | *Pending participant recruitment* |
+| **Stage 1 Notes (Unprompted Past Workflow & Pain Points)** | *No empirical data recorded yet.* |
+| **Stage 2 Notes (Proposed Feature & Usability Probe)** | *No empirical data recorded yet.* |
 | **Hypothesis Validation (`FRC-01`..`FRC-04`)** | *Pending empirical comparison against Provisional Persona 2 (Sarah Chen).* |
-| **Key Quotes / Concrete Friction Examples** | *None recorded yet.* |
-| **Resulting SRS / Design Adjustments** | *None yet — baseline remains governed by secondary research in `SRS.md` (`Revision 2.7`).* |
+| **Resulting SRS / Design Adjustments** | *None yet — baseline remains governed by secondary research in `SRS.md` (`Revision 2.8`).* |
 
 ---
 
 ## 5. Traceability to Week 1 & Week 2 Requirements Baseline
 
-| Provisional Friction / Persona Construct | Secondary Research Source (`Completed`) | Empirical Interview Verification Slot (`Pending`) | Mapped SRS Requirements (`Revision 2.7`) |
+| Provisional Friction / Persona Construct | Secondary Research Source (`Completed`) | Empirical Interview Verification Slot (`PENDING_LIVE_INTERVIEWS`) | Mapped SRS Requirements (`Revision 2.8`) |
 | :--- | :--- | :--- | :--- |
-| **`FRC-01` & `FRC-02`: Provider-Managed Key Control & Plaintext Email Leaks** | `ISO/IEC 29147:2018` §6.2; `IETF RFC 9580` (OpenPGP v6); public VDP architecture analysis | `INT-HUNTER-01`, `INT-HUNTER-02`, `INT-DEFENDER-01`, `INT-DEFENDER-02` (Q1, Q2) | `FR-1.2`, `FR-3.1`–`FR-3.8`, `FR-5.1`–`FR-5.3` |
-| **`FRC-03`: Legal Ambiguity (`security.txt` / Safe Harbor) & Account Signup Friction** | `IETF RFC 9116`; Disclose.io Safe Harbor framework; OWASP VDP guidelines | `INT-HUNTER-01`, `INT-HUNTER-02` (Q2, Q3); `INT-DEFENDER-01`, `INT-DEFENDER-02` (Q3) | `FR-1.6a`–`FR-1.6f`, `FR-2.1`–`FR-2.5`, `FR-8.3` |
-| **`FRC-04`: Subjective Severity & "Fix-and-Forget" Unverified Closures** | `ISO/IEC 30111:2019` §7.4; `FIRST.org CVSS v3.1` Specification | `INT-HUNTER-01`, `INT-HUNTER-02` (Q4); `INT-DEFENDER-01`, `INT-DEFENDER-02` (Q4) | `FR-4.1`–`FR-4.4`, `FR-6.1`–`FR-6.4`, `FR-7.1`–`FR-7.7`, `FR-8.5` |
+| **`FRC-01` & `FRC-02`: Provider-Managed Key Control & Plaintext Email Leaks** | `ISO/IEC 29147:2018` §6.2; `IETF RFC 9580` (OpenPGP v6); public VDP architecture analysis | `INT-HUNTER-01`, `INT-HUNTER-02`, `INT-DEFENDER-01`, `INT-DEFENDER-02` (Stage 1 Q1–Q2; Stage 2 Probes) | `FR-1.2`, `FR-3.1`–`FR-3.8`, `FR-5.1`–`FR-5.3` |
+| **`FRC-03`: Legal Ambiguity (`security.txt` / Safe Harbor) & Account Signup Friction** | `IETF RFC 9116`; Disclose.io Safe Harbor framework; OWASP VDP guidelines | `INT-HUNTER-01`, `INT-HUNTER-02` (Stage 1 Q2–Q3; Probe A1); `INT-DEFENDER-01`, `INT-DEFENDER-02` (Stage 1 Q3) | `FR-1.6a`–`FR-1.6f`, `FR-2.1`–`FR-2.5`, `FR-8.3` |
+| **`FRC-04`: Subjective Severity & "Fix-and-Forget" Unverified Closures** | `ISO/IEC 30111:2019` §7.4; `FIRST.org CVSS v3.1` Specification | `INT-HUNTER-01`, `INT-HUNTER-02` (Stage 1 Q4; Probe A2); `INT-DEFENDER-01`, `INT-DEFENDER-02` (Stage 1 Q4; Probe B2) | `FR-4.1`–`FR-4.4`, `FR-6.1`–`FR-6.4`, `FR-7.1`–`FR-7.7`, `FR-8.5` |
 | **Provisional Persona 1: Alex Rivera ("The Hunter")** | `WEEK_1_PART_A_USER_PERSONAS.md` §4.1 | `INT-HUNTER-01`, `INT-HUNTER-02` | `UC-01`, `UC-04`, `UC-05` |
 | **Provisional Persona 2: Sarah Chen ("The Defender")** | `WEEK_1_PART_A_USER_PERSONAS.md` §4.2 | `INT-DEFENDER-01`, `INT-DEFENDER-02` | `UC-02`, `UC-03`, `UC-04`, `UC-06`, `UC-07` |
+

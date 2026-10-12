@@ -382,42 +382,42 @@ check('commitment_salts_json' in srs and 'bbt-commit-v1' in srs and 'fn_guest_fe
       "SRS.md Revision 2.4 defines explicit bbt-commit-v1 formula, commitment_salts_json persistence, and zero stale fn_guest_fetch_pubkey_and_rotate_token references")
 check('1. cluster_storage_state' in srs and 'openpgp-symenc-seipdv2' in km and 'rewrap-researcher-key' in km,
       "SRS.md enforces universal 6-table lock order and KEY_MANAGEMENT.md is synchronized with Revision 2.4")
-check('Revision 2.7' in srs and 'Revision 2.7' in w2_task and 'Revision 2.7' in srs_header_xml,
-      "SRS.md, week-02-software-requirements-specification.md, and SRS.docx header are updated to Revision 2.7")
+check('Revision 2.8' in srs and 'Revision 2.8' in w2_task and 'Revision 2.8' in srs_header_xml,
+      "SRS.md, week-02-software-requirements-specification.md, and SRS.docx header are updated to Revision 2.8")
 check('encrypted_guest_credentials_armored' in srs and 'encrypted_guest_credentials_armored' in km,
       "SRS.md and KEY_MANAGEMENT.md encrypt guest retry-cache tokens to guest_public_key (encrypted_guest_credentials_armored)")
 check('org_commitment' in srs and 'export_payload' in srs and 'Summary-to-Closure-Event' in srs,
-      "SRS.md Revision 2.7 defines org_commitment, export_payload JCS signature scope, and Summary-to-Closure-Event equality")
+      "SRS.md Revision 2.8 defines org_commitment, export_payload JCS signature scope, and Summary-to-Closure-Event equality")
 check('fn_cron_evaluate_overdue_deadlines' in srs and 'fn_cron_finalize_r2_deletions' in srs and 'DELETING' in srs,
-      "SRS.md Revision 2.7 specifies 3-phase non-blocking cron execution (DELETING -> DELETED)")
+      "SRS.md Revision 2.8 specifies 3-phase non-blocking cron execution (DELETING -> DELETED)")
 check('19.0 MiB' in srs and 'capacity_deadline_paused' in srs and '307,200 bytes' in srs and 'ORDER BY id ASC FOR UPDATE' in srs,
-      "SRS.md Revision 2.7 specifies 19.0 MiB + 1.0 MiB intake split, capacity_deadline_paused, 307,200-byte Priority-0 floor, and ORDER BY id ASC FOR UPDATE")
+      "SRS.md Revision 2.8 specifies 19.0 MiB + 1.0 MiB intake split, capacity_deadline_paused, 307,200-byte Priority-0 floor, and ORDER BY id ASC FOR UPDATE")
 check('claim_id' in srs and 'claim_expires_at' in srs and 'has_more_backlog' in srs and 'workflow_dispatch' in srs,
-      "SRS.md Revision 2.7: Claim-lease R2 cleanup recovery (claim_id, claim_expires_at) & unified backlog drain (has_more_backlog, workflow_dispatch)")
-check('fn_process_researcher_response_or_pause' in srs and 'SAVEPOINT sp_researcher_payload' in srs and 'CAPACITY_DEADLINE_PAUSE' in srs and 'fn_record_capacity_deadline_pause' not in srs and 'fn_record_capacity_deadline_pause' not in w2_task,
-      "SRS.md Revision 2.7 Fix 1 & 2: Atomic savepoint pause (fn_process_researcher_response_or_pause + CAPACITY_DEADLINE_PAUSE) under organizations->reports lock")
+      "SRS.md Revision 2.8: Claim-lease R2 cleanup recovery (claim_id, claim_expires_at) & unified backlog drain (has_more_backlog, workflow_dispatch)")
+check('fn_process_researcher_response_or_pause' in srs and 'SAVEPOINT sp_researcher_payload' not in srs and 'ROLLBACK TO SAVEPOINT' not in srs and 'SAVEPOINT sp_researcher_payload' not in w2_task and 'EXCEPTION WHEN SQLSTATE \'P0001\'' in srs and 'CAPACITY_DEADLINE_PAUSE' in srs and 'fn_record_capacity_deadline_pause' not in srs and 'fn_record_capacity_deadline_pause' not in w2_task,
+      "SRS.md Revision 2.8 Fix 1: Client-owned outer transaction + nested PL/pgSQL BEGIN...EXCEPTION WHEN SQLSTATE 'P0001' subtransaction pause (zero function-internal SAVEPOINT/COMMIT)")
 check('in-place fixed-width update' not in srs and 'delta_bytes == 0' not in srs and 'zero heap growth' not in srs and '53100' in srs and 'DATABASE_PHYSICAL_STORAGE_EXHAUSTED' in srs,
-      "SRS.md Revision 2.7 Fix 1: Zero false 'in-place fixed-width update / delta_bytes == 0 / zero heap growth' claims; distinguishes logical quota exemption from SQLSTATE 53100 (HTTP 503)")
-check('p_r2_claim_limit => 10' in srs and 'p_deadline_limit => 50' in srs and 'p_purge_limit => 200' in srs and '11,000 ms' in srs and 'FOR UPDATE SKIP LOCKED' in srs,
-      "SRS.md Revision 2.7 Fix 3: Internally consistent cron timing (10 R2 / 50 deadlines / 200 purge, 3 batches <= 8,000ms start, 11,000ms R2 abort + 4,000ms finalization buffer)")
+      "SRS.md Revision 2.8: Zero false 'in-place fixed-width update / delta_bytes == 0 / zero heap growth' claims; distinguishes logical quota exemption from SQLSTATE 53100 (HTTP 503)")
+check('p_r2_claim_limit => 10' in srs and 'p_deadline_limit => 50' in srs and 'p_purge_limit => 200' in srs and '11,000 ms' in srs and 'FOR UPDATE SKIP LOCKED' in srs and "lock_timeout = '250ms'" in srs and "statement_timeout = '800ms'" in srs and 'immediately after its own Phase 2' in srs,
+      "SRS.md Revision 2.8 Fix 2: Sequential per-batch Phase 1->2->3 finalization, 4,000ms reserved final-batch headroom, and enforceable DB timeouts (lock_timeout=250ms, statement_timeout=800ms)")
 with open(os.path.join(diag_dir, 'fig4_1_component.mmd'), 'r', encoding='utf-8') as f:
     fig4_1_mmd = f.read()
 with open(os.path.join(diag_dir, 'fig4_6_erd.mmd'), 'r', encoding='utf-8') as f:
     fig4_6_mmd = f.read()
 check('QUOTA_HELD' not in fig4_1_mmd and 'Lemon Squeezy' not in fig4_1_mmd and 'token_hash' in fig4_1_mmd,
-      "SRS.md Revision 2.7: fig4_1_component.mmd synchronized (zero QUOTA_HELD or Lemon Squeezy, includes token_hash & 90%/95%/100% quota guard)")
+      "SRS.md Revision 2.8: fig4_1_component.mmd synchronized (zero QUOTA_HELD or Lemon Squeezy, includes token_hash & 90%/95%/100% quota guard)")
 check('SUBSCRIPTION' not in fig4_6_mmd and 'lemon_squeezy' not in fig4_6_mmd and '15-State Lifecycle Enum' in fig4_6_mmd and '8-Category Neutral Enum' in fig4_6_mmd and 'REPORT_RECIPIENT' in fig4_6_mmd and 'CLUSTER_STORAGE_STATE' in fig4_6_mmd and 'claim_id' in fig4_6_mmd,
-      "SRS.md Revision 2.7: fig4_6_erd.mmd synchronized (15-state enum, 8-category label, REPORT_RECIPIENT, CLUSTER_STORAGE_STATE, claim_id, zero SUBSCRIPTION/lemon_squeezy)")
+      "SRS.md Revision 2.8: fig4_6_erd.mmd synchronized (15-state enum, 8-category label, REPORT_RECIPIENT, CLUSTER_STORAGE_STATE, claim_id, zero SUBSCRIPTION/lemon_squeezy)")
 with open(files['DISCOVERY_INTERVIEW_LOG.md'], 'r', encoding='utf-8') as f:
     disc_log = f.read()
-check('DISCOVERY_INTERVIEW_LOG.md' in srs and 'DISCOVERY_INTERVIEW_LOG.md' in w1_report and 'DISCOVERY_INTERVIEW_LOG.md' in w1_part_a and 'PENDING_LIVE_INTERVIEWS' in disc_log and 'Provisional Composite Personas' in disc_log,
-      "SRS.md Revision 2.7 Fix 4: DISCOVERY_INTERVIEW_LOG.md exists in repository and tracks PENDING_LIVE_INTERVIEWS separately from Provisional Composite Personas")
+check('DISCOVERY_INTERVIEW_LOG.md' in srs and 'DISCOVERY_INTERVIEW_LOG.md' in w1_report and 'DISCOVERY_INTERVIEW_LOG.md' in w1_part_a and 'PENDING_LIVE_INTERVIEWS' in disc_log and 'Provisional Composite Personas' in disc_log and 'Tier 1 Primary Evidence' in disc_log and 'Tier 1 Primary Evidence' in srs and 'Stage 1 — Actual Past Behavior' in disc_log,
+      "SRS.md Revision 2.8 Fix 3: DISCOVERY_INTERVIEW_LOG.md and SRS.md synchronized (PENDING_LIVE_INTERVIEWS, Tier 1 vs Tier 2 evidence, Two-Stage Non-Leading Interview Script)")
 check('closure_report_seq_no' in srs and 'closure_report_seq_no' in w2_task and 'report_chain[M]' in srs,
-      "SRS.md Revision 2.7: Post-closure audit events & closure_report_seq_no = M in Redacted Closure Evidence Export verification")
+      "SRS.md Revision 2.8: Post-closure audit events & closure_report_seq_no = M in Redacted Closure Evidence Export verification")
 check('160 KiB' in srs and '163,840 bytes' in srs and '192 KiB' not in srs and '192 KiB' not in w2_task,
-      "SRS.md Revision 2.7: Incompressible configuration snapshot ceiling <= 160 KiB (163,840 bytes) plaintext -> <= 256 KiB armored ciphertext")
-check('emergency_db_buffer_used_bytes' in srs and 'db_reserve_quota_bytes' in srs and '232 MiB' in srs,
-      "SRS.md Revision 2.7: Bounded 20 MiB Shared Emergency DB Reserve Buffer (emergency_db_buffer_used_bytes) & +2 MiB max tenant grant")
+      "SRS.md Revision 2.8: Incompressible configuration snapshot ceiling <= 160 KiB (163,840 bytes) plaintext -> <= 256 KiB armored ciphertext")
+check('emergency_db_buffer_used_bytes' in srs and 'db_reserve_quota_bytes' in srs and 'budgeted for overhead and shared storage' in srs and 'actual remaining physical capacity is continuously monitored' in srs,
+      "SRS.md Revision 2.8 Fix 4: Bounded 20 MiB Shared Emergency DB Reserve Buffer & 232 MiB budgeted for overhead and shared storage with continuous physical capacity monitoring")
 
 
 # 16. Academic & Professional Attribution Hygiene (Zero AI Agent Bleed into Specifications)
