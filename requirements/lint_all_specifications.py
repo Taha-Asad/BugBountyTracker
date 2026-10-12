@@ -381,6 +381,16 @@ check('commitment_salts_json' in srs and 'bbt-commit-v1' in srs and 'fn_guest_fe
       "SRS.md Revision 2.4 defines explicit bbt-commit-v1 formula, commitment_salts_json persistence, and zero stale fn_guest_fetch_pubkey_and_rotate_token references")
 check('1. cluster_storage_state' in srs and 'openpgp-symenc-seipdv2' in km and 'rewrap-researcher-key' in km,
       "SRS.md enforces universal 6-table lock order and KEY_MANAGEMENT.md is synchronized with Revision 2.4")
+check('Revision 2.5' in srs and 'Revision 2.5' in w2_task,
+      "SRS.md and week-02-software-requirements-specification.md are updated to Revision 2.5")
+check('encrypted_guest_credentials_armored' in srs and 'encrypted_guest_credentials_armored' in km,
+      "SRS.md and KEY_MANAGEMENT.md encrypt guest retry-cache tokens to guest_public_key (encrypted_guest_credentials_armored)")
+check('org_commitment' in srs and 'export_payload' in srs and 'Summary-to-Chain' in srs,
+      "SRS.md Revision 2.5 defines org_commitment, export_payload JCS signature scope, and Summary-to-Chain equality")
+check('fn_cron_evaluate_overdue_deadlines' in srs and 'fn_cron_finalize_r2_deletions' in srs and 'DELETING' in srs,
+      "SRS.md Revision 2.5 specifies 3-phase non-blocking cron execution (DELETING -> DELETED)")
+check('19.0 MiB' in srs and 'capacity_deadline_paused' in srs and '307,200 bytes' in srs and 'ORDER BY id ASC FOR UPDATE' in srs,
+      "SRS.md Revision 2.5 specifies 19.0 MiB + 1.0 MiB intake split, capacity_deadline_paused, 307,200-byte Priority-0 floor, and ORDER BY id ASC FOR UPDATE")
 
 
 # 16. Academic & Professional Attribution Hygiene (Zero AI Agent Bleed into Specifications)
