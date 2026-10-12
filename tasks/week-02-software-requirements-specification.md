@@ -6,7 +6,7 @@
 | **Project Title** | **BugBountyTrack — Private Bug Bounty & Vulnerability Disclosure Platform** |
 | **Student Author** | Taha Asadullah (Roll No: `24-ST-013`, Section: `SET-B`) |
 | **Academic Supervisor** | Sir Umar Hayat (Assistant Professor, PTUT Lahore) |
-| **Milestone** | **Week 2** — Software Requirements Specification (**Gate 1: DoR Part II**) |
+| **Milestone** | **Week 2** — Software Requirements Specification |
 | **Standard Compliance** | IEEE Std 830-1998 / ISO/IEC/IEEE 29148:2018 (`Revision 2.8`) |
 | **WBS Task IDs** | `WP-1.1` (8h), `WP-1.2` (12h), `WP-1.3` (10h), `WP-1.4` (10h) — **Sprint 1 Baseline** |
 

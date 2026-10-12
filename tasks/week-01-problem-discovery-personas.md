@@ -6,7 +6,7 @@
 | **Project Title** | **BugBountyTrack — Private Bug Bounty & Vulnerability Disclosure Platform** |
 | **Student Author** | Taha Asadullah (Roll No: `24-ST-013`, Section: `SET-B`) |
 | **Academic Supervisor** | Sir Umar Hayat (Assistant Professor, PTUT Lahore) |
-| **Milestone** | **Week 1** — Problem Discovery & User Personas (**Gate 1: DoR Part I**) |
+| **Milestone** | **Week 1** — Problem Discovery & User Personas |
 | **WBS Task IDs** | `BBT-W01-T01` (4h), `BBT-W01-T02` (6h), `BBT-W01-T03` (4h) — **Total: 14 Hours** |
 
 ---

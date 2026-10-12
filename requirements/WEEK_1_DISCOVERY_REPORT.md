@@ -18,7 +18,7 @@
 | **Student / Candidate** | Taha Asadullah (`24-st-013@students.ptut.edu.pk`) |
 | **Claimed Date** | October 2, 2026 |
 | **Active Milestone** | **Week 1**: Problem Discovery & User Personas |
-| **SDLC Phase Gate** | **Gate 1: Definition of Ready (DoR)** |
+| **SDLC Phase** | **Phase 1: Problem Discovery & Requirements Engineering** |
 | **Student Author & Project Lead** | Taha Asadullah (Roll No: `24-ST-013`, Section: `SET-B`) |
 | **Academic Supervisor** | Sir Umar Hayat (Assistant Professor, PTUT Lahore) |
 

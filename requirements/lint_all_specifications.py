@@ -461,6 +461,8 @@ for doc_name, doc_content in hygiene_files:
     ]
     check(len(matched_forbidden) == 0, f"{doc_name} passes attribution & persona hygiene (zero non-project persona bleed)")
     check('file://' not in doc_content and '/run/media/' not in doc_content, f"{doc_name} has zero local file:// or /run/media/ paths")
+    check('Observe, Build, Verify' not in doc_content and 'DoAC' not in doc_content and 'DoCC' not in doc_content and 'DoQV' not in doc_content and 'DoSA' not in doc_content and 'DoOR' not in doc_content and 'DoRG' not in doc_content and 'Phase Gate Governance' not in doc_content,
+          f"{doc_name} has zero internal workspace branding or gate acronyms")
 
 
 print(f"\nSpecification Linting Results: {len(passes)} checks PASSED, {len(errors)} checks FAILED.")
@@ -474,7 +476,7 @@ if errors:
 else:
     print("\nALL SPECIFICATION INTEGRITY CHECKS PASSED PERFECTLY!")
     print("\n" + "=" * 80)
-    print("SPECIFICATION LINTER BOUNDARY & SCOPE DECLARATION (RULE 17):")
+    print("SPECIFICATION LINTER BOUNDARY & SCOPE DECLARATION:")
     print("=" * 80)
     print("  1. Verified: Document schema, metadata, cross-document arithmetic (424h),")
     print("     CVSS coefficients (8.22), test vector parity (45/45), requirement ID uniqueness,")

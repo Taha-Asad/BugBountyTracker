@@ -35,6 +35,6 @@
     "cryptography": ["OpenPGP.js"],
     "standards": ["RFC-9116", "CVSS-3.1"]
   },
-  "activePhase": "Phase 1: Requirements Analysis & Engineering (Gate 1: DoR)",
-  "activeMilestone": "Week 1-2: Discovery, BRD, IEEE 830 SRS & WBS Baseline Certified (v3.2.0)"
+  "activePhase": "Phase 2: System Architecture & Core Implementation",
+  "activeMilestone": "SRS Revision 2.8 Frozen as Implementation Baseline"
 }
