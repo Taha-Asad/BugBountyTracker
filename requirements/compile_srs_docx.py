@@ -558,7 +558,7 @@ header_xml = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <w:color w:val="{TEXT_COLOR}"/>
         <w:sz w:val="18"/><w:szCs w:val="18"/>
       </w:rPr>
-      <w:t>BugBountyTrack — IEEE 830 Software Requirements Specification (SRS Revision 2.6)</w:t>
+      <w:t>BugBountyTrack — IEEE 830 Software Requirements Specification (SRS Revision 2.7)</w:t>
     </w:r>
   </w:p>
 </w:hdr>"""
