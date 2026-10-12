@@ -2,8 +2,8 @@
 
 **Project**: BugBountyTrack — Vulnerability Disclosure Platform with Remediation Tracking  
 **Classification**: Fifth-Semester Project Proposal (Evaluated Prototype) & Commercial Launch Baseline  
-**Current Phase**: SDLC Phase 1 (Planning & Requirements Engineering)  
-**Last Updated**: 2026-10-05  
+**Current Phase**: SDLC Phase 2/3 Transition — SRS Revision 2.8 (`5f46e62`) Frozen as Implementation Baseline (`PENDING_LIVE_INTERVIEWS` tracked)  
+**Last Updated**: 2026-10-12  
 **Governing Standard**: Constitution Rule 9 & 10 (Epistemic Precision & Traceable Memory)
 
 ---
@@ -41,7 +41,7 @@
   - Remediation evidence supports both code commits (validated via GitHub API) and non-code fixes (e.g., infrastructure config, WAF rules, DNS updates).
   - Internal verification must be performed by an authorized user with access to the evidence; the audit record explicitly tracks whether the verifier also implemented the fix.
   - Required verification audit fields: Tested version/environment, retest steps, outcome, evidence reference, verifier identity, organizational relationship, implementer flag, and timestamp.
-  - Distinct terminal states: `VERIFIED_RESEARCHER`, `VERIFIED_INTERNAL`, `CLOSED_UNVERIFIED_TIMEOUT`, `RISK_ACCEPTED`, `REJECTED_SPAM`, `REJECTED_INVALID`, `DUPLICATE`, `WITHDRAWN`.
+  - Distinct terminal states: `VERIFIED_RESEARCHER`, `VERIFIED_INTERNAL`, `CLOSED_UNVERIFIED_TIMEOUT`, `RISK_ACCEPTED`, `REJECTED_SPAM`, `REJECTED_INVALID`, `DUPLICATE`, `WITHDRAWN`, and `CLOSED_INCOMPLETE`.
   - Closing under `CLOSED_UNVERIFIED_TIMEOUT` requires an **explicit authorized user action and recorded rationale**; expiration of a grace period alone never triggers automated closure or indicates successful verification.
   - Reopening is supported with a mandatory recorded reason, returning status to `TRIAGING`.
 - **DEC-016**: **Assistance vs. Security Boundary**: Client-side completeness checks are advisory user assistance, not trusted server-enforced security validation.
@@ -56,12 +56,12 @@
   - Commercial launch feature.
 - **DEC-019 (ADR-008)**: **Audited Historical Session Key Re-Wrapping**:
   - Newly assigned program defenders do not possess historical keys and cannot decrypt reports filed prior to their assignment.
-  - Historical access is granted via client-side re-wrapping of the symmetric session key ($K_S$) by an existing authorized defender using standard OpenPGP PKESK packets. Every re-wrap emits an immutable audit event (`HISTORICAL_ACCESS_GRANTED`).
+  - Historical access is granted via client-side re-wrapping of the symmetric session key (`K_S`) by an existing authorized defender using standard OpenPGP PKESK packets (`grant-defender-access` for `CLASS_B_AND_C`; `rewrap-researcher-key` for `CLASS_B_ONLY`, verified against `seipdv2_body_sha256`). Every re-wrap emits an immutable audit event.
 - **DEC-020 (ADR-009)**: **Account-Less (Guest) Vulnerability Submission**:
   - Researchers do not need to register an account, set a password, or configure TOTP to submit findings.
   - The client browser generates an ephemeral Curve25519 keypair in memory.
   - Submissions are encrypted to program defenders, the offline organization recovery key, and the ephemeral report key.
-  - The server issues an opaque tracking URL (`/report/track/BBT-RPT-XXXX?token=<secret>`), allowing anonymous dialogue and retest verification.
+  - The server encrypts `{ report_id, guest_actor_id, access_token }` to `guest_public_key` (`encrypted_guest_credentials_armored`) and issues a client-side URI fragment tracking link (`/report/track/BBT-RPT-XXXX#token=<access_token>`), allowing anonymous dialogue and retest verification without persisting raw tokens in database caches or logs.
   - Registered researchers can optionally claim past report tokens to build their portfolio.
   - Supersedes `DEF-005`.
 - **DEC-021 (ADR-010)**: **Offline Organization Master Recovery Key**:
@@ -72,19 +72,23 @@
   - Replaces direct Stripe integration. Lemon Squeezy serves as Merchant of Record, handling global sales tax, VAT, and direct bank payouts to Pakistani founders.
   - Commercial pricing structure: **Single Paid Plan ($49/mo Team)** + **Free Open-Source Community Tier ($0/mo)**.
   - Pro tier ($149/mo), custom PDF branding, and SAML SSO deferred to v1.1.
-- **DEC-023 (ADR-012)**: **Direct-to-R2 Presigned Upload Architecture**:
+- **DEC-023 (ADR-012)**: **Direct-to-R2 Presigned Upload Architecture & Claim-Lease Cleanup**:
   - Bypasses Vercel 4.5 MB serverless function payload limit.
   - Browser requests presigned S3/R2 direct `PUT` URL from `/api/uploads/presign` after validating storage quota.
-  - Automated cron job cleans up orphaned unconfirmed uploads.
-- **DEC-024 (ADR-013)**: **Cryptographic Primitives Pinning & Hash-Chained Audit Ledger**:
+  - Automated cron job cleans up orphaned unconfirmed uploads using 3-phase claim-lease recovery (`claim_id`, `claim_expires_at`, sequential per-batch Phase 1 -> Phase 2 -> Phase 3 finalization, and enforceable DB timeouts).
+- **DEC-024 (ADR-013)**: **Cryptographic Primitives Pinning & Dual Hash-Chained Audit Ledger**:
   - Standardizes on RFC 9580 Version 6 Ed25519 / X25519 Curve25519 keys with 64-character SHA-256 fingerprints; drops legacy RSA-4096 and v4 keys to eliminate in-browser keygen freezes and target sub-50ms bare keygen.
   - Uses OpenPGP native Argon2id S2K (`t=3, m=65536, p=4`) for browser key storage protection.
-  - Audit log table includes a SHA-256 `prev_hash` column forming a tamper-evident hash chain.
+  - Audit log table maintains dual tamper-evident SHA-256 hash chains (`prev_tenant_row_hash` -> `row_hash` and `prev_report_chain_hash` -> `report_chain_hash`) over `event_digest`, supporting Redacted Closure Evidence Exports (`bbt-closure-export-v1`, `closure_report_seq_no = M` <= `total_report_events = K`).
 - **DEC-025 (ADR-014)**: **Versioned JSON Guest Recovery Package & Durable Guest Identity**:
-  - Standardizes guest recovery exclusively on a single versioned `.bbt-recovery.json` bundle protected with client-side Argon2id S2K; defers 24-word mnemonic seeds to eliminate server-side lookup or seed-derivation coupling.
+  - Standardizes guest recovery exclusively on a single versioned `.bbt-recovery.json` bundle protected with client-side Argon2id S2K (`openpgp-symenc-seipdv2`); defers 24-word mnemonic seeds to eliminate server-side lookup or seed-derivation coupling.
   - Tracking URL contains only `#token=<access_token>` in hash fragment; address bar is immediately scrubbed via `window.history.replaceState`.
   - Establishes a durable, report-scoped `guest_actor_id` (UUIDv4) decoupled from mutable bearer token hashes.
   - Enforces strict program-level authorization boundaries and atomic membership updates via `PROGRAM_DEFENDER`.
+- **DEC-026 (Baseline Freeze)**: **SRS Revision 2.8 (`5f46e62`) Frozen as Implementation Baseline**:
+  - Freezes `requirements/SRS.md` (`Revision 2.8`, commit `5f46e62`) as the authoritative engineering baseline and closes specification-level editing unless contradicted by empirical test or interview findings.
+  - Enforces client-owned outer transactions with nested PL/pgSQL `BEGIN ... EXCEPTION WHEN SQLSTATE 'P0001'` subtransaction deadline pausing (`bbt_core.fn_process_researcher_response_or_pause`) under held `organizations -> reports FOR UPDATE` locks, universal 6-table canonical lock ordering (`1. cluster_storage_state -> 2. organizations -> 3. programs -> 4. user_memberships/program_defenders -> 5. reports/report_recipients -> 6. organization_audit_heads`), and sequential per-batch R2 cleanup finalization with `lock_timeout = '250ms'` and `statement_timeout = '800ms'`.
+  - Tracks live stakeholder interviews explicitly as `PENDING_LIVE_INTERVIEWS` (`0` of `4` completed in `requirements/DISCOVERY_INTERVIEW_LOG.md`) and advances the project to **Stage 2: Working End-to-End Implementation & Executable Verification**.
 
 ---
 
