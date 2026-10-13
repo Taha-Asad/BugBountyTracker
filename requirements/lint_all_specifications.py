@@ -353,6 +353,8 @@ check('NFR-09' in srs and '99.5%' in srs and 'NFR-09' in w2_task and '99.5%' in 
       "Both SRS.md and week-02 task spec define quantifiable NFR-09 Uptime SLO (>= 99.5%)")
 check('Document Submission & Milestone Sign-Off' in srs and 'Document Submission & Milestone Sign-Off' in w2_task,
       "Both SRS.md and week-02 task spec include formal Document Submission & Milestone Sign-Off signature block")
+check('1n8VKmXeK4TSTPPR-mDXp3NkKwDxvzTzEWR9tgdZlxSg' in srs and '1n8VKmXeK4TSTPPR-mDXp3NkKwDxvzTzEWR9tgdZlxSg' in w2_task and 'PASTE_GOOGLE_DRIVE_LINK' not in w2_task,
+      "Both SRS.md and week-02 task spec contain verified Google Drive link for Week 2 SRS document")
 check('Document Submission &amp; Milestone Sign-Off' in srs_xml,
       "SRS.docx includes formal Document Submission & Milestone Sign-Off signature block")
 check('REPORT_RECIPIENT' in srs and 'state_version' in srs and 'remediation_attempt_no' in srs,

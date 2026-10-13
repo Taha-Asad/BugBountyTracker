@@ -19,6 +19,7 @@
 | **Milestone** | **Week 2** — Software Requirements Specification (SRS), Use Cases & Non-Functional Requirements |
 | **Governing Standards** | IEEE Std 830-1998 & ISO/IEC/IEEE 29148:2018 |
 | **Technical Stack** | Next.js 14+ (App Router, TypeScript), Node.js 22 LTS, PostgreSQL 16 (Neon), Cloudflare R2, OpenPGP.js v6 |
+| **Google Drive Document Link** | [View Software Requirements Specification (Google Drive)](https://docs.google.com/document/d/1n8VKmXeK4TSTPPR-mDXp3NkKwDxvzTzEWR9tgdZlxSg/edit?usp=drive_link) |
 
 ---
 

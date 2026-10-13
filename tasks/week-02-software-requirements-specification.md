@@ -16,7 +16,7 @@
 
 | Deliverable Document | Scope Covered | Google Drive Link |
 | :--- | :--- | :--- |
-| **Formal IEEE 830 Software Requirements Specification (`SRS.docx`)** | Complete IEEE 830 SRS (`Revision 2.8`), Finalized Problem Statement (`1.4.1`), 5 Mandatory Core MVP Features vs. Optional P2 Extensions (`1.5`), Authoritative Actor × Operation × Resource Permission Matrix (`Table 2.2`), Field-Level Classification Matrix (`Class A/B/C`), Functional Requirements (`FR-1` to `FR-8`), Formal Use Case Specifications (`UC-01` to `UC-07`), 4 UML Behavioral Diagrams (`Figure 4.1` to `Figure 4.4`), Quantifiable NFRs (`NFR-01` to `NFR-09`), Deterministic Operational Scenario Walkthrough Matrix (`Section 7.3`), and 100% Bidirectional Traceability Matrix | [View IEEE 830 Software Requirements Specification (Google Drive)](PASTE_GOOGLE_DRIVE_LINK_FOR_SRS_DOCX_HERE) |
+| **Formal IEEE 830 Software Requirements Specification (`SRS.docx`)** | Complete IEEE 830 SRS (`Revision 2.8`), Finalized Problem Statement (`1.4.1`), 5 Mandatory Core MVP Features vs. Optional P2 Extensions (`1.5`), Authoritative Actor × Operation × Resource Permission Matrix (`Table 2.2`), Field-Level Classification Matrix (`Class A/B/C`), Functional Requirements (`FR-1` to `FR-8`), Formal Use Case Specifications (`UC-01` to `UC-07`), 4 UML Behavioral Diagrams (`Figure 4.1` to `Figure 4.4`), Quantifiable NFRs (`NFR-01` to `NFR-09`), Deterministic Operational Scenario Walkthrough Matrix (`Section 7.3`), and 100% Bidirectional Traceability Matrix | [View IEEE 830 Software Requirements Specification (Google Drive)](https://docs.google.com/document/d/1n8VKmXeK4TSTPPR-mDXp3NkKwDxvzTzEWR9tgdZlxSg/edit?usp=drive_link) |
 
 ---
 
