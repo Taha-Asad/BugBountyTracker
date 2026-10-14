@@ -35,6 +35,9 @@ files = {
     'HOD_PROPOSAL.md': os.path.join(SCRIPT_DIR, 'HOD_PROPOSAL.md'),
     'week-01-problem-discovery-personas.md': os.path.join(PROJECT_DIR, 'tasks', 'week-01-problem-discovery-personas.md'),
     'week-02-software-requirements-specification.md': os.path.join(PROJECT_DIR, 'tasks', 'week-02-software-requirements-specification.md'),
+    'week-03-high-level-architecture-cloud-topology.md': os.path.join(PROJECT_DIR, 'tasks', 'week-03-high-level-architecture-cloud-topology.md'),
+    'HIGH_LEVEL_ARCHITECTURE.md': os.path.join(PROJECT_DIR, 'architecture', 'HIGH_LEVEL_ARCHITECTURE.md'),
+    'HIGH_LEVEL_ARCHITECTURE.docx': os.path.join(PROJECT_DIR, 'architecture', 'HIGH_LEVEL_ARCHITECTURE.docx'),
     'KEY_MANAGEMENT.md': os.path.join(PROJECT_DIR, 'architecture', 'KEY_MANAGEMENT.md'),
     'DECISION_LOG.md': os.path.join(PROJECT_DIR, 'decisions', 'DECISION_LOG.md'),
     'project.json': os.path.join(PROJECT_DIR, 'project.json'),
@@ -48,7 +51,7 @@ for fname, fpath in files.items():
     check(sz >= min_sz, f"File size valid: {fname} ({sz} bytes)")
 
 # 2. Check metadata in Markdown specifications
-for mdf in ['BRD.md', 'SRS.md', 'WBS.md', 'WEEK_1_DISCOVERY_REPORT.md', 'WEEK_1_PART_A_USER_PERSONAS.md', 'WEEK_1_PART_B_CHARTER_AND_MVP.md', 'DISCOVERY_INTERVIEW_LOG.md', 'HOD_PROPOSAL.md', 'week-01-problem-discovery-personas.md', 'week-02-software-requirements-specification.md']:
+for mdf in ['BRD.md', 'SRS.md', 'WBS.md', 'WEEK_1_DISCOVERY_REPORT.md', 'WEEK_1_PART_A_USER_PERSONAS.md', 'WEEK_1_PART_B_CHARTER_AND_MVP.md', 'DISCOVERY_INTERVIEW_LOG.md', 'HOD_PROPOSAL.md', 'week-01-problem-discovery-personas.md', 'week-02-software-requirements-specification.md', 'week-03-high-level-architecture-cloud-topology.md', 'HIGH_LEVEL_ARCHITECTURE.md']:
     p = files[mdf]
     with open(p, 'r', encoding='utf-8') as f:
         content = f.read()
@@ -58,7 +61,7 @@ for mdf in ['BRD.md', 'SRS.md', 'WBS.md', 'WEEK_1_DISCOVERY_REPORT.md', 'WEEK_1_
     check('PTUT - PRJ - 089' in content, f"{mdf} contains Project ID PTUT - PRJ - 089")
     check('SET-B' in content, f"{mdf} contains Section SET-B")
     check('SET-A' not in content, f"{mdf} has zero legacy SET-A references")
-    if mdf in ['BRD.md', 'SRS.md', 'WBS.md', 'WEEK_1_DISCOVERY_REPORT.md', 'WEEK_1_PART_A_USER_PERSONAS.md', 'WEEK_1_PART_B_CHARTER_AND_MVP.md', 'DISCOVERY_INTERVIEW_LOG.md', 'week-01-problem-discovery-personas.md', 'week-02-software-requirements-specification.md']:
+    if mdf in ['BRD.md', 'SRS.md', 'WBS.md', 'WEEK_1_DISCOVERY_REPORT.md', 'WEEK_1_PART_A_USER_PERSONAS.md', 'WEEK_1_PART_B_CHARTER_AND_MVP.md', 'DISCOVERY_INTERVIEW_LOG.md', 'week-01-problem-discovery-personas.md', 'week-02-software-requirements-specification.md', 'week-03-high-level-architecture-cloud-topology.md', 'HIGH_LEVEL_ARCHITECTURE.md']:
         # Verify no raw unescaped LaTeX formatting artifacts in Word-source or portal-paste docs
         check(r'\text{' not in content, f"{mdf} has no \\text{{}} artifacts")
         check(r'\longrightarrow' not in content, f"{mdf} has no \\longrightarrow artifacts")
@@ -421,6 +424,34 @@ check('160 KiB' in srs and '163,840 bytes' in srs and '192 KiB' not in srs and '
 check('emergency_db_buffer_used_bytes' in srs and 'db_reserve_quota_bytes' in srs and 'budgeted for overhead and shared storage' in srs and 'actual remaining physical capacity is continuously monitored' in srs,
       "SRS.md Revision 2.8 Fix 4: Bounded 20 MiB Shared Emergency DB Reserve Buffer & 232 MiB budgeted for overhead and shared storage with continuous physical capacity monitoring")
 
+# 15d. Week 3 High-Level Architecture & Cloud Topology Integrity: 3-Tier Model, DFD 0/1, System Boundaries & Cloud Justification
+with open(files['HIGH_LEVEL_ARCHITECTURE.md'], 'r', encoding='utf-8') as f:
+    arch_md = f.read()
+with open(files['week-03-high-level-architecture-cloud-topology.md'], 'r', encoding='utf-8') as f:
+    w3_task = f.read()
+
+check('Tier 1: Client Presentation' in arch_md and 'Tier 2: Presentation & Gateway' in arch_md and 'Tier 3: Persistence & Storage' in arch_md,
+      "HIGH_LEVEL_ARCHITECTURE.md specifies complete 3-Tier Zero-Plaintext Model")
+check('fig3_1_3tier_architecture.png' in arch_md and 'fig3_2_dfd_level_0.png' in arch_md and 'fig3_3_dfd_level_1.png' in arch_md and 'fig3_4_cloud_topology.png' in arch_md,
+      "HIGH_LEVEL_ARCHITECTURE.md references all 4 canonical architecture and DFD diagrams")
+check('DFD Level 0: System Context Diagram' in arch_md and 'Entity E1: Security Researcher' in w3_task and 'Entity E6: GitHub Actions Cron' in w3_task,
+      "Both architecture spec and week-03 task define DFD Level 0 Context Diagram with 6 external entities")
+check('Process 1.0: Tenant Registration' in arch_md and 'Process 7.0: Attested Retest' in arch_md and 'Organizations & Tenant Registry' in arch_md and 'Storage Quotas & Claim Leases' in arch_md,
+      "HIGH_LEVEL_ARCHITECTURE.md decomposes DFD Level 1 into 7 sub-processes and 7 persistent data stores")
+check('STRIDE' in arch_md and 'Spoofing' in arch_md and 'Tampering' in arch_md and 'Repudiation' in arch_md and 'Information Disclosure' in arch_md and 'Denial of Service' in arch_md and 'Elevation of Privilege' in arch_md,
+      "HIGH_LEVEL_ARCHITECTURE.md includes comprehensive STRIDE Threat Mitigation Analysis")
+check('$0.00' in arch_md and '$61.00' in arch_md and 'Vercel' in arch_md and 'Neon' in arch_md and 'Cloudflare R2' in arch_md,
+      "HIGH_LEVEL_ARCHITECTURE.md validates dual-track $0.00 academic vs $61.00 commercial cloud justification")
+check('Document Submission & Milestone Sign-Off' in arch_md and 'Document Submission & Milestone Sign-Off' in w3_task,
+      "Both HIGH_LEVEL_ARCHITECTURE.md and week-03 task spec include formal Document Submission & Milestone Sign-Off")
+
+with zipfile.ZipFile(files['HIGH_LEVEL_ARCHITECTURE.docx'], 'r') as arch_zip:
+    arch_doc_xml = arch_zip.read('word/document.xml').decode('utf-8')
+    arch_rels_xml = arch_zip.read('word/_rels/document.xml.rels').decode('utf-8')
+check('rId201' in arch_rels_xml and 'rId202' in arch_rels_xml and 'rId203' in arch_rels_xml and 'rId204' in arch_rels_xml,
+      "HIGH_LEVEL_ARCHITECTURE.docx OpenXML relationships embed all 4 high-DPI architecture diagrams")
+check('24-ST-013' in arch_doc_xml and 'Taha Asadullah' in arch_doc_xml and 'Sir Umar Hayat' in arch_doc_xml,
+      "HIGH_LEVEL_ARCHITECTURE.docx OpenXML document body verified (24-ST-013, Taha Asadullah, Sir Umar Hayat)")
 
 # 16. Academic & Professional Attribution Hygiene (Zero Non-Project Persona or Local Path Bleed)
 import hashlib
@@ -443,6 +474,7 @@ with open(os.path.join(SCRIPT_DIR, 'SRS_UNIVERSITY_SUBMISSION.md'), 'r', encodin
 hygiene_files = [
     ('SRS.md', srs),
     ('SRS_UNIVERSITY_SUBMISSION.md', uni_srs_txt),
+    ('HIGH_LEVEL_ARCHITECTURE.md', arch_md),
     ('BRD.md', brd_full),
     ('WBS.md', wbs),
     ('KEY_MANAGEMENT.md', km),
@@ -454,6 +486,7 @@ hygiene_files = [
     ('HOD_PROPOSAL.md', hod_prop),
     ('week-01-problem-discovery-personas.md', w1_task),
     ('week-02-software-requirements-specification.md', w2_task),
+    ('week-03-high-level-architecture-cloud-topology.md', w3_task),
     ('DECISION_LOG.md', dec_log),
     ('PROJECT_SUMMARY.md', proj_sum),
     ('README.md', readme_txt),

@@ -33,10 +33,19 @@ projects/BugBountyTrack/
 ├── README.md                       # Repository overview, architecture, and verification guide
 ├── project.json                    # Machine-readable project state and metadata
 ├── PROJECT_SUMMARY.md              # Executive summary and architectural baseline
-├── architecture/                   # Technical architecture & key management runbooks
-│   └── KEY_MANAGEMENT.md           # Program-scoped multi-defender OpenPGP model & isolation
+├── architecture/                   # Technical architecture, DFDs & key management
+│   ├── HIGH_LEVEL_ARCHITECTURE.md  # High-Level Architecture & Cloud Topology Specification
+│   ├── HIGH_LEVEL_ARCHITECTURE.docx# Compiled Word deliverable (with 4 embedded diagrams)
+│   ├── KEY_MANAGEMENT.md           # Program-scoped multi-defender OpenPGP model & isolation
+│   ├── compile_architecture_docx.py# Portable compiler: Markdown -> Word with embedded figures
+│   ├── generate_architecture_diagrams.py # Headless Chrome/mmdc diagram renderer
+│   └── diagrams/                   # 3-Tier, DFD Level 0/1, and Cloud Topology diagrams
+│       ├── fig3_1_3tier_architecture.png / .svg / .mmd
+│       ├── fig3_2_dfd_level_0.png / .svg / .mmd
+│       ├── fig3_3_dfd_level_1.png / .svg / .mmd
+│       └── fig3_4_cloud_topology.png / .svg / .mmd
 ├── decisions/                      # Architecture Decision Records (ADRs)
-│   └── DECISION_LOG.md             # Formal ledger of architectural and governance decisions (DEC-001 to DEC-024)
+│   └── DECISION_LOG.md             # Formal ledger of architectural and governance decisions (DEC-001 to DEC-026)
 ├── evidence/                       # Verification artifacts and test logs (.gitkeep)
 ├── learning/                       # Engineering research notes and prototypes (.gitkeep)
 ├── requirements/                   # Core engineering specification suite
@@ -44,6 +53,7 @@ projects/BugBountyTrack/
 │   ├── BRD.docx                    # Compiled Word BRD (styled with Lexend & shaded tables)
 │   ├── SRS.md                      # Software Requirements Specification (Markdown source)
 │   ├── SRS.docx                    # Compiled Word SRS (with 6 embedded high-res diagrams)
+│   ├── SRS_UNIVERSITY_SUBMISSION.docx # Concise 18-page university portal submission edition
 │   ├── WBS.md                      # Work Breakdown Structure (5 Sheets, 424h across 9 Sprints)
 │   ├── WBS.xlsx                    # Compiled Excel WBS (live =SUM() formulas across sheets)
 │   ├── CVSS_TEST_FIXTURES.md       # Traceable suite of 45 unique FIRST.org/NVD vectors
@@ -53,7 +63,7 @@ projects/BugBountyTrack/
 │   ├── compile_srs_docx.py         # Portable compiler: SRS.md + diagrams -> SRS.docx
 │   ├── compile_wbs_xlsx.py         # Portable compiler: WBS.md -> WBS.xlsx
 │   ├── generate_perfect_diagrams.py# SVG/PNG compiler for all 6 architecture diagrams
-│   ├── lint_all_specifications.py  # Level 1 specification integrity linter (112 checks, 100% pass)
+│   ├── lint_all_specifications.py  # Level 1 specification integrity linter (125 checks, 100% pass)
 │   ├── verify_cvss_engine.py       # Level 2 CVSS 3.1 mathematical verification & parser rejection engine (45 scoring vectors + 6 negative tests, 100% pass)
 │   ├── verify_all_specifications.py# Backward-compatible wrapper invoking lint_all_specifications.py
 │   └── diagrams/                   # Architecture, sequence, state, and ERD diagrams
@@ -66,8 +76,13 @@ projects/BugBountyTrack/
 ├── Resources/                      # Synced OpenXML deliverables for presentation & submission
 │   ├── BRD.docx
 │   ├── SRS.docx
+│   ├── SRS_UNIVERSITY_SUBMISSION.docx
+│   ├── HIGH_LEVEL_ARCHITECTURE.docx
 │   └── WBS.xlsx
-└── tasks/                          # Sprint task tracking (.gitkeep)
+└── tasks/                          # Weekly task deliverables
+    ├── week-01-problem-discovery-personas.md
+    ├── week-02-software-requirements-specification.md
+    └── week-03-high-level-architecture-cloud-topology.md
 ```
 
 ---

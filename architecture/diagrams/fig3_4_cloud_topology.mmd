@@ -1,0 +1,62 @@
+flowchart TB
+    subgraph USERS["End-User Clients (Global Web Browsers)"]
+        CL_H["Security Researcher Device<br/>(OpenPGP.js v6 / WebCrypto)"]
+        CL_D["Organization Defender Device<br/>(OpenPGP.js v6 / WebCrypto)"]
+    end
+
+    subgraph CLOUDFLARE_EDGE["Cloudflare Edge & Security Perimeter"]
+        CF_DNS["Cloudflare Anycast DNS<br/>(DNSSEC & Zone Governance)"]
+        CF_WAF["Cloudflare WAF & DDoS Shield<br/>(TLS 1.3 Termination & Rate Limiting)"]
+        CF_TURNSTILE["Turnstile Bot Protection<br/>(Cryptographic CAPTCHA Tokens)"]
+    end
+
+    subgraph VERCEL_PLATFORM["Vercel Cloud Application Infrastructure (us-east-1)"]
+        V_EDGE["Vercel Global Edge Network<br/>(Static Assets & Edge Middleware)"]
+        subgraph V_SERVERLESS["Serverless Compute Fleet (Node.js 22 LTS)"]
+            V_API["Next.js 14+ App Router API Handlers<br/>(/api/v1/*, /.well-known/security.txt)"]
+            V_PRISMA["Prisma Client ORM 5.x<br/>(Connection Management & Query Engine)"]
+            V_MEM["Ephemeral Memory Scope<br/>(Zero In-Memory Plaintext Caching)"]
+        end
+    end
+
+    subgraph NEON_DATABASE["Neon Serverless PostgreSQL 16 Cloud (us-east-1)"]
+        N_BOUNCER["PgBouncer Transaction Pooler<br/>(?pgbouncer=true, High-Concurrency Multiplexing)"]
+        N_COMPUTE["PostgreSQL 16 Compute Node<br/>(Autoscaling 0.25 to 2 CU, RLS Engine)"]
+        N_STORAGE["Neon Serverless Storage Engine<br/>(Copy-on-Write Pages, Continuous PITR Backups)"]
+    end
+
+    subgraph R2_STORAGE["Cloudflare R2 Object Storage (Global Multi-Region)"]
+        R2_BUCKET["Encrypted Attachments Bucket<br/>(S3-Compatible, SSE-R2 At Rest)"]
+        R2_EGRESS["Zero-Cost Egress Interconnect<br/>($0.00 Bandwidth Fees)"]
+    end
+
+    subgraph EXTERNAL_SERVICES["External Third-Party APIs & Automation"]
+        EXT_GH["GitHub REST API v3<br/>(Commit SHA & Branch Compare Validation)"]
+        EXT_RESEND["Resend Email Delivery API<br/>(Minimal-Metadata Notifications)"]
+        EXT_GHA["GitHub Actions Automation<br/>(CI/CD Pipeline & Hourly Signed Cron)"]
+    end
+
+    %% Client Interactions
+    CL_H --> CF_DNS
+    CL_D --> CF_DNS
+    CF_DNS --> CF_WAF
+    CF_WAF --> CF_TURNSTILE
+    CF_TURNSTILE --> V_EDGE
+    V_EDGE --> V_API
+    V_API --> V_PRISMA
+
+    %% Direct Encrypted File Transfers
+    CL_H -. "Direct HTTPS Presigned PUT / GET (Ciphertext Only)" .-> R2_BUCKET
+    CL_D -. "Direct HTTPS Presigned GET (Ciphertext Only)" .-> R2_BUCKET
+    V_API -. "AWS SDK v3 S3 Presigned URL Minting" .-> R2_BUCKET
+    R2_BUCKET --- R2_EGRESS
+
+    %% Database Connections
+    V_PRISMA -- "TLS 1.3 Pooled TCP (Port 6543)" --> N_BOUNCER
+    N_BOUNCER --> N_COMPUTE
+    N_COMPUTE --> N_STORAGE
+
+    %% External API Integrations
+    V_API -- "HTTPS REST (OAuth / PAT)" --> EXT_GH
+    V_API -- "HTTPS REST (Bearer Token)" --> EXT_RESEND
+    EXT_GHA -- "Hourly Scheduled Job (Ed25519 X-Cron-Signature)" --> V_API

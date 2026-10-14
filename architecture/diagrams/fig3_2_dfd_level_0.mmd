@@ -1,0 +1,41 @@
+flowchart LR
+    %% External Entities
+    E1["External Entity E1:<br/><b>Security Researcher</b><br/>(Hunter / Account-Less Guest)"]
+    E2["External Entity E2:<br/><b>Organization Defender</b><br/>(Owner / Reviewer)"]
+    E3["External Entity E3:<br/><b>GitHub REST API v3</b><br/>(Version Control Forge)"]
+    E4["External Entity E4:<br/><b>Resend Mail Service</b><br/>(Transactional Email API)"]
+    E5["External Entity E5:<br/><b>Cloudflare R2 Storage</b><br/>(S3-Compatible Object Store)"]
+    E6["External Entity E6:<br/><b>GitHub Actions</b><br/>(Hourly Cron Scheduler)"]
+
+    %% Central System Process
+    BBT(("<b>0.0</b><br/><br/><b>BugBountyTrack System</b><br/>(Confidential Multi-Tenant<br/>Vulnerability Management)"))
+
+    %% Data Inflows & Outflows for Researcher (E1)
+    E1 -- "1. Policy Discovery Request & Turnstile Token" --> BBT
+    BBT -- "2. Signed security.txt Policy & Public Keys" --> E1
+    E1 -- "3. Encrypted Report Payload (Class B Ciphertext)" --> BBT
+    BBT -- "4. Presigned S3 Upload URL & Quota Token" --> E1
+    E1 -- "5. Direct Encrypted Binary Attachment Upload" --> E5
+    BBT -- "6. Guest Recovery Package (.bbt-recovery.json) & Secret Tracking URL" --> E1
+    E1 -- "7. Encrypted Triage Messages & Retest Attestation" --> BBT
+    BBT -- "8. Encrypted Defender Responses & Retest Requests" --> E1
+
+    %% Data Inflows & Outflows for Defender (E2)
+    E2 -- "9. Tenant Setup, Scope Policy & Ed25519 Public Keys" --> BBT
+    BBT -- "10. Encrypted Vulnerability Feed & Audit Notifications" --> E2
+    E2 -- "11. Encrypted Triage Messages (Class B/C) & Severity Adjustments" --> BBT
+    E2 -- "12. Remediation Claim (Commit SHA or Config Hash)" --> BBT
+    BBT -- "13. Attested Retest Outcomes & Verified Closure Exports" --> E2
+
+    %% Integration with GitHub (E3)
+    BBT -- "14. Commit SHA & Branch Comparison Query" --> E3
+    E3 -- "15. Commit Verification Evidence & Parent Tree Metadata" --> BBT
+
+    %% Integration with Email (E4)
+    BBT -- "16. Class A Operational Metadata Alerts (Zero Plaintext)" --> E4
+
+    %% Integration with Cloudflare R2 (E5)
+    BBT -- "17. Object Existence Check (HeadObject) & Claim Lease Cleanup" --> E5
+
+    %% Integration with Cron (E6)
+    E6 -- "18. Hourly Scheduled Trigger with Ed25519-Signed JWT" --> BBT

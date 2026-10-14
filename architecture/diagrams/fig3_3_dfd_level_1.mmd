@@ -1,0 +1,84 @@
+flowchart TB
+    %% External Entities
+    E1["Entity E1:<br/>Security Researcher"]
+    E2["Entity E2:<br/>Organization Defender"]
+    E3["Entity E3:<br/>GitHub REST API"]
+    E4["Entity E4:<br/>Resend Email API"]
+    E5["Entity E5:<br/>Cloudflare R2 Bucket"]
+    E6["Entity E6:<br/>GitHub Actions Cron"]
+
+    %% Data Stores
+    D1[("D1: Organizations & Tenant Registry")]
+    D2[("D2: Key Store & Recipient Snapshots")]
+    D3[("D3: Reports & Triage Threads (Ciphertext)")]
+    D4[("D4: Remediation Records & Commit Hashes")]
+    D5[("D5: Cloudflare R2 Encrypted Files")]
+    D6[("D6: Hash-Chained Audit Ledger")]
+    D7[("D7: Storage Quotas & Claim Leases")]
+
+    %% Sub-Processes
+    subgraph PROCESSES["DFD Level 1: Sub-Processes"]
+        P1(("<b>1.0</b><br/>Tenant & Session<br/>Governance"))
+        P2(("<b>2.0</b><br/>RFC 9116 Policy &<br/>Key Management"))
+        P3(("<b>3.0</b><br/>Cryptographic Intake &<br/>Attachment Pipeline"))
+        P4(("<b>4.0</b><br/>Deterministic CVSS v3.1<br/>Scoring Engine"))
+        P5(("<b>5.0</b><br/>Dual-Lane Triage &<br/>Notification Broker"))
+        P6(("<b>6.0</b><br/>Remediation Attestation &<br/>Commit Verification"))
+        P7(("<b>7.0</b><br/>Attested Retest &<br/>Audit Ledger Engine"))
+    end
+
+    %% Flows: Process 1.0 (Identity)
+    E2 -- "Org Registration / Login (Argon2id, TOTP)" --> P1
+    P1 <--> D1
+    P1 -- "Tenant Membership & Session Nonce" --> D2
+
+    %% Flows: Process 2.0 (Policy & Keys)
+    E1 -- "GET /.well-known/security.txt" --> P2
+    E2 -- "Register Defender Ed25519/X25519 Keys" --> P2
+    P2 <--> D1
+    P2 <--> D2
+    P2 -- "Signed security.txt & Public Keys" --> E1
+
+    %% Flows: Process 3.0 (Intake)
+    E1 -- "Turnstile Token & Session Request" --> P3
+    P3 <--> D7
+    P3 -- "Presigned S3 PUT URL" --> E1
+    E1 -- "Direct Encrypted Binary Upload" --> E5
+    E1 -- "Submit Encrypted Report (Class B Payload)" --> P3
+    P3 -- "Verify Recipient Keys Version" --> D2
+    P3 -- "Insert Report (Ciphertext, state=NEW)" --> D3
+    P3 -- "Log Submission Event" --> D6
+    P3 -- "Encrypted Guest Credentials (.bbt-recovery.json)" --> E1
+
+    %% Flows: Process 4.0 (CVSS Scoring)
+    P3 -- "Base Metric Vector" --> P4
+    E2 -- "Adjust Severity Vector" --> P4
+    P4 -- "Calculated Score (8.22 Formula) & Canonical String" --> D3
+
+    %% Flows: Process 5.0 (Triage & Notifications)
+    E1 <--> P5
+    E2 <--> P5
+    P5 <--> D3
+    P5 -- "Snapshot Recipient Keys" --> D2
+    P5 -- "Queue Class A Metadata Notification" --> E4
+    P5 -- "Record Triage Event" --> D6
+
+    %% Flows: Process 6.0 (Remediation)
+    E2 -- "Fix Proposed: Commit SHA or Config Hash" --> P6
+    P6 -- "Verify Commit & Branch (`ahead`/`identical`)" --> E3
+    E3 -- "Commit Verification Result" --> P6
+    P6 -- "Store Remediation Record (FIX_PROPOSED)" --> D4
+    P6 -- "Transition State to RETEST_PENDING" --> P7
+
+    %% Flows: Process 7.0 (Retest & Audit Ledger)
+    E1 -- "Attested Retest Verdict" --> P7
+    E2 -- "Internal Verification or Timeout Closure" --> P7
+    P7 <--> D3
+    P7 <--> D4
+    P7 -- "Append Hash-Chained Audit Record (prev_hash)" --> D6
+    P7 -- "Generate Signed Closure Export (.json / PDF)" --> E2
+
+    %% Hourly Maintenance Flows (Cron & Storage Leases)
+    E6 -- "Hourly Trigger (Signed JWT)" --> P7
+    P7 <--> D7
+    P7 -- "Phase 2 Direct-S3 Cleanup" --> E5
