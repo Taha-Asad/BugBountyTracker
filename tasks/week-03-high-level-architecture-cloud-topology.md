@@ -211,7 +211,25 @@ flowchart TB
 
 ---
 
-## Part 4: Requirements Traceability & Verification
+## Part 4: Implementation Phases and Clarifications
+
+### 4.1 Phase 1 Working Demonstration: Core Central Workflow
+The first demonstrable release focuses on proving the complete central workflow in running software:
+`Submit Encrypted Report -> Review & Triage -> Record Fix Evidence -> Retest Attestation -> Record Closure Outcome`
+
+This ensures that early testing exercises client-side encryption, authenticated access control, GitHub commit verification, and immutable ledger persistence before secondary features are layered on.
+
+### 4.2 Milestone Phasing vs. Requirement Priority Obligations
+Sequencing features into subsequent milestones (Weeks 4–16) organizes development order; **it does not remove or diminish any P1 obligation** established in the approved IEEE 830 SRS (`Revision 2.8`).
+* **Mandatory P1 Invariants**: All requirements designated as `P1` (e.g., RFC 9116 policies, dual-lane messaging, quota pause protection, controlled reopening, and hash-chained audit logging) remain planned mandatory deliverables.
+* **Secondary P2 Extensions**: Features designated as `P2` (such as Redacted Closure Evidence Exports `FR-8.6` and automated disaster recovery drills `FR-8.7`) are scheduled following complete verification of core `P1` functionality.
+
+### 4.3 Supervisor Governance on Scope Realignment
+If empirical development reveals that advanced edge-case mechanisms—such as multi-recipient historical key re-wrapping (`FR-3.8`), offline master key recovery (`FR-1.2b`), or dual concurrent audit ledger chains (`FR-8.5`)—cannot realistically be completed within semester constraints, the candidate will formally propose explicit scope deferrals directly to the FYP Academic Supervisor (Sir Umar Hayat). Architectural specifications must not silently relabel submitted `P1` requirements as optional.
+
+---
+
+## Part 5: Requirements Traceability & Verification
 
 | Architectural Component | Traced IEEE 830 Requirements | Traced Use Cases | Verification Method |
 | :--- | :---: | :---: | :--- |

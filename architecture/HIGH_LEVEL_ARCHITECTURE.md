@@ -8,7 +8,7 @@
 | Attribute | Specification |
 | :--- | :--- |
 | **Document Title** | High-Level Architecture & Cloud Topology Specification |
-| **Document Version** | **Revision 1.1 (Academic Milestone Baseline — Evaluator Aligned)** |
+| **Document Version** | **Revision 1.2 (Academic Milestone Baseline — Evaluator Aligned)** |
 | **Release Date** | October 16, 2026 |
 | **Author / Candidate** | **Taha Asadullah** (Roll No: **`24-ST-013`**) |
 | **Academic Institution** | Punjab Tianjin University of Technology (PTUT), Lahore |
@@ -45,8 +45,8 @@ BugBountyTrack replaces this model with a **client-side cryptographic architectu
 
 ### 1.2 Architectural Quality Attributes & Non-Functional Goals
 The high-level architecture is optimized against four primary non-functional engineering constraints:
-* **Confidentiality & Minimal Trust (`NFR-04`, `NFR-05`)**: Application servers, database administrators, and cloud hosting providers possess zero technical capability to decrypt submitted vulnerability bodies or attachments.
-* **Deterministic Remediation Verifiability (`NFR-06`)**: Every state transition from `ACCEPTED` to a terminal state (`VERIFIED_RESEARCHER`, `VERIFIED_INTERNAL`, or `CLOSED_UNVERIFIED_TIMEOUT`) is immutably anchored in an append-only ledger using SHA-256 dual state chaining (`tenant_row_hash` and `report_chain_hash`).
+* **Confidentiality & Minimal Trust (`NFR-04`, `NFR-05`)**: Application servers, database storage engines, and hosting providers hold only armored ciphertexts and operational metadata; they lack access to the client-held private keys required to decrypt report descriptions or attachments without unauthorized access to client endpoint keystores.
+* **Deterministic Remediation Verifiability (`NFR-06`)**: Every state transition from `ACCEPTED` to a terminal state (`VERIFIED_RESEARCHER`, `VERIFIED_INTERNAL`, or `CLOSED_UNVERIFIED_TIMEOUT`) is cryptographically chained in an append-only audit ledger using SHA-256 hashes (`tenant_row_hash` and `report_chain_hash`), enabling independent verification of tamper-evident event ordering.
 * **Sub-Second Operational Latency (`NFR-01`, `NFR-02`)**: API serverless routes achieve p95 latency <= 400 ms on warm invocations and <= 1,200 ms on cold starts; client-side OpenPGP v6 Curve25519 key generation executes in < 50 ms; deterministic CVSS v3.1 scoring executes in < 5 ms.
 * **Zero-Dollar Academic Feasibility & Linear Commercial Scaling**: The entire production architecture operates at **$0.00/month** on verified permanent free tiers for university evaluation, while commercial scaling requires only **~$61.00/month** for 10–25 organizations.
 
@@ -97,13 +97,13 @@ The client tier executes inside the user's web browser (Firefox, Chromium, Safar
   - Account-less ephemeral key generation (< 50 ms).
   - Multi-recipient payload encryption wrapping symmetric session keys for authorized program defenders (`PROGRAM_DEFENDER`) and organization recovery keys.
   - Symmetric encryption of `.bbt-recovery.json` packages using `RFC 9580` `SYMENC+SEIPDv2` with Argon2id S2K (`s2kType = argon2`).
-* **Client Storage & Sanitization**: Private keys are maintained in `IndexedDB` protected by user passphrases. Decrypted report bodies and Markdown comments pass through `rehype-sanitize` AST cleansing, neutralizing the 100-vector OWASP XSS attack corpus prior to DOM injection.
+* **Client Storage & Sanitization**: Private keys are maintained in `IndexedDB` protected by user passphrases. Decrypted report bodies and Markdown comments pass through `rehype-sanitize` AST cleansing, filtering unsafe HTML elements, scripting attributes, and dangerous URI schemes via strict Markdown AST sanitization prior to DOM rendering.
 
 #### Tier 2: Presentation & Gateway / API Server Tier (Serverless Compute)
 The application tier runs as a serverless fleet on **Node.js 22 LTS** hosted on Vercel's global infrastructure:
 * **Stateless API Gateway**: Exposes structured JSON REST endpoints under `/api/v1/` and public RFC 9116 endpoints (`/.well-known/security.txt`). Serverless functions are stateless, achieving warm p95 response times <= 400 ms and cold-start execution <= 1,200 ms (`NFR-01`).
 * **Authentication & RBAC Middleware**: Manages session governance using 256-bit cryptographically secure pseudorandom values (CSPRNG), storing only SHA-256 hashes in the database (`bbt_core.sessions.token_hash`). User passwords are protected using Argon2id (`FR-1.3a`). Session cookies use the secure cookie name `__Host-bbt-session` with attributes `SameSite=Lax`, `Secure`, `HttpOnly`, and `Path=/`. The `SameSite=Lax` policy allows legitimate top-level navigations (such as following email notifications or external bookmarks) to retain active session state, preventing disruptive session drops on safe GET requests, while withholding cookies on cross-site subrequests. All state-changing endpoints (POST, PUT, PATCH, DELETE) enforce JSON payload requirements and anti-CSRF request validation. Tenant isolation is enforced by injecting `organization_id` into database execution contexts, and mandatory TOTP MFA step-up is required for `ORG_OWNER` operations (`FR-1.3c`).
-* **Deterministic CVSS v3.1 Engine**: A pure TypeScript implementation of FIRST.org CVSS v3.1 Base scoring (`FR-4.1` – `FR-4.4`). It accepts valid CVSS v3.1 base metrics in any ordering, parses and validates all mandatory metrics, computes the Base score using the official coefficient **`8.22`** and Appendix A `RoundUp` ceiling function in < 5 ms (`NFR-02`), and serializes metrics into the canonical FIRST.org vector format (`CVSS:3.1/AV:X/AC:X/PR:X/UI:X/S:X/C:X/I:X/A:X`).
+* **Deterministic CVSS v3.1 Engine**: A pure TypeScript implementation of FIRST.org CVSS v3.1 Base scoring (`FR-4.1` – `FR-4.4`). It accepts valid CVSS v3.1 base metrics in any ordering, parses and validates all mandatory metrics, computes the Base score using the official coefficient **`8.22`** and Appendix A `RoundUp` ceiling function in < 5 ms (`NFR-02`), and serializes metrics into the canonical FIRST.org vector format (`CVSS:3.1/AV:X/AC:X/PR:X/UI:X/S:X/C:X/I:X/A:X`), verifying computational parity against the 45 official FIRST.org reference test fixtures.
 * **External Adapters & Scheduled Worker**: Integrates with the GitHub REST API v3 to verify commit existence and branch inclusion via `GET /repos/{owner}/{repo}/compare/{branch}...{sha}` (`FR-6.2`), dispatches metadata-only notification emails via Resend (`FR-5.3`), and executes hourly claim-lease cleanup tasks on `POST /api/v1/internal/cron/sla-check` authenticated via HMAC-SHA256 request headers (`X-Cron-Timestamp` and `X-Cron-Signature: sha256=<64-hex-hmac>`, `FR-8.4c`).
 
 #### Tier 3: Persistence & Storage Tier (Managed Cloud Data)
@@ -154,7 +154,7 @@ The Level 0 Context Diagram models BugBountyTrack as a unified central process (
    - *Outflows to Researcher*: Signed RFC 9116 security policies, presigned R2 upload URLs, secret tracking URL fragments (`#token=...`), encrypted `.bbt-recovery.json` recovery packages, and encrypted defender clarification requests.
 2. **E2: Organization Defender (Security Lead / Program Owner)**
    - *Inflows to System*: Organization registration parameters, program scope definitions, Ed25519/X25519 public keys, encrypted triage comments (Class B/C), CVSS base metric adjustments, remediation claims (GitHub commit SHA or config snapshot), and closure triggers.
-   - *Outflows to Defender*: Encrypted vulnerability report queues, computed CVSS scores and canonical vectors, retest outcome notifications, and signed cryptographic closure evidence exports (`.bbt-closure-export.json`, P2 extension under `FR-7.7`).
+   - *Outflows to Defender*: Encrypted vulnerability report queues, computed CVSS scores and canonical vectors, retest outcome notifications, and signed cryptographic closure evidence exports (`.bbt-closure-export.json`, P2 extension under `FR-8.6`).
 3. **E3: Version Control Forge (GitHub REST API v3)**
    - *Inflows to System*: Authoritative commit verification responses (`sha`, author, timestamp, parent tree), branch comparison inclusion flags (`ahead`, `identical`), and rate-limit headers (`x-ratelimit-remaining`).
    - *Outflows from System*: Automated commit lookup requests (`GET /repos/{owner}/{repo}/commits/{sha}`) and branch compare queries (`GET /repos/{owner}/{repo}/compare/{branch}...{sha}`).
@@ -195,8 +195,8 @@ The Level 1 Data Flow Diagram decomposes Process `0.0` into seven discrete funct
 * **Process 6.0: Remediation Attestation & GitHub Verification (`FR-6.1` – `FR-6.4`)**
   - Enforces the 3-step remediation workflow: captures proposed fix metadata (`remediation_attempt_no = N`), executes live commit verification against the GitHub REST API v3 (`GET /repos/{owner}/{repo}/compare/{branch}...{sha}`) or validates encrypted configuration snapshots bound to SHA-256 hashes, and advances report status to `RETEST_PENDING`.
   - *Data Stores*: Reads/Writes `D4: Remediation & Commit Store`; Updates `D3`; Queries `E3: Version Control Forge`.
-* **Process 7.0: Attested Retest Lifecycle & Audit Ledger Engine (`FR-7.1` – `FR-7.6`, `FR-7.7` [P2 Extension], `FR-8.4`, `FR-8.5`)**
-  - Executes the 15-state lifecycle automaton, records attested retest confirmations or timeout closures, appends SHA-256 dual hash-chained audit events (`tenant_row_hash` and `report_chain_hash`), coordinates hourly claim-lease R2 garbage collection, and exports verifiable closure evidence packets (P2 extension under `FR-7.7`).
+* **Process 7.0: Attested Retest Lifecycle & Audit Ledger Engine (`FR-7.1` – `FR-7.7`, `FR-8.4`, `FR-8.5`, `FR-8.6` [P2 Extension])**
+  - Executes the 15-state lifecycle automaton, records attested retest confirmations or timeout closures, executes controlled report reopening (`FR-7.7`), appends SHA-256 dual hash-chained audit events (`tenant_row_hash` and `report_chain_hash`), coordinates hourly claim-lease R2 garbage collection, and exports verifiable closure evidence packets (P2 extension under `FR-8.6`).
   - *Data Stores*: Reads/Writes `D3`, `D4`, `D6`, and `D7`; Purges expired attachments from `D5`.
 
 #### Persistent Data Store Specifications
@@ -257,7 +257,7 @@ The security posture of BugBountyTrack rests on establishing four unambiguous, n
 | :--- | :--- | :--- | :--- |
 | **Spoofing Identity** | Malicious actor attempts to forge researcher identity or impersonate an organization defender. | 1. Argon2id password hashing + mandatory TOTP MFA for `ORG_OWNER` with 10-minute step-up.<br/>2. Account-less guest requests require single-use `guest_mutation_nonces` and detached OpenPGP v6 Ed25519 signatures (`X-Guest-Signature`).<br/>3. Hourly cron requests require HMAC-SHA256 authentication (`X-Cron-Timestamp` and `X-Cron-Signature: sha256=<64-hex-hmac>`) on `/api/v1/internal/cron/sla-check`. | `FR-1.3`, `FR-1.6f`, `FR-5.4`, `FR-8.4c` |
 | **Tampering with Data** | Attacker modifies vulnerability write-up, alters audit records, or tampers with closure status. | 1. Client payloads use OpenPGP SEIPDv2 with AEAD integrity verification.<br/>2. Audit ledger enforces append-only semantics via PostgreSQL triggers and SHA-256 dual hash chaining (`tenant_row_hash` and `report_chain_hash`).<br/>3. Optimistic concurrency (`state_version`) prevents lost updates or race condition tampering. | `FR-3.1`, `FR-7.1`, `FR-8.5` |
-| **Repudiation** | Defender falsely claims a bug was fixed, or researcher denies submitting a report. | 1. Fixing requires automated verification of a real GitHub commit SHA via the GitHub REST API v3 (`compare/{branch}...{sha}`) or an immutable config hash.<br/>2. Retest closures generate cryptographic Closure Evidence Exports signed with Ed25519 (Priority 2 Extension under `FR-7.7`). | `FR-6.2`, `FR-6.3`, `FR-7.7` |
+| **Repudiation** | Defender falsely claims a bug was fixed, or researcher denies submitting a report. | 1. Fixing requires automated verification of a real GitHub commit SHA via the GitHub REST API v3 (`compare/{branch}...{sha}`) or an immutable config hash.<br/>2. Retest closures generate cryptographic Closure Evidence Exports signed with Ed25519 (Priority 2 Extension under `FR-8.6`). | `FR-6.2`, `FR-6.3`, `FR-8.6` |
 | **Information Disclosure** | Database breach or malicious platform operator attempts to harvest zero-day exploit details. | 1. Client-Side OpenPGP v6 Curve25519 encryption: server and database store strictly ciphertext (`title_ciphertext`, report body, attachments).<br/>2. Dual-lane threading guarantees Class C internal notes are never encrypted for the researcher's key.<br/>3. Raw guest `access_token` values are never stored in database retry caches; sessions use CSPRNG tokens with SHA-256 hashes in `token_hash`. | `FR-3.3`, `FR-5.2`, `FR-1.3b`, `FR-1.6b` |
 | **Denial of Service** | Bot swarm exhausts serverless function compute, floods database storage, or uploads huge files. | 1. Cloudflare Turnstile bot verification required before issuing submission session tokens.<br/>2. Shared-store rate limiter restricts unauthenticated submissions to 10 submissions/hour/IP (`FR-8.3`).<br/>3. Strict multi-tenant storage quotas: separate 20 MiB intake pool and 6 MiB Priority-0 reserve floor (`FR-8.4`). | `FR-8.3`, `FR-8.4`, `NFR-09` |
 | **Elevation of Privilege** | Tenant user attempts to access reports belonging to another organization (IDOR / Multi-Tenant leak). | 1. PostgreSQL `FORCE ROW LEVEL SECURITY` on all tenant tables bound to `app.current_org_id`.<br/>2. Runtime executes under unprivileged role `bbt_app` (`NOSUPERUSER NOBYPASSRLS`).<br/>3. Hardened `SECURITY DEFINER` functions enforce clean `search_path = pg_catalog, bbt_core, pg_temp`. | `FR-8.2`, `FR-1.1` |
@@ -360,7 +360,37 @@ When transitioning to commercial production for small software startups, the arc
 
 ---
 
-## 6. Bidirectional Architecture Traceability Matrix (RTM)
+## 6. Implementation Phases and Clarifications
+
+### 6.1 Phase 1 Working Demonstration: Core Workflow Baseline
+To ground system development in working code and avoid premature document churn, the first implementation milestone will deliver the complete central end-to-end vulnerability coordination workflow:
+
+`Submit Encrypted Report -> Review & Triage -> Record Fix Evidence -> Retest Attestation -> Record Closure Outcome`
+
+This central demonstration validates all essential cross-tier interfaces:
+1. **Intake & Cryptographic Isolation**: A security researcher generates an ephemeral keypair in browser memory, encrypts report content using OpenPGP.js v6 Curve25519, and submits ciphertext to the serverless API with zero server plaintext visibility.
+2. **Defender Review & CVSS Scoring**: An authenticated organization defender (`__Host-bbt-session`, `SameSite=Lax`) decrypts report metadata client-side, reviews triage parameters, and verifies deterministic FIRST.org CVSS v3.1 calculation.
+3. **Remediation Evidence Verification**: A defender records a remediation claim verified through the GitHub REST API (`compare/{branch}...{sha}`) or an encrypted configuration snapshot bound to a SHA-256 hash.
+4. **Attested Retest**: The researcher verifies the remediation and submits an attested outcome (`VERIFIED_RESEARCHER` or `RETEST_FAILED`).
+5. **Closure & Ledger Recording**: The state machine advances to a terminal status and appends an immutable, hash-chained record to the PostgreSQL audit ledger.
+
+### 6.2 Milestone Staging vs. Requirement Priority Obligations
+Sequencing functional features across subsequent implementation milestones organizes the engineering development plan; **it does not remove or diminish any P1 obligation** established in the submitted and approved IEEE 830 SRS (`Revision 2.8`).
+* **Mandatory P1 Invariants**: All requirements designated as `P1` in the approved specification—including RFC 9116 `security.txt` manifest generation (`FR-2`), dual-lane triage message isolation (`FR-5`), state machine quota pause handling (`FR-7.5`), controlled report reopening (`FR-7.7`), database Row-Level Security (`FR-8.2`), and append-only audit chaining (`FR-8.5`)—remain planned mandatory deliverables for subsequent development sprints.
+* **Secondary P2 Extensions**: Features formally categorized as `P2` in the submitted SRS—specifically Redacted Closure Evidence Exports (`FR-8.6`), automated disaster recovery drills (`FR-8.7`), and advanced export tooling—are scheduled after the core `P1` operational pipeline is verified through running tests.
+
+### 6.3 Supervisor Governance on Scope Realignment
+If empirical testing during early implementation reveals that advanced edge-case mechanisms—specifically:
+1. Multi-recipient historical key re-wrapping upon defender offboarding (`FR-3.8`),
+2. Offline Organization Master Recovery Key unlocking procedures (`FR-1.2b`), or
+3. Dual concurrent audit ledger chains (`tenant_row_hash` and `report_chain_hash`, `FR-8.5`)—
+introduce disproportionate architectural complexity or stability risks within the academic semester timeframe, the student author will formally propose explicit scope deferrals directly to the FYP Academic Supervisor (Sir Umar Hayat). 
+
+Architectural specifications must not silently relabel or dilute submitted `P1` requirements as optional without formal academic supervisor consultation and written endorsement.
+
+---
+
+## 7. Bidirectional Architecture Traceability Matrix (RTM)
 
 This matrix maps high-level architectural tiers, components, and DFD processes directly to the Week 2 SRS Functional Requirements and formal Use Cases:
 
@@ -369,17 +399,17 @@ This matrix maps high-level architectural tiers, components, and DFD processes d
 | **1.0** | Tier 2 (Auth Middleware, Session Service) | `FR-1.1`, `FR-1.2`, `FR-1.3`, `FR-1.4`, `FR-1.5` | `UC-06`, `UC-07` | CSPRNG session token issuance (SHA-256 `token_hash`); Argon2id password KDF; TOTP MFA step-up verification; `bbt_app` role tenant context injection. |
 | **2.0** | Tier 1 (Crypto Engine) & Tier 2 (RFC 9116 Router)| `FR-2.1`, `FR-2.2`, `FR-2.3`, `FR-2.4`, `FR-2.5`, `FR-3.1` | `UC-01`, `UC-06` | Valid RFC 9116 manifest rendered; Ed25519 in-browser cleartext signature; DNS TXT challenge match. |
 | **3.0** | Tier 1 (OpenPGP.js) & Tier 3 (R2 Bucket, Neon DB) | `FR-3.3`, `FR-3.5`, `FR-3.6`, `FR-1.6`, `FR-8.3`, `FR-8.4` | `UC-01` | Turnstile CAPTCHA validation; rate limiting (10 req/hr/IP); presigned S3 upload; zero raw plaintext in SQL insert; 20 MiB intake / 6 MiB reserve quota check; `.bbt-recovery.json` issuance. |
-| **4.0** | Tier 2 (CVSS v3.1 Pure TypeScript Engine) | `FR-4.1`, `FR-4.2`, `FR-4.3`, `FR-4.4` | `UC-03` | Accepts valid metrics in any order; 100% mathematical parity across 45 FIRST.org test fixtures; calculation completes in < 5 ms (`NFR-02`). |
+| **4.0** | Tier 2 (CVSS v3.1 Pure TypeScript Engine) | `FR-4.1`, `FR-4.2`, `FR-4.3`, `FR-4.4` | `UC-03` | Accepts valid metrics in any order; computational parity across 45 FIRST.org test fixtures; calculation completes in < 5 ms (`NFR-02`). |
 | **5.0** | Tier 2 (Triage Controller) & Tier 3 (Neon DB) | `FR-5.1`, `FR-5.2`, `FR-5.3`, `FR-5.4` | `UC-02`, `UC-03` | Dual-lane message separation (Class B vs C); recipient version snapshot matching; minimal metadata email dispatch via Resend. |
 | **6.0** | Tier 2 (Remediation Service) & External (GitHub) | `FR-6.1`, `FR-6.2`, `FR-6.3`, `FR-6.4` | `UC-04` | GitHub REST API commit validation (`compare/{branch}...{sha}`); encrypted config snapshot hash binding. |
-| **7.0** | Tier 2 (FSM Engine) & Tier 3 (Audit Ledger, Neon) | `FR-7.1`, `FR-7.2`, `FR-7.3`, `FR-7.4`, `FR-7.5`, `FR-7.6`, `FR-7.7`, `FR-8.4`, `FR-8.5` | `UC-05`, `UC-07` | 15-state transition guard; append-only dual hash-chained audit logging (`tenant_row_hash` & `report_chain_hash`); hourly claim-lease R2 reclamation; signed closure export (P2 extension). |
+| **7.0** | Tier 2 (FSM Engine) & Tier 3 (Audit Ledger, Neon) | `FR-7.1`, `FR-7.2`, `FR-7.3`, `FR-7.4`, `FR-7.5`, `FR-7.6`, `FR-7.7`, `FR-8.4`, `FR-8.5`, `FR-8.6` (`P2`) | `UC-05`, `UC-06`, `UC-07` | 15-state transition guard; controlled reopening (`FR-7.7`); append-only dual hash-chained audit logging (`tenant_row_hash` & `report_chain_hash`); hourly claim-lease R2 reclamation; signed closure export (`FR-8.6`, P2 extension). |
 
 ---
 
-## 7. Document Submission & Milestone Sign-Off
+## 8. Document Submission & Milestone Sign-Off
 
-### 7.1 Single Student Author Endorsement
-I hereby certify that this **High-Level Architecture & Cloud Topology Specification (Revision 1.1)** represents an original, standards-compliant architectural baseline authored independently for **BugBountyTrack** (`PTUT - PRJ - 089`). All architectural patterns, trust boundaries, data flows, and infrastructure cost models have been rigorously formulated to satisfy the University Final Year Project syllabus and align completely with the approved IEEE 830 Software Requirements Specification (`Revision 2.8`).
+### 8.1 Single Student Author Endorsement
+I hereby certify that this **High-Level Architecture & Cloud Topology Specification (Revision 1.2)** represents an original, standards-compliant architectural baseline authored independently for **BugBountyTrack** (`PTUT - PRJ - 089`). All architectural patterns, trust boundaries, data flows, and infrastructure cost models have been formulated to satisfy the University Final Year Project syllabus and align completely with the approved IEEE 830 Software Requirements Specification (`Revision 2.8`).
 
 * **Student Author**: **Taha Asadullah**  
 * **Roll Number**: `24-ST-013` (Section `SET-B`)  
@@ -388,7 +418,7 @@ I hereby certify that this **High-Level Architecture & Cloud Topology Specificat
 
 ---
 
-### 7.2 Academic Supervisor Review & Endorsement
+### 8.2 Academic Supervisor Review & Endorsement
 I have reviewed the High-Level Architecture & Cloud Topology Specification, including the 3-Tier Zero-Plaintext Model, Data Flow Diagrams (DFD Level 0 and Level 1), System Trust Boundaries, and Cloud Infrastructure Justification. The architectural design meets departmental requirements for Phase 2 system design.
 
 * **Academic Supervisor**: **Sir Umar Hayat**  

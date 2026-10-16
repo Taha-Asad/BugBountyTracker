@@ -467,13 +467,15 @@ check('any order' in arch_md and 'rejects invalid or out-of-order' not in arch_m
 check('tenant_row_hash' in arch_md and 'report_chain_hash' in arch_md and 'tenant_row_hash' in w3_task and 'report_chain_hash' in w3_task,
       "Week 3 Alignment 10: Dual hash-chained audit ledger specified (tenant_row_hash and report_chain_hash)")
 check('P2 extension' in arch_md or 'P2 Extension' in arch_md,
-      "Week 3 Alignment 11: Cryptographic closure exports explicitly designated as P2 extension (FR-7.7)")
+      "Week 3 Alignment 11: Cryptographic closure exports explicitly designated as P2 extension (FR-8.6)")
 check('FR-5.5' not in arch_md and 'FR-5.4' in arch_md,
       "Week 3 Alignment 12: Discussion/triage requirements end at FR-5.4 (zero orphan FR-5.5 reference)")
 check('compare/{branch}...{sha}' in arch_md and 'compare/{sha}...{branch}' not in arch_md and 'compare/{branch}...{sha}' in w3_task,
       "Week 3 Alignment 13: GitHub compare route uses canonical compare/{branch}...{sha} order")
 check('What BugBountyTrack DOES Architecturally Control' in arch_md and 'What BugBountyTrack DOES NOT Control' in arch_md,
       "Week 3 Alignment 14: Section 4 includes explicit Controls vs Does NOT Control boundary table")
+check('Implementation Phases and Clarifications' in arch_md and 'Implementation Phases and Clarifications' in w3_task and 'Submit Encrypted Report ->' in arch_md and 'Submit Encrypted Report ->' in w3_task,
+      "Week 3 Alignment 15: Explicit Implementation Phases and Clarifications section defines central workflow and mandatory P1 obligations")
 
 with zipfile.ZipFile(files['HIGH_LEVEL_ARCHITECTURE.docx'], 'r') as arch_zip:
     arch_doc_xml = arch_zip.read('word/document.xml').decode('utf-8')
