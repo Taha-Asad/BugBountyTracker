@@ -1,64 +1,65 @@
-flowchart TB
-    %% External Entities
-    subgraph ENTITIES["External Entities"]
-        direction LR
+flowchart LR
+    %% Column 1: External Entities
+    subgraph ENTITIES["External Boundary Entities"]
+        direction TB
         E1["Entity E1:<br/><b>Security Researcher</b>"]
         E2["Entity E2:<br/><b>Organization Defender</b>"]
-        E3["Entity E3:<br/><b>Version Control Forge</b>"]
-        E4["Entity E4:<br/><b>Email Notification Service</b>"]
-        E6["Entity E6:<br/><b>Scheduled Job Runner</b>"]
+        E3["Entity E3:<br/><b>GitHub REST API</b>"]
+        E4["Entity E4:<br/><b>Resend Mail API</b>"]
+        E5["Entity E5:<br/><b>Cloudflare R2 Service</b>"]
+        E6["Entity E6:<br/><b>GitHub Actions Cron</b>"]
     end
 
-    %% Processes
-    subgraph PROCESSES["System Sub-Processes"]
+    %% Column 2: Functional Processes
+    subgraph PROCESSES["Functional Sub-Processes"]
         direction TB
         P1(("<b>1.0</b><br/>Tenant & Session<br/>Governance"))
-        P2(("<b>2.0</b><br/>Security Policy &<br/>Key Governance"))
+        P2(("<b>2.0</b><br/>RFC 9116 Policy &<br/>Key Governance"))
         P3(("<b>3.0</b><br/>Cryptographic Intake &<br/>Storage Accounting"))
         P4(("<b>4.0</b><br/>Deterministic CVSS v3.1<br/>Scoring Engine"))
         P5(("<b>5.0</b><br/>Dual-Lane Triage &<br/>Notification Broker"))
-        P6(("<b>6.0</b><br/>Remediation Attestation &<br/>Verification"))
-        P7(("<b>7.0</b><br/>Retest Verification &<br/>Audit Ledger Engine"))
+        P6(("<b>6.0</b><br/>Remediation Attestation &<br/>Commit Verification"))
+        P7(("<b>7.0</b><br/>Attested Retest &<br/>Audit Ledger Engine"))
     end
 
-    %% Data Stores
-    subgraph STORES["Persistent Logical Data Stores"]
+    %% Column 3: Persistent Data Stores
+    subgraph STORES["Persistent Data Stores"]
         direction TB
-        D1[("<b>D1</b><br/>Tenant & Organization Registry")]
+        D1[("<b>D1</b><br/>Organizations & Tenant Registry")]
         D2[("<b>D2</b><br/>Cryptographic Key Store")]
-        D3[("<b>D3</b><br/>Reports & Triage Message Store")]
-        D4[("<b>D4</b><br/>Remediation & Commit Store")]
-        D5[("<b>D5</b><br/>Encrypted Attachment Store")]
-        D6[("<b>D6</b><br/>Hash-Chained Audit Ledger Store")]
+        D3[("<b>D3</b><br/>Reports & Triage Threads")]
+        D4[("<b>D4</b><br/>Remediation Records & Hashes")]
+        D5[("<b>D5</b><br/>Encrypted Attachment Registry")]
+        D6[("<b>D6</b><br/>Hash-Chained Audit Ledger")]
         D7[("<b>D7</b><br/>Storage Quotas & Claim Leases")]
     end
 
-    %% External Entity Interactions with Processes
+    %% Left to Center: Entities <-> Processes
     E2 -- "Registration & Credentials" --> P1
-    E1 -- "Security Policy Query" --> P2
+    E1 -- "Policy Query" --> P2
     P2 -- "Signed Policy & Public Keys" --> E1
-    E2 -- "Scope Policy & Public Keys" --> P2
+    E2 -- "Policy Scope & Public Keys" --> P2
     E1 -- "Encrypted Report & Attachment" --> P3
-    P3 -- "Submission Receipt & Recovery Package" --> E1
-    E2 -- "Severity Adjustment Vector" --> P4
-    E1 -- "Researcher Triage Comments" --> P5
-    P5 -- "Defender Triage Responses" --> E1
-    E2 -- "Defender Triage Comments" --> P5
-    P5 -- "Researcher Triage Responses" --> E2
-    P5 -- "Operational Alert Payload" --> E4
-    E2 -- "Remediation Claim (Commit / Config)" --> P6
-    P6 -- "Commit Comparison Query" --> E3
-    E3 -- "Commit Verification Evidence" --> P6
+    P3 -- "Receipt & Recovery Package" --> E1
+    P3 -. "Presigned Upload Request" .-> E5
+    E2 -- "Severity Assessment Vector" --> P4
+    E1 <--> P5
+    E2 <--> P5
+    P5 -- "Class A Operational Alert" --> E4
+    E2 -- "Remediation Claim (Commit SHA / Hash)" --> P6
+    P6 -- "Commit Ancestry Query" --> E3
+    E3 -- "Commit Existence & Ancestry Evidence" --> P6
     E1 -- "Attested Retest Verdict" --> P7
     E2 -- "Internal Verification" --> P7
-    E6 -- "Scheduled SLA & Maintenance Trigger" --> P7
+    E6 -- "Scheduled Maintenance Trigger (HMAC)" --> P7
+    P7 -. "Purge Expired Leases" .-> E5
     P7 -- "Verified Closure Evidence (P2)" --> E2
 
     %% Inter-Process Flows
     P3 -- "Base Metric Vector" --> P4
-    P6 -- "Advance to Retest Pending" --> P7
+    P6 -- "Advance Status (RETEST_PENDING)" --> P7
 
-    %% Process to Data Store Flows
+    %% Center to Right: Processes <-> Data Stores
     P1 <--> D1
     P1 --> D6
     P2 <--> D1

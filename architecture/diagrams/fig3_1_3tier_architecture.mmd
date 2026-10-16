@@ -1,10 +1,10 @@
 flowchart TB
-    subgraph TIER1["Tier 1: Client Tier (Web Browser)"]
+    subgraph TIER1["Tier 1: Client Presentation & Cryptographic Boundary (Browser)"]
         direction TB
         ACTORS["User Actors<br/>(Security Researchers & Organization Defenders)"]
         CLIENT_UI["Presentation & UI Layer<br/>(Next.js 14 Client Runtime, React 18+, Tailwind CSS)"]
         CLIENT_CRYPTO["Client Cryptographic Engine<br/>(OpenPGP.js v6 WebCrypto, Curve25519)"]
-        CLIENT_STORE["Local Key Storage<br/>(Browser IndexedDB / Session Memory)"]
+        CLIENT_STORE["Local Client Keystore<br/>(Browser IndexedDB / Session Memory)"]
         
         ACTORS --> CLIENT_UI
         CLIENT_UI <--> CLIENT_CRYPTO
@@ -27,8 +27,8 @@ flowchart TB
         direction TB
         RELATIONAL_DB["Relational Database Engine<br/>(Neon Serverless PostgreSQL 16, bbt_core Schema)"]
         RLS_POLICIES["Row-Level Security Enforcement<br/>(bbt_app Role, FORCE ROW LEVEL SECURITY)"]
-        AUDIT_STORE["Immutable Audit Trail<br/>(Dual Hash-Chained: tenant_row_hash & report_chain_hash)"]
-        OBJECT_STORE["Encrypted Object Storage<br/>(Cloudflare R2 Bucket, S3-Compatible API)"]
+        AUDIT_STORE["Immutable Audit Trail<br/>(Dual Hash-Chained: row_hash & report_chain_hash)"]
+        OBJECT_STORE["Encrypted Object Storage Service<br/>(Cloudflare R2 Bucket, S3-Compatible API)"]
         
         RELATIONAL_DB --> RLS_POLICIES
         RLS_POLICIES --> AUDIT_STORE
@@ -36,6 +36,6 @@ flowchart TB
 
     %% High-Level Tier-to-Tier Interconnects
     CLIENT_UI -- "JSON REST API (HTTPS / TLS 1.3)" --> API_GATEWAY
-    CLIENT_CRYPTO -- "Direct Pre-Signed Encrypted Upload / Download" --> OBJECT_STORE
     CORE_SERVICES -- "SQL Connection Pool (PgBouncer, TLS 1.3)" --> RELATIONAL_DB
     CORE_SERVICES -. "Mint Time-Limited Presigned URLs" .-> OBJECT_STORE
+    CLIENT_CRYPTO -. "Direct Encrypted S3 Upload / Download" .-> OBJECT_STORE

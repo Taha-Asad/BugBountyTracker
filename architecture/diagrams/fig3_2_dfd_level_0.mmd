@@ -1,8 +1,8 @@
 flowchart LR
     %% External Entities
-    E1["External Entity E1:<br/><b>Security Researcher</b><br/>(Hunter / Guest)"]
+    E1["External Entity E1:<br/><b>Security Researcher</b><br/>(Hunter / Guest)<br/><i>Passphrases local only</i>"]
     E2["External Entity E2:<br/><b>Organization Defender</b><br/>(Owner / Reviewer)"]
-    E3["External Entity E3:<br/><b>Version Control Forge</b><br/>(GitHub)"]
+    E3["External Entity E3:<br/><b>Version Control Forge</b><br/>(GitHub API)"]
     E4["External Entity E4:<br/><b>Email Notification Service</b><br/>(Resend)"]
     E5["External Entity E5:<br/><b>Object Storage Service</b><br/>(Cloudflare R2)"]
     E6["External Entity E6:<br/><b>Scheduled Job Runner</b><br/>(GitHub Actions Cron)"]
@@ -11,31 +11,28 @@ flowchart LR
     BBT(("<b>0.0</b><br/><br/><b>BugBountyTrack System</b><br/>(Confidential Multi-Tenant<br/>Vulnerability Management)"))
 
     %% Researcher Data Flows (E1)
-    E1 -- "Policy & Public Key Query" --> BBT
-    BBT -- "Security Policy & Defender Public Keys" --> E1
-    E1 -- "Encrypted Vulnerability Report & Attachment" --> BBT
-    BBT -- "Submission Receipt & Recovery Package" --> E1
-    E1 -- "Clarification Response & Retest Verdict" --> BBT
-    BBT -- "Triage Inquiry & Retest Request" --> E1
+    E1 -- "Policy & Public Key Queries" --> BBT
+    BBT -- "Signed Policies & Public Keys" --> E1
+    E1 -- "Encrypted Reports & Retest Evidence" --> BBT
+    BBT -- "Receipts, Triage Inquiries & Packages" --> E1
 
     %% Defender Data Flows (E2)
-    E2 -- "Tenant Setup, Scope Policy & Public Keys" --> BBT
-    BBT -- "Encrypted Vulnerability Feed & Audit Updates" --> E2
-    E2 -- "Triage Assessment & Severity Adjustment" --> BBT
-    E2 -- "Remediation Claim (Commit SHA / Config Hash)" --> BBT
-    BBT -- "Retest Outcome & Verified Closure Evidence (P2)" --> E2
+    E2 -- "Tenant Setup, Policies & Public Keys" --> BBT
+    BBT -- "Encrypted Vulnerability Feed & Updates" --> E2
+    E2 -- "Triage Assessments & Remediation Claims" --> BBT
+    BBT -- "Retest Outcomes & Closure Records (P2)" --> E2
 
     %% Integration with Version Control Forge (E3)
-    BBT -- "Commit & Branch Verification Query" --> E3
+    BBT -- "Commit & Branch Ancestry Query" --> E3
     E3 -- "Commit Existence & Ancestry Evidence" --> BBT
 
     %% Integration with Email Service (E4)
-    BBT -- "Operational Metadata Notification" --> E4
+    BBT -- "Operational Metadata Alert (Class A Only)" --> E4
 
     %% Integration with Object Storage Service (E5)
-    BBT -- "Attachment Upload & Retrieval Lease Authorization" --> E5
-    E5 -- "Encrypted Binary Storage & Health Confirmation" --> BBT
+    BBT -- "Attachment Upload / Retrieval Lease Authorization" --> E5
+    E5 -- "Encrypted Binary Storage Confirmation" --> BBT
 
     %% Integration with Scheduled Job Runner (E6)
-    E6 -- "Scheduled Maintenance & SLA Trigger" --> BBT
+    E6 -- "Scheduled Maintenance & SLA Trigger (HMAC)" --> BBT
     BBT -- "Maintenance Execution Summary" --> E6

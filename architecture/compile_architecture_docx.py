@@ -364,6 +364,8 @@ def compile_markdown_to_docx(md_source_path, target_docx_path, mirror_docx_path=
                     break
             if rid and rid not in inserted_diagrams:
                 _, png_path, doc_id, d_name = diagram_files[rid]
+                if rid == "rId203":
+                    body_parts.append('<w:p><w:r><w:br w:type="page"/></w:r></w:p>')
                 body_parts.append(make_image_p(rid, doc_id, d_name, png_path))
                 inserted_diagrams.add(rid)
             i += 1

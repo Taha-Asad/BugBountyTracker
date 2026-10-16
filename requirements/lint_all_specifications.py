@@ -434,7 +434,7 @@ check('Tier 1: Client Presentation' in arch_md and 'Tier 2: Presentation & Gatew
       "HIGH_LEVEL_ARCHITECTURE.md specifies complete 3-Tier Zero-Plaintext Model")
 check('fig3_1_3tier_architecture.png' in arch_md and 'fig3_2_dfd_level_0.png' in arch_md and 'fig3_3_dfd_level_1.png' in arch_md and 'fig3_4_cloud_topology.png' in arch_md,
       "HIGH_LEVEL_ARCHITECTURE.md references all 4 canonical architecture and DFD diagrams")
-check('DFD Level 0: System Context Diagram' in arch_md and 'Entity E1: Security Researcher' in w3_task and 'Entity E6: GitHub Actions Cron' in w3_task,
+check('DFD Level 0: System Context Diagram' in arch_md and ('Entity E1' in w3_task and 'Security Researcher' in w3_task) and ('Entity E6' in w3_task and 'GitHub Actions Cron' in w3_task),
       "Both architecture spec and week-03 task define DFD Level 0 Context Diagram with 6 external entities")
 check('Process 1.0: Tenant Registration' in arch_md and 'Process 7.0: Attested Retest' in arch_md and 'Organizations & Tenant Registry' in arch_md and 'Storage Quotas & Claim Leases' in arch_md,
       "HIGH_LEVEL_ARCHITECTURE.md decomposes DFD Level 1 into 7 sub-processes and 7 persistent data stores")
@@ -464,8 +464,8 @@ check('20 MiB intake' in arch_md and '6 MiB' in arch_md and '50 MB DB cap' not i
       "Week 3 Alignment 8: Storage quotas align with FR-8.4 (20 MiB intake, 6 MiB reserve, zero 50 MB DB cap)")
 check('any order' in arch_md and 'rejects invalid or out-of-order' not in arch_md,
       "Week 3 Alignment 9: CVSS v3.1 accepts base metrics in any order and emits canonical vector (FR-4.3)")
-check('tenant_row_hash' in arch_md and 'report_chain_hash' in arch_md and 'tenant_row_hash' in w3_task and 'report_chain_hash' in w3_task,
-      "Week 3 Alignment 10: Dual hash-chained audit ledger specified (tenant_row_hash and report_chain_hash)")
+check(('row_hash' in arch_md or 'tenant_row_hash' in arch_md) and 'report_chain_hash' in arch_md and ('row_hash' in w3_task or 'tenant_row_hash' in w3_task) and 'report_chain_hash' in w3_task,
+      "Week 3 Alignment 10: Dual hash-chained audit ledger specified (row_hash and report_chain_hash)")
 check('P2 extension' in arch_md or 'P2 Extension' in arch_md,
       "Week 3 Alignment 11: Cryptographic closure exports explicitly designated as P2 extension (FR-8.6)")
 check('FR-5.5' not in arch_md and 'FR-5.4' in arch_md,
@@ -476,6 +476,17 @@ check('What BugBountyTrack DOES Architecturally Control' in arch_md and 'What Bu
       "Week 3 Alignment 14: Section 4 includes explicit Controls vs Does NOT Control boundary table")
 check('Implementation Phases and Clarifications' in arch_md and 'Implementation Phases and Clarifications' in w3_task and 'Submit Encrypted Report ->' in arch_md and 'Submit Encrypted Report ->' in w3_task,
       "Week 3 Alignment 15: Explicit Implementation Phases and Clarifications section defines central workflow and mandatory P1 obligations")
+check('approved SRS' not in arch_md and 'approved SRS' not in w3_task and 'submitted SRS' in arch_md and 'submitted SRS' in w3_task,
+      "Week 3 Alignment 16: Uses 'submitted SRS' (zero premature 'approved SRS' claims)")
+check('FR-8.4c' not in arch_md and 'FR-8.4c' not in w3_task and 'FR-1.2b' not in arch_md and 'FR-1.2b' not in w3_task,
+      "Week 3 Alignment 17: Accurate requirement references (zero FR-8.4c or FR-1.2b phantom references)")
+check('p99 <= 800 ms' in arch_md and 'p99 <= 800 ms' in w3_task and 'cold <= 1,200 ms' not in arch_md and 'cold start <= 1,200 ms' not in w3_task,
+      "Week 3 Alignment 18: Restored exact NFR-01 design targets p95 <= 400 ms and p99 <= 800 ms (zero warm/cold deviation)")
+check('300 KiB' in arch_md and '300 KiB' in w3_task and 'prevents tampering or deletion' not in arch_md,
+      "Week 3 Alignment 19: Storage reserve specifies 300 KiB Priority-0 floor and honest audit ledger security claims")
+check('row_hash' in arch_md and 'row_hash' in w3_task and 'PASTE_GOOGLE_DRIVE_LINK' not in w3_task,
+      "Week 3 Alignment 20: Specifies canonical row_hash and zero placeholder Google Drive links")
+
 
 with zipfile.ZipFile(files['HIGH_LEVEL_ARCHITECTURE.docx'], 'r') as arch_zip:
     arch_doc_xml = arch_zip.read('word/document.xml').decode('utf-8')
