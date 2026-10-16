@@ -7,13 +7,13 @@ flowchart TB
     subgraph CLOUDFLARE_EDGE["Cloudflare Edge & Security Perimeter"]
         CF_DNS["Cloudflare Anycast DNS<br/>(DNSSEC & Zone Governance)"]
         CF_WAF["Cloudflare WAF & DDoS Shield<br/>(TLS 1.3 Termination & Rate Limiting)"]
-        CF_TURNSTILE["Turnstile Bot Protection<br/>(Cryptographic CAPTCHA Tokens)"]
+        CF_TURNSTILE["Turnstile Bot Protection<br/>(Cryptographic Non-Interactive Tokens)"]
     end
 
     subgraph VERCEL_PLATFORM["Vercel Cloud Application Infrastructure (us-east-1)"]
         V_EDGE["Vercel Global Edge Network<br/>(Static Assets & Edge Middleware)"]
         subgraph V_SERVERLESS["Serverless Compute Fleet (Node.js 22 LTS)"]
-            V_API["Next.js 14+ App Router API Handlers<br/>(/api/v1/*, /.well-known/security.txt)"]
+            V_API["Next.js 14+ App Router API Handlers<br/>(/api/v1/*, /.well-known/security.txt)<br/>[__Host-bbt-session: SameSite=Lax, Secure]"]
             V_PRISMA["Prisma Client ORM 5.x<br/>(Connection Management & Query Engine)"]
             V_MEM["Ephemeral Memory Scope<br/>(Zero In-Memory Plaintext Caching)"]
         end
@@ -21,7 +21,7 @@ flowchart TB
 
     subgraph NEON_DATABASE["Neon Serverless PostgreSQL 16 Cloud (us-east-1)"]
         N_BOUNCER["PgBouncer Transaction Pooler<br/>(?pgbouncer=true, High-Concurrency Multiplexing)"]
-        N_COMPUTE["PostgreSQL 16 Compute Node<br/>(Autoscaling 0.25 to 2 CU, RLS Engine)"]
+        N_COMPUTE["PostgreSQL 16 Compute Node<br/>(bbt_app Role, FORCE ROW LEVEL SECURITY)"]
         N_STORAGE["Neon Serverless Storage Engine<br/>(Copy-on-Write Pages, Continuous PITR Backups)"]
     end
 
@@ -33,7 +33,7 @@ flowchart TB
     subgraph EXTERNAL_SERVICES["External Third-Party APIs & Automation"]
         EXT_GH["GitHub REST API v3<br/>(Commit SHA & Branch Compare Validation)"]
         EXT_RESEND["Resend Email Delivery API<br/>(Minimal-Metadata Notifications)"]
-        EXT_GHA["GitHub Actions Automation<br/>(CI/CD Pipeline & Hourly Signed Cron)"]
+        EXT_GHA["GitHub Actions Automation<br/>(CI/CD & Hourly HMAC-SHA256 Cron)"]
     end
 
     %% Client Interactions
@@ -52,11 +52,11 @@ flowchart TB
     R2_BUCKET --- R2_EGRESS
 
     %% Database Connections
-    V_PRISMA -- "TLS 1.3 Pooled TCP (Port 6543)" --> N_BOUNCER
+    V_PRISMA -- "TLS 1.3 Pooled TCP as bbt_app (Port 6543)" --> N_BOUNCER
     N_BOUNCER --> N_COMPUTE
     N_COMPUTE --> N_STORAGE
 
     %% External API Integrations
     V_API -- "HTTPS REST (OAuth / PAT)" --> EXT_GH
     V_API -- "HTTPS REST (Bearer Token)" --> EXT_RESEND
-    EXT_GHA -- "Hourly Scheduled Job (Ed25519 X-Cron-Signature)" --> V_API
+    EXT_GHA -- "Hourly Trigger (HMAC-SHA256 on /api/v1/internal/cron/sla-check)" --> V_API

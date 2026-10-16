@@ -445,6 +445,36 @@ check('$0.00' in arch_md and '$61.00' in arch_md and 'Vercel' in arch_md and 'Ne
 check('Document Submission & Milestone Sign-Off' in arch_md and 'Document Submission & Milestone Sign-Off' in w3_task,
       "Both HIGH_LEVEL_ARCHITECTURE.md and week-03 task spec include formal Document Submission & Milestone Sign-Off")
 
+# Week 3 Architecture Alignment to Submitted SRS Revision 2.8 Invariants
+check('HMAC-SHA256' in arch_md and 'X-Cron-Signature: sha256=' in arch_md and 'Ed25519-signed JWT' not in arch_md and 'Ed25519-signed JSON Web Tokens' not in arch_md,
+      "Week 3 Alignment 1: Scheduled-job authentication uses HMAC-SHA256 (zero Ed25519-signed JWT)")
+check('/api/v1/internal/cron/sla-check' in arch_md and '/api/cron/process-deadlines' not in arch_md,
+      "Week 3 Alignment 2: Scheduled-job route is /api/v1/internal/cron/sla-check (zero /api/cron/process-deadlines)")
+check('SameSite=Lax' in arch_md and 'SameSite=Strict' not in arch_md and '__Host-bbt-session' in arch_md,
+      "Week 3 Alignment 3: Session cookie policy is SameSite=Lax under __Host-bbt-session (zero SameSite=Strict)")
+check('CSPRNG' in arch_md and 'token_hash' in arch_md and 'Argon2id session' not in arch_md,
+      "Week 3 Alignment 4: Session tokens use CSPRNG with SHA-256 token_hash persistence (Argon2id strictly password KDF)")
+check('bbt_app' in arch_md and 'bbt_app_runtime' not in arch_md and 'bbt_app_runtime' not in w3_task,
+      "Week 3 Alignment 5: Unprivileged database role is bbt_app (zero bbt_app_runtime)")
+check('p95 latency <= 400 ms' in arch_md and '< 250 ms' not in arch_md,
+      "Week 3 Alignment 6: API latency matches NFR-01 p95 <= 400 ms (zero unsupported < 250 ms claim)")
+check('10 submissions/hour/IP' in arch_md and '5 requests/hour/IP' not in arch_md and '5 req/hr/IP' not in arch_md,
+      "Week 3 Alignment 7: Intake rate limit aligns with FR-8.3 (10 submissions/hour/IP, zero 5 req/hr/IP)")
+check('20 MiB intake' in arch_md and '6 MiB' in arch_md and '50 MB DB cap' not in arch_md,
+      "Week 3 Alignment 8: Storage quotas align with FR-8.4 (20 MiB intake, 6 MiB reserve, zero 50 MB DB cap)")
+check('any order' in arch_md and 'rejects invalid or out-of-order' not in arch_md,
+      "Week 3 Alignment 9: CVSS v3.1 accepts base metrics in any order and emits canonical vector (FR-4.3)")
+check('tenant_row_hash' in arch_md and 'report_chain_hash' in arch_md and 'tenant_row_hash' in w3_task and 'report_chain_hash' in w3_task,
+      "Week 3 Alignment 10: Dual hash-chained audit ledger specified (tenant_row_hash and report_chain_hash)")
+check('P2 extension' in arch_md or 'P2 Extension' in arch_md,
+      "Week 3 Alignment 11: Cryptographic closure exports explicitly designated as P2 extension (FR-7.7)")
+check('FR-5.5' not in arch_md and 'FR-5.4' in arch_md,
+      "Week 3 Alignment 12: Discussion/triage requirements end at FR-5.4 (zero orphan FR-5.5 reference)")
+check('compare/{branch}...{sha}' in arch_md and 'compare/{sha}...{branch}' not in arch_md and 'compare/{branch}...{sha}' in w3_task,
+      "Week 3 Alignment 13: GitHub compare route uses canonical compare/{branch}...{sha} order")
+check('What BugBountyTrack DOES Architecturally Control' in arch_md and 'What BugBountyTrack DOES NOT Control' in arch_md,
+      "Week 3 Alignment 14: Section 4 includes explicit Controls vs Does NOT Control boundary table")
+
 with zipfile.ZipFile(files['HIGH_LEVEL_ARCHITECTURE.docx'], 'r') as arch_zip:
     arch_doc_xml = arch_zip.read('word/document.xml').decode('utf-8')
     arch_rels_xml = arch_zip.read('word/_rels/document.xml.rels').decode('utf-8')

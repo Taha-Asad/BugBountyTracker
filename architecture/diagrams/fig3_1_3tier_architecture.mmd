@@ -1,72 +1,41 @@
 flowchart TB
-    subgraph TIER1["Tier 1: Client Presentation & Cryptographic Boundary (Web Browser)"]
+    subgraph TIER1["Tier 1: Client Tier (Web Browser)"]
         direction TB
-        subgraph T1_ACTORS["Actors & Intake Context"]
-            ACT_H["Security Researcher<br/>(Hunter / Account-Less Guest)"]
-            ACT_D["Organization Defender<br/>(Owner / Reviewer)"]
-        end
-        subgraph T1_ENGINE["Client-Side Execution Engine (Next.js 14 Client Runtime)"]
-            UI_COMP["Responsive UI Components<br/>(React 18+, Tailwind CSS)"]
-            AST_SAN["Markdown AST Sanitizer<br/>(rehype-sanitize / DOMPurify)"]
-            CRYPTO_ENG["Client Cryptographic Engine<br/>(OpenPGP.js v6 / WebCrypto API)"]
-            KEY_STORE["Browser Key Storage<br/>(IndexedDB / Local Memory)"]
-            CAPTCHA_WID["Turnstile CAPTCHA Widget<br/>(Bot Protection Challenge)"]
-        end
-        ACT_H --> UI_COMP
-        ACT_D --> UI_COMP
-        UI_COMP --> AST_SAN
-        UI_COMP --> CRYPTO_ENG
-        CRYPTO_ENG <--> KEY_STORE
-        UI_COMP --> CAPTCHA_WID
+        ACTORS["User Actors<br/>(Security Researchers & Organization Defenders)"]
+        CLIENT_UI["Presentation & UI Layer<br/>(Next.js 14 Client Runtime, React 18+, Tailwind CSS)"]
+        CLIENT_CRYPTO["Client Cryptographic Engine<br/>(OpenPGP.js v6 WebCrypto, Curve25519)"]
+        CLIENT_STORE["Local Key Storage<br/>(Browser IndexedDB / Session Memory)"]
+        
+        ACTORS --> CLIENT_UI
+        CLIENT_UI <--> CLIENT_CRYPTO
+        CLIENT_CRYPTO <--> CLIENT_STORE
     end
 
-    subgraph TIER2["Tier 2: Presentation & Gateway / API Server Tier (Node.js 22 LTS Serverless Runtime)"]
+    subgraph TIER2["Tier 2: Application / API Server Tier (Serverless Compute)"]
         direction TB
-        subgraph T2_GATEWAY["Edge CDN & API Routing Layer (Vercel Edge Network)"]
-            API_ROUTER["Unified Next.js App Router<br/>(/api/v1/*, /.well-known/*)"]
-            AUTH_MW["Session & RBAC Middleware<br/>(Argon2id, Session Cookies, TOTP MFA)"]
-            RATE_LMT["Shared Store Rate Limiter<br/>(Token Bucket / IP Sliding Window)"]
-        end
-        subgraph T2_SERVICES["Stateless Application Services (Node.js Serverless Functions)"]
-            INTAKE_SVC["Confidential Intake Controller<br/>(Turnstile Token Verification)"]
-            CVSS_ENG["CVSS v3.1 Base Scoring Engine<br/>(Deterministic Pure TypeScript)"]
-            TRIAGE_SVC["Dual-Lane Triage Controller<br/>(Optimistic Concurrency & Recipient Tracking)"]
-            REMED_SVC["Remediation Attestation Service<br/>(GitHub REST API v3 Integration)"]
-            CRON_SVC["Hourly Scheduled Cron Worker<br/>(Ed25519-Signed JWT Authentication)"]
-            PRESIGN_SVC["Presigned URL Generator<br/>(Cloudflare R2 Direct-Upload Tokens)"]
-        end
-        API_ROUTER --> AUTH_MW
-        API_ROUTER --> RATE_LMT
-        AUTH_MW --> INTAKE_SVC
-        AUTH_MW --> TRIAGE_SVC
-        AUTH_MW --> REMED_SVC
-        AUTH_MW --> PRESIGN_SVC
-        INTAKE_SVC --> CVSS_ENG
+        API_GATEWAY["API Gateway & Routing Layer<br/>(Next.js 14+ App Router, Node.js 22 LTS)"]
+        AUTH_MODULE["Authentication & Access Governance<br/>(Argon2id Passwords, CSPRNG Session Tokens, RBAC)"]
+        CORE_SERVICES["Stateless Application Logic<br/>(Intake Handlers, CVSS 3.1 Scoring, Remediation Verifier)"]
+        EXTERNAL_ADAPTERS["External Service Integrations<br/>(GitHub REST API Client, Resend Mail Client, Cron Handler)"]
+        
+        API_GATEWAY --> AUTH_MODULE
+        AUTH_MODULE --> CORE_SERVICES
+        CORE_SERVICES <--> EXTERNAL_ADAPTERS
     end
 
-    subgraph TIER3["Tier 3: Persistence & Object Storage Tier (Cloud Data Layer)"]
+    subgraph TIER3["Tier 3: Persistence & Storage Tier (Cloud Data Layer)"]
         direction TB
-        subgraph T3_DB["Managed Relational Database (Neon Serverless PostgreSQL 16)"]
-            PGBOUNCER["PgBouncer Connection Pooler<br/>(Transaction Pooling & Multiplexing)"]
-            RLS_ENGINE["PostgreSQL Engine (bbt_core Schema)<br/>(FORCE ROW LEVEL SECURITY & Policies)"]
-            AUDIT_LEDGER["Append-Only Audit Ledger<br/>(Hash-Chained prev_hash & Checkpoints)"]
-            DATA_TABLES["Multi-Tenant Core Tables<br/>(organizations, reports, programs, keys)"]
-        end
-        subgraph T3_STORAGE["Encrypted Object Storage (Cloudflare R2 Storage)"]
-            R2_BUCKET["S3-Compatible Object Bucket<br/>(Client-Encrypted PoC Attachments)"]
-            R2_LIFECYCLE["Object Storage Governance<br/>(Presigned Direct Upload / Strict Quota Caps)"]
-        end
-        PGBOUNCER --> RLS_ENGINE
-        RLS_ENGINE --> DATA_TABLES
-        RLS_ENGINE --> AUDIT_LEDGER
-        R2_BUCKET --> R2_LIFECYCLE
+        RELATIONAL_DB["Relational Database Engine<br/>(Neon Serverless PostgreSQL 16, bbt_core Schema)"]
+        RLS_POLICIES["Row-Level Security Enforcement<br/>(bbt_app Role, FORCE ROW LEVEL SECURITY)"]
+        AUDIT_STORE["Immutable Audit Trail<br/>(Dual Hash-Chained: tenant_row_hash & report_chain_hash)"]
+        OBJECT_STORE["Encrypted Object Storage<br/>(Cloudflare R2 Bucket, S3-Compatible API)"]
+        
+        RELATIONAL_DB --> RLS_POLICIES
+        RLS_POLICIES --> AUDIT_STORE
     end
 
-    %% Network & Protocol Connectors
-    UI_COMP -- "HTTPS / TLS 1.3 (JSON REST API)" --> API_ROUTER
-    CRYPTO_ENG -- "Direct Encrypted Binary Upload (HTTPS PUT via Presigned URL)" --> R2_BUCKET
-    PRESIGN_SVC -. "AWS SDK v3 S3 Presigned URL Generation" .-> R2_BUCKET
-    INTAKE_SVC -- "SQL Transactions via Prisma ORM 5.x" --> PGBOUNCER
-    TRIAGE_SVC -- "SQL Queries & State Transitions" --> PGBOUNCER
-    REMED_SVC -- "Audit Events & Status Mutation" --> PGBOUNCER
-    CRON_SVC -- "Claim-Lease Cleanup & Expiry Processing" --> PGBOUNCER
+    %% High-Level Tier-to-Tier Interconnects
+    CLIENT_UI -- "JSON REST API (HTTPS / TLS 1.3)" --> API_GATEWAY
+    CLIENT_CRYPTO -- "Direct Pre-Signed Encrypted Upload / Download" --> OBJECT_STORE
+    CORE_SERVICES -- "SQL Connection Pool (PgBouncer, TLS 1.3)" --> RELATIONAL_DB
+    CORE_SERVICES -. "Mint Time-Limited Presigned URLs" .-> OBJECT_STORE
