@@ -38,6 +38,8 @@ files = {
     'week-03-high-level-architecture-cloud-topology.md': os.path.join(PROJECT_DIR, 'tasks', 'week-03-high-level-architecture-cloud-topology.md'),
     'HIGH_LEVEL_ARCHITECTURE.md': os.path.join(PROJECT_DIR, 'architecture', 'HIGH_LEVEL_ARCHITECTURE.md'),
     'HIGH_LEVEL_ARCHITECTURE.docx': os.path.join(PROJECT_DIR, 'architecture', 'HIGH_LEVEL_ARCHITECTURE.docx'),
+    'PROJECT_COMPREHENSIVE_OVERVIEW.md': os.path.join(PROJECT_DIR, 'PROJECT_COMPREHENSIVE_OVERVIEW.md'),
+    'PROJECT_COMPREHENSIVE_OVERVIEW.docx': os.path.join(PROJECT_DIR, 'PROJECT_COMPREHENSIVE_OVERVIEW.docx'),
     'KEY_MANAGEMENT.md': os.path.join(PROJECT_DIR, 'architecture', 'KEY_MANAGEMENT.md'),
     'DECISION_LOG.md': os.path.join(PROJECT_DIR, 'decisions', 'DECISION_LOG.md'),
     'project.json': os.path.join(PROJECT_DIR, 'project.json'),
@@ -51,7 +53,7 @@ for fname, fpath in files.items():
     check(sz >= min_sz, f"File size valid: {fname} ({sz} bytes)")
 
 # 2. Check metadata in Markdown specifications
-for mdf in ['BRD.md', 'SRS.md', 'WBS.md', 'WEEK_1_DISCOVERY_REPORT.md', 'WEEK_1_PART_A_USER_PERSONAS.md', 'WEEK_1_PART_B_CHARTER_AND_MVP.md', 'DISCOVERY_INTERVIEW_LOG.md', 'HOD_PROPOSAL.md', 'week-01-problem-discovery-personas.md', 'week-02-software-requirements-specification.md', 'week-03-high-level-architecture-cloud-topology.md', 'HIGH_LEVEL_ARCHITECTURE.md']:
+for mdf in ['BRD.md', 'SRS.md', 'WBS.md', 'WEEK_1_DISCOVERY_REPORT.md', 'WEEK_1_PART_A_USER_PERSONAS.md', 'WEEK_1_PART_B_CHARTER_AND_MVP.md', 'DISCOVERY_INTERVIEW_LOG.md', 'HOD_PROPOSAL.md', 'week-01-problem-discovery-personas.md', 'week-02-software-requirements-specification.md', 'week-03-high-level-architecture-cloud-topology.md', 'HIGH_LEVEL_ARCHITECTURE.md', 'PROJECT_COMPREHENSIVE_OVERVIEW.md']:
     p = files[mdf]
     with open(p, 'r', encoding='utf-8') as f:
         content = f.read()
@@ -61,7 +63,7 @@ for mdf in ['BRD.md', 'SRS.md', 'WBS.md', 'WEEK_1_DISCOVERY_REPORT.md', 'WEEK_1_
     check('PTUT - PRJ - 089' in content, f"{mdf} contains Project ID PTUT - PRJ - 089")
     check('SET-B' in content, f"{mdf} contains Section SET-B")
     check('SET-A' not in content, f"{mdf} has zero legacy SET-A references")
-    if mdf in ['BRD.md', 'SRS.md', 'WBS.md', 'WEEK_1_DISCOVERY_REPORT.md', 'WEEK_1_PART_A_USER_PERSONAS.md', 'WEEK_1_PART_B_CHARTER_AND_MVP.md', 'DISCOVERY_INTERVIEW_LOG.md', 'week-01-problem-discovery-personas.md', 'week-02-software-requirements-specification.md', 'week-03-high-level-architecture-cloud-topology.md', 'HIGH_LEVEL_ARCHITECTURE.md']:
+    if mdf in ['BRD.md', 'SRS.md', 'WBS.md', 'WEEK_1_DISCOVERY_REPORT.md', 'WEEK_1_PART_A_USER_PERSONAS.md', 'WEEK_1_PART_B_CHARTER_AND_MVP.md', 'DISCOVERY_INTERVIEW_LOG.md', 'week-01-problem-discovery-personas.md', 'week-02-software-requirements-specification.md', 'week-03-high-level-architecture-cloud-topology.md', 'HIGH_LEVEL_ARCHITECTURE.md', 'PROJECT_COMPREHENSIVE_OVERVIEW.md']:
         # Verify no raw unescaped LaTeX formatting artifacts in Word-source or portal-paste docs
         check(r'\text{' not in content, f"{mdf} has no \\text{{}} artifacts")
         check(r'\longrightarrow' not in content, f"{mdf} has no \\longrightarrow artifacts")
@@ -496,6 +498,14 @@ check('rId201' in arch_rels_xml and 'rId202' in arch_rels_xml and 'rId203' in ar
 check('24-ST-013' in arch_doc_xml and 'Taha Asadullah' in arch_doc_xml and 'Sir Umar Hayat' in arch_doc_xml,
       "HIGH_LEVEL_ARCHITECTURE.docx OpenXML document body verified (24-ST-013, Taha Asadullah, Sir Umar Hayat)")
 
+with zipfile.ZipFile(files['PROJECT_COMPREHENSIVE_OVERVIEW.docx'], 'r') as over_zip:
+    over_doc_xml = over_zip.read('word/document.xml').decode('utf-8')
+    over_rels_xml = over_zip.read('word/_rels/document.xml.rels').decode('utf-8')
+check('rId201' in over_rels_xml and 'rId202' in over_rels_xml and 'rId203' in over_rels_xml and 'rId204' in over_rels_xml and 'rId205' in over_rels_xml and 'rId206' in over_rels_xml,
+      "PROJECT_COMPREHENSIVE_OVERVIEW.docx OpenXML relationships embed all 6 architecture & behavioral diagrams")
+check('24-ST-013' in over_doc_xml and 'Taha Asadullah' in over_doc_xml and 'Sir Umar Hayat' in over_doc_xml,
+      "PROJECT_COMPREHENSIVE_OVERVIEW.docx OpenXML document body verified (24-ST-013, Taha Asadullah, Sir Umar Hayat)")
+
 # 16. Academic & Professional Attribution Hygiene (Zero Non-Project Persona or Local Path Bleed)
 import hashlib
 FORBIDDEN_TOKEN_SHA256_PREFIXES = {
@@ -513,11 +523,14 @@ with open(os.path.join(PROJECT_DIR, 'README.md'), 'r', encoding='utf-8') as f:
     readme_txt = f.read()
 with open(os.path.join(SCRIPT_DIR, 'SRS_UNIVERSITY_SUBMISSION.md'), 'r', encoding='utf-8') as f:
     uni_srs_txt = f.read()
+with open(files['PROJECT_COMPREHENSIVE_OVERVIEW.md'], 'r', encoding='utf-8') as f:
+    over_md = f.read()
 
 hygiene_files = [
     ('SRS.md', srs),
     ('SRS_UNIVERSITY_SUBMISSION.md', uni_srs_txt),
     ('HIGH_LEVEL_ARCHITECTURE.md', arch_md),
+    ('PROJECT_COMPREHENSIVE_OVERVIEW.md', over_md),
     ('BRD.md', brd_full),
     ('WBS.md', wbs),
     ('KEY_MANAGEMENT.md', km),
